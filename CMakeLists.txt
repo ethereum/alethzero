@@ -70,7 +70,7 @@ endif ()
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE} 
 	ICON alethzero
-    UI_RESOURCES ${UI_FILES} src/alethzero.icns
+	UI_RESOURCES ${UI_FILES} src/alethzero.icns
 	WIN_RESOURCES src/alethzero.rc
 )
 
@@ -80,14 +80,14 @@ target_link_libraries(${EXECUTABLE} Qt5::WebEngine)
 target_link_libraries(${EXECUTABLE} Qt5::WebEngineWidgets)
 
 if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
-    target_link_libraries(${EXECUTABLE} Qt5::WebEngineCore)
+	target_link_libraries(${EXECUTABLE} Qt5::WebEngineCore)
 	target_link_libraries(${EXECUTABLE} Qt5::DBus)
 	target_link_libraries(${EXECUTABLE} Qt5::PrintSupport)
 endif()
 
 set(P ${CPPETHEREUM_BUILD}/)
 set(LIBS web3jsonrpc;webthree;whisper;ethereum;evm;ethcore;lll;p2p;evmasm;devcrypto;evmcore;natspec;devcore;ethash-cl;ethash;secp256k1;scrypt;jsqrc)
-set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH};${P}secp256k1;${P}evmjit;${P}libsolidity)
+set(CMAKE_LIBRARY_PATH ${P}secp256k1;${P}evmjit;${P}libsolidity;${CMAKE_LIBRARY_PATH})
 find_library(SOLIDITY_LIBRARY NAMES solidity)
 if (SOLIDITY_LIBRARY)
 	target_link_libraries(${EXECUTABLE} ${SOLIDITY_LIBRARY})
@@ -99,7 +99,7 @@ if (EVMJIT_LIBRARY)
 	add_definitions(-DETH_EVMJIT)
 endif()
 foreach (l ${LIBS})
-	set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH};${P}lib${l})
+	set(CMAKE_LIBRARY_PATH ${P}lib${l};${CMAKE_LIBRARY_PATH})
 	find_library(${l}_LIBRARY NAMES ${l})
 	target_link_libraries(${EXECUTABLE} ${${l}_LIBRARY})
 endforeach()
