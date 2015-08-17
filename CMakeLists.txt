@@ -9,6 +9,7 @@ if (${CMAKE_MAJOR_VERSION} GREATER 2)
 	cmake_policy(SET CMP0043 OLD)
 endif()
 
+project(alethzero)
 set(CMAKE_AUTOMOC ON)
 
 set(BUILD_DIR_NAME "build" CACHE STRING "The name of the build directory in cpp-ethereum")
@@ -31,12 +32,10 @@ if (("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") AND NOT (CMAKE_CXX_COMPILER_VER
 endif ()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-aux_source_directory(./src SRC_LIST)
-file(GLOB_RECURSE SRC_LIST "./plugins/*.cpp" "./src/*.cpp")
-file(GLOB_RECURSE HEADERS "./plugins/*.h" "./src/*.h")
-message("SRC_LIST: ${SRC_LIST}")
+file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
+file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
 
-file(GLOB_RECURSE UI_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/*.ui")
+file(GLOB_RECURSE UI_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ui" "${CMAKE_CURRENT_SOURCE_DIR}/plugins/*.ui")
 foreach(ITEM ${UI_FILES})
     get_filename_component(UI_NAME ${ITEM} NAME_WE)
     qt5_wrap_ui(ui_${UI_NAME}.h ./${ITEM})
