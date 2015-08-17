@@ -14,7 +14,7 @@ set(CMAKE_AUTOMOC ON)
 set(BUILD_DIR_NAME CACHE STRING "build")
 set(CPPETHEREUM_BUILD "${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum/${BUILD_DIR_NAME}")
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum-cmake)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum/cmake)
 set(GUI 1)
 set(JSONRPC 1)
 add_definitions(-DETH_TRUE)
@@ -73,8 +73,6 @@ eth_add_executable(${EXECUTABLE}
     UI_RESOURCES ${UI_FILES} src/alethzero.icns
 	WIN_RESOURCES src/alethzero.rc
 )
-
-add_dependencies(${EXECUTABLE} BuildInfo.h)
 
 target_link_libraries(${EXECUTABLE} Qt5::Core)
 target_link_libraries(${EXECUTABLE} Qt5::Widgets)
