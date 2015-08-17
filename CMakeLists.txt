@@ -11,7 +11,7 @@ endif()
 
 set(CMAKE_AUTOMOC ON)
 
-set(BUILD_DIR_NAME CACHE STRING "build")
+set(BUILD_DIR_NAME "build" CACHE STRING "The name of the build directory in cpp-ethereum")
 set(CPPETHEREUM_BUILD "${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum/${BUILD_DIR_NAME}")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum/cmake)
@@ -84,7 +84,6 @@ if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
 	target_link_libraries(${EXECUTABLE} Qt5::DBus)
 	target_link_libraries(${EXECUTABLE} Qt5::PrintSupport)
 endif()
-
 
 set(P ${CPPETHEREUM_BUILD}/)
 set(LIBS web3jsonrpc;webthree;whisper;ethereum;evm;ethcore;lll;p2p;evmasm;devcrypto;evmcore;natspec;devcore;ethash-cl;ethash;secp256k1;scrypt;jsqrc)
