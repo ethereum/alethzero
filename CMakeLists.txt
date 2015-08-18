@@ -59,8 +59,6 @@ if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
 	find_package (Qt5PrintSupport)
 endif()
 
-file(GLOB HEADERS "*.h")
-
 if (APPLE)
 	set(EXECUTABLE AlethZero)
 else ()
