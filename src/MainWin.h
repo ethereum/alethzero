@@ -54,8 +54,6 @@ namespace jsonrpc {
 class HttpServer;
 }
 
-class QWebEnginePage;
-
 namespace dev
 {
 
@@ -117,7 +115,6 @@ public:
 	void noteSettingsChanged() override { writeSettings(); }
 
 public slots:
-	void load(QString _file);
 	void note(QString _entry);
 	void debug(QString _entry);
 	void warn(QString _entry);
@@ -128,9 +125,6 @@ public slots:
 	void onKeysChanged();
 
 private slots:
-	void eval(QString const& _js);
-	void addConsoleMessage(QString const& _js, QString const& _s);
-
 	// Application
 	void on_about_triggered();
 	void on_quit_triggered() { close(); }
@@ -162,7 +156,6 @@ private slots:
 
 	// Tools
 	void on_newTransaction_triggered();
-	void on_loadJS_triggered();
 
 	// Stuff concerning the blocks/transactions/accounts panels
 	void on_ourAccounts_itemClicked(QListWidgetItem* _i);
@@ -172,8 +165,6 @@ private slots:
 	void on_blocks_currentItemChanged();
 
 	// Misc
-	void on_urlEdit_returnPressed();
-	void on_jsInput_returnPressed();
 	void on_nameReg_textChanged();
 
 	// Special (debug) stuff
@@ -203,10 +194,6 @@ private slots:
 
 	void refreshBlockChain();
 
-	// Dapps
-	void dappLoaded(Dapp& _dapp); //qt does not support rvalue refs for signals
-	void pageLoaded(QByteArray const& _content, QString const& _mimeType, QUrl const& _uri);
-
 signals:
 	void poll();
 
@@ -221,7 +208,6 @@ private:
 	p2p::NetworkPreferences netPrefs() const;
 
 	QString lookup(QString const& _n) const;
-	Address getNameReg() const;
 	Address getCurrencies() const;
 
 	void updateFee();
@@ -279,8 +265,6 @@ private:
 
 	QActionGroup* m_vmSelectionGroup = nullptr;
 
-	QList<QPair<QString, QString>> m_consoleHistory;
-
 	std::unique_ptr<jsonrpc::HttpServer> m_httpConnector;
 	std::unique_ptr<OurWebThreeStubServer> m_server;
 
@@ -288,10 +272,6 @@ private:
 	NatspecHandler m_natSpecDB;
 
 	Transact* m_transact;
-	std::unique_ptr<DappHost> m_dappHost;
-	DappLoader* m_dappLoader;
-	QWebEnginePage* m_webPage;
-
 	Connect m_connect;
 
 	std::unordered_set<AccountNamer*> m_namers;

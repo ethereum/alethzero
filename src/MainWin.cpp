@@ -32,10 +32,6 @@
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QListWidgetItem>
-#include <QtWebEngine/QtWebEngine>
-#include <QtWebEngineWidgets/QWebEngineView>
-#include <QtWebEngineWidgets/QWebEngineCallback>
-#include <QtWebEngineWidgets/QWebEngineSettings>
 #include <QtGui/QClipboard>
 #include <QtCore/QtCore>
 #include <boost/algorithm/string.hpp>
@@ -70,9 +66,6 @@
 #include "OurWebThreeStubServer.h"
 #include "Transact.h"
 #include "Debugger.h"
-#include "DappLoader.h"
-#include "DappHost.h"
-#include "WebPage.h"
 #include "ui_Main.h"
 #include "ui_GetPassword.h"
 #include "ui_GasPricing.h"
@@ -99,11 +92,8 @@ Address c_nameReg = Address("96d76ae3397b52d9f61215270df65d72358709e3");
 Main::Main(QWidget* _parent):
 	MainFace(_parent),
 	ui(new Ui::Main),
-	m_transact(nullptr),
-	m_dappLoader(nullptr),
-	m_webPage(nullptr)
+	m_transact(nullptr)
 {
-	QtWebEngine::initialize();
 	setWindowFlags(Qt::Window);
 	ui->setupUi(this);
 	std::string dbPath = getDataDir();
@@ -196,32 +186,8 @@ Main::Main(QWidget* _parent):
 	m_httpConnector.reset(new jsonrpc::HttpServer(SensibleHttpPort, "", "", dev::SensibleHttpThreads));
 	auto w3ss = new OurWebThreeStubServer(*m_httpConnector, this);
 	m_server.reset(w3ss);
-	auto sessionKey = w3ss->newSession(SessionPermissions{{Privilege::Admin}});
 	m_server->StartListening();
 
-	WebPage* webPage = new WebPage(this);
-	m_webPage = webPage;
-	connect(webPage, &WebPage::consoleMessage, [this](QString const& _msg) { Main::addConsoleMessage(_msg, QString()); });
-	ui->webView->setPage(m_webPage);
-
-	connect(ui->webView, &QWebEngineView::titleChanged, [=]()
-	{
-		ui->tabWidget->setTabText(0, ui->webView->title());
-	});
-	connect(ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& _url)
-	{
-		if (!m_dappHost->servesUrl(_url))
-			ui->urlEdit->setText(_url.toString());
-	});
-
-	m_dappHost.reset(new DappHost(8081));
-	m_dappLoader = new DappLoader(this, web3(), getNameReg());
-	m_dappLoader->setSessionKey(sessionKey);
-	connect(m_dappLoader, &DappLoader::dappReady, this, &Main::dappLoaded);
-	connect(m_dappLoader, &DappLoader::pageReady, this, &Main::pageLoaded);
-//	ui->webView->page()->settings()->setAttribute(QWebEngineSettings::DeveloperExtrasEnabled, true);
-//	QWebEngineInspector* inspector = new QWebEngineInspector();
-//	inspector->setPage(page);
 	setBeneficiary(m_keyManager.accounts().front());
 
 	ethereum()->setDefault(LatestBlock);
@@ -466,13 +432,6 @@ void Main::installWatches()
 //	installWatch(LogFilter().address(c_newConfig), [=](LocalisedLogEntries const&) { installNameRegWatch(); });
 //	installWatch(LogFilter().address(c_newConfig), [=](LocalisedLogEntries const&) { installCurrenciesWatch(); });
 }
-
-Address Main::getNameReg() const
-{
-	return Address("c6d9d2cd449a754c494264e1809c50e34d64562b");
-//	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)1)).output);
-}
-
 Address Main::getCurrencies() const
 {
 //	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)3)).output);
@@ -567,23 +526,10 @@ QString Main::contents(QString _s)
 	return QString::fromStdString(dev::asString(dev::contents(_s.toStdString())));
 }
 
-void Main::load(QString _s)
-{
-	QString contents = QString::fromStdString(dev::asString(dev::contents(_s.toStdString())));
-	ui->webView->page()->runJavaScript(contents);
-}
-
 void Main::on_newTransaction_triggered()
 {
 	m_transact->setEnvironment(m_keyManager.accountsHash(), ethereum(), &m_natSpecDB);
 	m_transact->show();
-}
-
-void Main::on_loadJS_triggered()
-{
-	QString f = QFileDialog::getOpenFileName(this, "Load Javascript", QString(), "Javascript (*.js);;All files (*)");
-	if (f.size())
-		load(f);
 }
 
 void Main::note(QString _s)
@@ -599,48 +545,6 @@ void Main::debug(QString _s)
 void Main::warn(QString _s)
 {
 	cwarn << _s.toStdString();
-}
-
-void Main::on_jsInput_returnPressed()
-{
-	eval(ui->jsInput->text());
-	ui->jsInput->setText("");
-}
-
-void Main::eval(QString const& _js)
-{
-	if (_js.trimmed().isEmpty())
-		return;
-	auto f = [=](QVariant ev) {
-		auto f2 = [=](QVariant jsonEv) {
-			QString s;
-			if (ev.isNull())
-				s = "<span style=\"color: #888\">null</span>";
-			else if (ev.type() == QVariant::String)
-				s = "<span style=\"color: #444\">\"</span><span style=\"color: #c00\">" + ev.toString().toHtmlEscaped() + "</span><span style=\"color: #444\">\"</span>";
-			else if (ev.type() == QVariant::Int || ev.type() == QVariant::Double)
-				s = "<span style=\"color: #00c\">" + ev.toString().toHtmlEscaped() + "</span>";
-			else if (jsonEv.type() == QVariant::String)
-				s = "<span style=\"color: #840\">" + jsonEv.toString().toHtmlEscaped() + "</span>";
-			else
-				s = "<span style=\"color: #888\">unknown type</span>";
-			addConsoleMessage(_js, s);
-		};
-		ui->webView->page()->runJavaScript("JSON.stringify(___RET)", f2);
-	};
-	auto c = (_js.startsWith("{") || _js.startsWith("if ") || _js.startsWith("if(")) ? _js : ("___RET=(" + _js + ")");
-	ui->webView->page()->runJavaScript(c, f);
-}
-
-void Main::addConsoleMessage(QString const& _js, QString const& _s)
-{
-	m_consoleHistory.push_back(qMakePair(_js, _s));
-	QString r = "<html><body style=\"margin: 0;\">" ETH_HTML_DIV(ETH_HTML_MONO "position: absolute; bottom: 0; border: 0px; margin: 0px; width: 100%");
-	for (auto const& i: m_consoleHistory)
-		r +=	"<div style=\"border-bottom: 1 solid #eee; width: 100%\"><span style=\"float: left; width: 1em; color: #888; font-weight: bold\">&gt;</span><span style=\"color: #35d\">" + i.first.toHtmlEscaped() + "</span></div>"
-				"<div style=\"border-bottom: 1 solid #eee; width: 100%\"><span style=\"float: left; width: 1em\">&nbsp;</span><span>" + i.second + "</span></div>";
-	r += "</div></body></html>";
-	ui->jsConsole->setHtml(r);
 }
 
 std::string Main::pretty(dev::Address const& _a) const
@@ -794,7 +698,6 @@ void Main::writeSettings()
 	s.setValue("idealPeers", ui->idealPeers->value());
 	s.setValue("listenIP", ui->listenIP->text());
 	s.setValue("port", ui->port->value());
-	s.setValue("url", ui->urlEdit->text());
 	s.setValue("privateChain", m_privateChain);
 	if (auto vm = m_vmSelectionGroup->checkedAction())
 		s.setValue("vm", vm->text());
@@ -912,8 +815,6 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	}
 #endif
 
-	ui->urlEdit->setText(s.value("url", "about:blank").toString());	//http://gavwood.com/gavcoin.html
-	on_urlEdit_returnPressed();
 }
 
 std::string Main::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
@@ -1085,33 +986,6 @@ void Main::on_rewindChain_triggered()
 		ethereum()->rewind(n);
 		refreshAll();
 	}
-}
-
-void Main::on_urlEdit_returnPressed()
-{
-	QString s = ui->urlEdit->text();
-	QUrl url(s);
-	if (url.scheme().isEmpty() || url.scheme() == "eth" || url.path().endsWith(".dapp"))
-	{
-		try
-		{
-			//try do resolve dapp url
-			m_dappLoader->loadDapp(s);
-			return;
-		}
-		catch (...)
-		{
-			qWarning() << boost::current_exception_diagnostic_information().c_str();
-		}
-	}
-
-	if (url.scheme().isEmpty())
-		if (url.path().indexOf('/') < url.path().indexOf('.'))
-			url.setScheme("file");
-		else
-			url.setScheme("http");
-	else {}
-	m_dappLoader->loadPage(url.toString());
 }
 
 void Main::on_nameReg_textChanged()
@@ -2130,17 +2004,6 @@ int Main::authenticate(QString _title, QString _text)
 	userInput.button(QMessageBox::Cancel)->setText("Reject");
 	userInput.setDefaultButton(QMessageBox::Cancel);
 	return userInput.exec();
-}
-
-void Main::dappLoaded(Dapp& _dapp)
-{
-	QUrl url = m_dappHost->hostDapp(std::move(_dapp));
-	ui->webView->page()->setUrl(url);
-}
-
-void Main::pageLoaded(QByteArray const& _content, QString const& _mimeType, QUrl const& _uri)
-{
-	ui->webView->page()->setContent(_content, _mimeType, _uri);
 }
 
 void Main::initPlugin(Plugin* _p)

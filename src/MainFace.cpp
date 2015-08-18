@@ -25,6 +25,12 @@ using namespace std;
 using namespace dev;
 using namespace az;
 
+Address MainFace::getNameReg()
+{
+	return Address("c6d9d2cd449a754c494264e1809c50e34d64562b");
+//	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)1)).output);
+}
+
 void AccountNamer::noteKnownChanged()
 {
 	if (m_main)
