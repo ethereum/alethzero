@@ -14,6 +14,8 @@ set(CMAKE_AUTOMOC ON)
 set(BUILD_DIR_NAME "build" CACHE STRING "The name of the build directory in cpp-ethereum")
 set(CPPETHEREUM_BUILD "${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum/${BUILD_DIR_NAME}")
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CPPETHEREUM_BUILD})
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum/cmake)
 set(GUI 1)
 set(JSONRPC 1)
