@@ -91,6 +91,8 @@ public:
 
 	using Context::render;
 
+	static Address getNameReg();
+
 	// TODO: tidy - all should be references that throw if module unavailable.
 	// TODO: provide a set of available web3 modules.
 	virtual dev::WebThreeDirect* web3() const = 0;
