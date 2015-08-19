@@ -19,20 +19,33 @@ else()
 endif()
 
 # Figure out environment.
-set(BUILD_DIR_NAME "build" CACHE STRING "The name of the build directory in cpp-ethereum")
-set(CPPETHEREUM_BUILD "${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum/${BUILD_DIR_NAME}")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CPPETHEREUM_BUILD})
-message("CPPETHEREUM_BUILD: ${CPPETHEREUM_BUILD}")
+set(ETH_CMAKE_DIR   "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum-cmake"   CACHE PATH "The the path to the cmake directory")
+set(ETH_DIR         "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
+set(BUILD_DIR_NAME  "build"                                             CACHE STRING "The name of the build directory in cpp-ethereum")
+set(ETH_BUILD_DIR   "${ETH_DIR}/${BUILD_DIR_NAME}")
 
+# A place where should we look for *.cmake files
 list(APPEND CMAKE_MODULE_PATH ${ETH_CMAKE_DIR})
+
+# A place where we should look for ethereum libraries 
+set(CMAKE_LIBRARY_PATH ${ETH_BUILD_DIR})
 
 set(GUI 1)		# TODO: remove once packages are all changed to optional
 set(JSONRPC 1)	# TODO: remove once packages are all changed to optional
 
+# Let's find our dependencies
 include(EthDependencies)
-include(EthExecutableHelper)
+
+# Figure out what compiler and system are we using
 include(EthCompilerSettings)
 
+# Include helper macros
+include(EthExecutableHelper)
+
+# Include a directory with BuildInfo.h
+include_directories(${ETH_BUILD_DIR})
+
+find_package(Eth)
 find_package(Qt5Core)
 find_package(Qt5Widgets)
 
@@ -70,8 +83,6 @@ if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
 	find_package (Qt5PrintSupport)
 endif()
 
-file(GLOB HEADERS "*.h")
-
 if (APPLE)
 	set(EXECUTABLE AlethZero)
 else ()
@@ -96,39 +107,8 @@ if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
 	target_link_libraries(${EXECUTABLE} Qt5::PrintSupport)
 endif()
 
-set(CMAKE_LIBRARY_PATH ${CPPETHEREUM_BUILD};${CMAKE_LIBRARY_PATH})
-find_library(solidity_LIBRARY NAMES solidity)
-if (solidity_LIBRARY)
-	set(SOLIDITY 1)
-endif()
-find_library(serpent_LIBRARY NAMES serpent)
-if (serpent_LIBRARY)
-	set(SERPENT 1)
-endif()
-find_library(evmjit_LIBRARY NAMES evmjit)
-if (evmjit_LIBRARY)
-	set(EVMJIT 1)
-endif()
-
-set(LIBS web3jsonrpc;webthree;whisper;ethereum;evm;ethcore;lll;p2p;evmasm;devcrypto;evmcore;natspec;devcore;ethash-cl;ethash;secp256k1;scrypt;jsqrc)
-foreach (l ${LIBS})
-	find_library(${l}_LIBRARY NAMES ${l})
-	target_link_libraries(${EXECUTABLE} ${${l}_LIBRARY})
-endforeach()
-
-if (SERPENT)
-	target_link_libraries(${EXECUTABLE} ${serpent_LIBRARY})
-	add_definitions(-DETH_SERPENT)
-endif()
-if (SOLIDITY)
-	target_link_libraries(${EXECUTABLE} ${solidity_LIBRARY})
-	add_definitions(-DETH_SOLIDITY)
-endif()
-if (EVMJIT)
-	target_link_libraries(${EXECUTABLE} ${evmjit_LIBRARY})
-	add_definitions(-DETH_EVMJIT)
-endif()
-
+target_link_libraries(${EXECUTABLE} ${ETH_CORE_LIBRARIES})
+target_link_libraries(${EXECUTABLE} ${ETH_SOLIDITY_LIBRARIES})
 target_link_libraries(${EXECUTABLE} ${JSON_RPC_CPP_SERVER_LIBRARIES})
 target_link_libraries(${EXECUTABLE} ${JSONCPP_LIBRARIES})
 target_link_libraries(${EXECUTABLE} ${CURL_LIBRARIES})
@@ -158,7 +138,6 @@ if (APPLE)
 		-DAPP_DMG_ICON="alethzero/alethzero.icns"
 		-DAPP_DMG_BACKGROUND="install-folder-bg.png"
 		-DETH_BUILD_DIR="${CMAKE_BINARY_DIR}"
-		-DETH_MIX_APP="$<TARGET_FILE_DIR:mix>"
 		-DETH_ALETHZERO_APP="$<TARGET_FILE_DIR:AlethZero>"
 		-P "${ETH_SCRIPTS_DIR}/appdmg.cmake"
 	)
@@ -174,21 +153,8 @@ if (WIN32)
 	set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 	set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 	set(CPACK_GENERATOR "NSIS")
-	# seems to be not working
-	# set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/alethzero/alethzero.bmp")
-
-	# our stuff
-	#set(CPACK_COMPONENT_ALETHZERO_GROUP "Applications")
-	#set(CPACK_COMPONENT_MIX_GROUP "Applications")
-	#set(CPACK_COMPONENT_SOLC_GROUP "CLI")
-	#set(CPACK_COMPONENT_ETH_GROUP "CLI")
-	#set(CPACK_COMPONENT_ETHMINER_GROUP "CLI")
-	#set(CPACK_COMPONENT_RLP_GROUP "CLI")
-	#set(CPACK_COMPONENT_ABI_GROUP "CLI")
-
-	#set(CPACK_COMPONENTS_ALL alethzero mix solc eth ethminer rlp abi)
-
-	# nsis specific stuff
+	
+    # nsis specific stuff
 	if (CMAKE_CL_64)
 		set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
 		set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} (Win64)")
