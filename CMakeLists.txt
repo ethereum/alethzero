@@ -1,24 +1,6 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0.0)
 
-cmake_policy(SET CMP0015 NEW)
-# let cmake autolink dependencies on windows
-cmake_policy(SET CMP0020 NEW)
-# this policy was introduced in cmake 3.0
-# remove if, once 3.0 will be used on unix
-if (${CMAKE_MAJOR_VERSION} GREATER 2)
-	cmake_policy(SET CMP0043 OLD)
-endif()
-
-set(PROJECT_VERSION "0.9.42")
-if (${CMAKE_VERSION} VERSION_GREATER 3.0)
-	cmake_policy(SET CMP0042 OLD) 	# fix MACOSX_RPATH
-	cmake_policy(SET CMP0048 NEW) 	# allow VERSION argument in project()
-	project(alethzero VERSION ${PROJECT_VERSION})
-else()
-	project(alethzero)
-endif()
-
-# Figure out environment.
+# Figureout environment.
 set(ETH_CMAKE_DIR   "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum-cmake"   CACHE PATH "The the path to the cmake directory")
 set(ETH_DIR         "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
 set(BUILD_DIR_NAME  "build"                                             CACHE STRING "The name of the build directory in cpp-ethereum")
@@ -27,14 +9,23 @@ set(ETH_BUILD_DIR   "${ETH_DIR}/${BUILD_DIR_NAME}")
 # A place where should we look for *.cmake files
 list(APPEND CMAKE_MODULE_PATH ${ETH_CMAKE_DIR})
 
+# Set cmake policies
+include(EthPolicy)
+
+# Set project version. It must be done after setting Policies
+set(PROJECT_VERSION "0.9.42")
+project(alethzero VERSION ${PROJECT_VERSION})
+
 # A place where we should look for ethereum libraries 
-set(CMAKE_LIBRARY_PATH ${ETH_BUILD_DIR})
+set(CMAKE_LIBRARY_PATH ${ETH_BUILD_DIR} ${CMAKE_LIBRARY_PATH})
 
 set(GUI 1)		# TODO: remove once packages are all changed to optional
 set(JSONRPC 1)	# TODO: remove once packages are all changed to optional
 
 # Let's find our dependencies
 include(EthDependencies)
+include(EthDependenciesBoost)
+include(EthDependenciesGui)
 
 # Figure out what compiler and system are we using
 include(EthCompilerSettings)
@@ -46,8 +37,6 @@ include(EthExecutableHelper)
 include_directories(${ETH_BUILD_DIR})
 
 find_package(Eth)
-find_package(Qt5Core)
-find_package(Qt5Widgets)
 
 if (("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") AND NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.6") AND NOT APPLE)
 	# Supress warnings for qt headers for clang+ccache
@@ -74,20 +63,7 @@ include_directories(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
 include_directories(${CPPETHEREUM_BUILD})
 
-find_package (Qt5WebEngine)
-find_package (Qt5WebEngineWidgets)
-if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
-# TODO: remove indirect dependencies once macdeployqt is fixed
-	find_package (Qt5WebEngineCore)
-	find_package (Qt5DBus)
-	find_package (Qt5PrintSupport)
-endif()
-
-if (APPLE)
-	set(EXECUTABLE AlethZero)
-else ()
-	set(EXECUTABLE alethzero)
-endif ()
+eth_name(EXECUTABLE AlethZero)
 	
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE} 
