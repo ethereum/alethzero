@@ -94,7 +94,7 @@ void Transact::setEnvironment(AddressHash const& _accounts, dev::eth::Client* _e
 
 void Transact::resetGasPrice()
 {
-	setValueUnits(ui->gasPriceUnits, ui->gasPrice, m_main->gasPrice());
+	setValueUnits(ui->gasPriceUnits, ui->gasPrice, m_main->ethereum()->gasPricer()->bid());
 }
 
 bool Transact::isCreation() const
