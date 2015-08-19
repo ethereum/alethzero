@@ -20,6 +20,7 @@
  */
 
 #include "JsConsoleWidget.h"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <QWebEngineView>
 #include "WebPage.h"
 #include "Context.h"

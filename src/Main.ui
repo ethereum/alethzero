@@ -22,6 +22,67 @@
   <property name="sizeGripEnabled" stdset="0">
    <bool>true</bool>
   </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_7">
+      <item>
+       <widget class="QTabWidget" name="tabs">
+        <property name="currentIndex">
+         <number>0</number>
+        </property>
+        <property name="documentMode">
+         <bool>false</bool>
+        </property>
+        <property name="tabsClosable">
+         <bool>true</bool>
+        </property>
+        <property name="movable">
+         <bool>true</bool>
+        </property>
+        <property name="tabBarAutoHide">
+         <bool>true</bool>
+        </property>
+        <widget class="QWidget" name="tab">
+         <attribute name="title">
+          <string>n/a</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>4</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>4</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -130,41 +191,97 @@
    <addaction name="menuSpecial"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
-       <widget class="QLabel" name="cacheUsage">
-        <property name="text">
-         <string>0 bytes used</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="syncStatus">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-       <widget class="QLabel" name="chainStatus">
-        <property name="text">
-         <string>#0</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="blockCount">
-        <property name="text">
-         <string>1 block</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="balance">
-        <property name="text">
-         <string>0 wei</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="peerCount">
-        <property name="text">
-         <string>0 peers</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="mineStatus">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
+   <widget class="QLabel" name="cacheUsage">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0 bytes used</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="syncStatus">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="chainStatus">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>#0</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="blockCount">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>1 block</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="balance">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0 wei</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="peerCount">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>0 peers</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="mineStatus">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_3">
    <property name="features">
@@ -1073,12 +1190,6 @@
    <class>dev::az::SyncView</class>
    <extends>QWidget</extends>
    <header>DownloadView.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>QWebEngineView</class>
-   <extends>QWidget</extends>
-   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

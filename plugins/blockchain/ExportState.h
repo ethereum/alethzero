@@ -20,6 +20,7 @@
  */
 
 #pragma once
+#include "BuildInfo.h"
 
 #if ETH_FATDB
 

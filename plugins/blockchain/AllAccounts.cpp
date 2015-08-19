@@ -19,7 +19,7 @@
  * @date 2015
  */
 
-#if ETH_FATDB || !ETH_TRUE
+#include "BuildInfo.h"
 
 #include "AllAccounts.h"
 #include <sstream>
@@ -67,7 +67,6 @@ void AllAccounts::installWatches()
 void AllAccounts::refresh()
 {
 	DEV_TIMED_FUNCTION;
-#if ETH_FATDB || !ETH_TRUE
 	cwatch << "refreshAccounts()";
 	m_ui->accounts->clear();
 	bool showContract = m_ui->showContracts->isChecked();
@@ -77,8 +76,10 @@ void AllAccounts::refresh()
 	Addresses as;
 	if (onlyKnown)
 		as = main()->allKnownAddresses();
+#if ETH_FATDB || !ETH_TRUE
 	else
 		as = ethereum()->addresses();
+#endif
 
 	for (auto const& i: as)
 	{
@@ -90,7 +91,6 @@ void AllAccounts::refresh()
 			->setData(Qt::UserRole, QByteArray((char const*)i.data(), Address::size));
 	}
 	m_ui->accounts->sortItems();
-#endif
 	m_ui->refreshAccounts->setEnabled(false);
 }
 
@@ -140,5 +140,3 @@ void AllAccounts::on_accounts_doubleClicked()
 		qApp->clipboard()->setText(QString::fromStdString(toHex(h.asArray())));
 	}
 }
-
-#endif

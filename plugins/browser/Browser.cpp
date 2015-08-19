@@ -20,6 +20,7 @@
  */
 
 #include "Browser.h"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <QtWebEngine/QtWebEngine>
 #include <QtWebEngineWidgets/QWebEngineView>
 #include <QtWebEngineWidgets/QWebEngineCallback>

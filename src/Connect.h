@@ -51,9 +51,6 @@ public:
 	/// @returns the host string, as chosen or entered by the user. Assumed to be "hostOrIP:port" (:port is optional).
 	QString host();
 	
-	/// @returns the identity of the node, as entered by the user. Assumed to be a 64-character hex string.
-	QString nodeId();
-	
 	/// @returns true if Required is checked by the user, indicating that the host is a required Peer.
 	bool required();
 

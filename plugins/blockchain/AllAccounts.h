@@ -20,8 +20,7 @@
  */
 
 #pragma once
-
-#if ETH_FATDB || !ETH_TRUE
+#include "BuildInfo.h"
 
 #include <QListWidget>
 #include <QPlainTextEdit>
@@ -60,5 +59,3 @@ private:
 
 }
 }
-
-#endif

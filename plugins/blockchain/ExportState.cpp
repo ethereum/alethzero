@@ -19,6 +19,8 @@
  * @date 2015
  */
 
+#include "BuildInfo.h"
+
 #if ETH_FATDB
 
 #include "ExportState.h"

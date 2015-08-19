@@ -45,18 +45,12 @@ void Connect::setEnvironment(QStringList const& _nodes)
 
 void Connect::reset()
 {
-	ui->nodeId->clear();
 	ui->required->setChecked(true);
 }
 
 QString Connect::host()
 {
 	return ui->host->currentText();
-}
-
-QString Connect::nodeId()
-{
-	return ui->nodeId->text();
 }
 
 bool Connect::required()

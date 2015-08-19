@@ -19,17 +19,13 @@
  * @date 2014
  */
 
-#include <QMenu>
 #include "MainFace.h"
+#include <QMenu>
+#include <libdevcore/Log.h>
 using namespace std;
 using namespace dev;
 using namespace az;
 
-Address MainFace::getNameReg()
-{
-	return Address("c6d9d2cd449a754c494264e1809c50e34d64562b");
-//	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)1)).output);
-}
 
 void AccountNamer::noteKnownChanged()
 {
@@ -41,13 +37,6 @@ void AccountNamer::noteNamesChanged()
 {
 	if (m_main)
 		m_main->noteAddressNamesChanged(this);
-}
-
-void MainFace::notePlugin(std::function<Plugin*(MainFace*)> const& _new)
-{
-	if (!s_linkedPlugins)
-		s_linkedPlugins = new std::vector<std::function<Plugin*(MainFace*)>>();
-	s_linkedPlugins->push_back(_new);
 }
 
 Plugin::Plugin(MainFace* _f, std::string const& _name):
@@ -91,7 +80,25 @@ QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep)
 	return a;
 }
 
-std::vector<std::function<Plugin*(MainFace*)>>* MainFace::s_linkedPlugins = nullptr;
+unordered_map<string, function<Plugin*(MainFace*)>>* MainFace::s_linkedPlugins = nullptr;
+
+Address MainFace::getNameReg()
+{
+	return Address("c6d9d2cd449a754c494264e1809c50e34d64562b");
+//	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)1)).output);
+}
+void MainFace::notePlugin(string const& _name, PluginFactory const& _new)
+{
+	if (!s_linkedPlugins)
+		s_linkedPlugins = new std::unordered_map<string, PluginFactory>();
+	s_linkedPlugins->insert(make_pair(_name, _new));
+}
+
+void MainFace::unnotePlugin(string const& _name)
+{
+	if (s_linkedPlugins)
+		s_linkedPlugins->erase(_name);
+}
 
 void MainFace::adoptPlugin(Plugin* _p)
 {
@@ -107,4 +114,17 @@ void MainFace::allChange()
 {
 	for (auto const& p: m_plugins)
 		p.second->onAllChange();
+}
+
+PluginRegistrarBase::PluginRegistrarBase(std::string const& _name, PluginFactory const& _f):
+	m_name(_name)
+{
+	cdebug << "Noting linked plugin" << _name;
+	MainFace::notePlugin(_name, _f);
+}
+
+PluginRegistrarBase::~PluginRegistrarBase()
+{
+	cdebug << "Noting unlinked plugin" << m_name;
+	MainFace::unnotePlugin(m_name);
 }

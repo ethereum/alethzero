@@ -228,7 +228,10 @@ Main::Main(QWidget* _parent):
 	}
 
 	for (auto const& i: *s_linkedPlugins)
-		initPlugin(i(this));
+	{
+		cdebug << "Initialising plugin:" << i.first;
+		initPlugin(i.second(this));
+	}
 
 	readSettings(false, true);
 }
@@ -1847,21 +1850,15 @@ void Main::on_connect_triggered()
 	m_connect.setEnvironment(m_servers);
 	if (m_connect.exec() == QDialog::Accepted)
 	{
-		bool required = m_connect.required();
-		string host(m_connect.host().toStdString());
-		NodeId nodeID;
+		m_connect.reset();
 		try
 		{
-			nodeID = NodeId(fromHex(m_connect.nodeId().toStdString()));
+			web3()->addPeer(NodeSpec(m_connect.host().toStdString()), m_connect.required() ? PeerType::Required : PeerType::Optional);
 		}
-		catch (BadHexCharacter&) {}
-
-		m_connect.reset();
-
-		if (required)
-			web3()->requirePeer(nodeID, host);
-		else
-			web3()->addNode(nodeID, host);
+		catch (...)
+		{
+			QMessageBox::warning(this, "Connect to Node", "Couldn't interpret that address. Ensure you've typed it in properly and that it's in a reasonable format.", QMessageBox::Ok);
+		}
 	}
 }
 

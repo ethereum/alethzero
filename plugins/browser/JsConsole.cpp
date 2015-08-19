@@ -20,6 +20,7 @@
  */
 
 #include "JsConsole.h"
+#pragma GCC diagnostic ignored "-Wpedantic"
 #include <QWebEngineView>
 #include "JsConsoleWidget.h"
 #include "OurWebThreeStubServer.h"

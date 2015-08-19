@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <functional>
 #include <QtWidgets/QMainWindow>
@@ -43,13 +44,7 @@ namespace shh { class WhisperHost; }
 namespace az
 {
 
-#ifndef _MSC_VER // MSVC does not like gcc compiler attributes
-#define DEV_AZ_NOTE_PLUGIN(ClassName) \
-	static bool s_notePlugin __attribute__((unused)) = [](){ MainFace::notePlugin([](MainFace* m){ return new ClassName(m); }); return true; }()
-#else
-#define DEV_AZ_NOTE_PLUGIN(ClassName) \
-	static bool s_notePlugin = [](){ MainFace::notePlugin([](MainFace* m){ return new ClassName(m); }); return true; }()
-#endif
+#define DEV_AZ_NOTE_PLUGIN(ClassName) static DEV_UNUSED dev::az::PluginRegistrar<ClassName> s_notePlugin(#ClassName)
 
 class Plugin;
 class MainFace;
@@ -75,6 +70,8 @@ private:
 	MainFace* m_main = nullptr;
 };
 
+using PluginFactory = std::function<Plugin*(MainFace*)>;
+
 class MainFace: public QMainWindow, public Context
 {
 	Q_OBJECT
@@ -82,7 +79,8 @@ class MainFace: public QMainWindow, public Context
 public:
 	explicit MainFace(QWidget* _parent = nullptr): QMainWindow(_parent) {}
 
-	static void notePlugin(std::function<Plugin*(MainFace*)> const& _new);
+	static void notePlugin(std::string const& _name, PluginFactory const& _new);
+	static void unnotePlugin(std::string const& _name);
 
 	void adoptPlugin(Plugin* _p);
 	void killPlugins();
@@ -119,7 +117,7 @@ protected:
 	template <class F> void forEach(F const& _f) { for (auto const& p: m_plugins) _f(p.second); }
 	std::shared_ptr<Plugin> takePlugin(std::string const& _name) { auto it = m_plugins.find(_name); std::shared_ptr<Plugin> ret; if (it != m_plugins.end()) { ret = it->second; m_plugins.erase(it); } return ret; }
 
-	static std::vector<std::function<Plugin*(MainFace*)>>* s_linkedPlugins;
+	static std::unordered_map<std::string, PluginFactory>* s_linkedPlugins;
 
 signals:
 	void knownAddressesChanged();
@@ -162,6 +160,23 @@ class AccountNamerPlugin: public Plugin, public AccountNamer
 protected:
 	AccountNamerPlugin(MainFace* _m, std::string const& _name): Plugin(_m, _name) { main()->install(this); }
 	~AccountNamerPlugin() { main()->uninstall(this); }
+};
+
+class PluginRegistrarBase
+{
+public:
+	PluginRegistrarBase(std::string const& _name, PluginFactory const& _f);
+	~PluginRegistrarBase();
+
+private:
+	std::string m_name;
+};
+
+template<class ClassName>
+class PluginRegistrar: public PluginRegistrarBase
+{
+public:
+	PluginRegistrar(std::string const& _name): PluginRegistrarBase(_name, [](MainFace* m){ return new ClassName(m); }) {}
 };
 
 }
