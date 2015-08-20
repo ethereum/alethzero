@@ -1,10 +1,13 @@
 cmake_minimum_required(VERSION 2.8.12)
 
 # Figure out environment.
-set(ETH_CMAKE_DIR   "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum-cmake"   CACHE PATH "The the path to the cmake directory")
-set(ETH_DIR         "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
-set(BUILD_DIR_NAME  "build"                                             CACHE STRING "The name of the build directory in cpp-ethereum")
-set(ETH_BUILD_DIR   "${ETH_DIR}/${BUILD_DIR_NAME}")
+set(ETH_CMAKE_DIR       "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum-cmake"   CACHE PATH "The the path to the cmake directory")
+set(ETH_DIR             "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
+set(ETH_BUILD_DIR_NAME  "build"                                             CACHE STRING "The name of the build directory in cpp-ethereum")
+set(ETH_BUILD_DIR       "${ETH_DIR}/${ETH_BUILD_DIR_NAME}")
+set(SOL_DIR             "${CMAKE_CURRENT_LIST_DIR}/../solidity"             CACHE PATH "The path to the solidity directory")
+set(SOL_BUILD_DIR_NAME  "build"                                             CACHE STRING "The name of the build directory in soliditiy")
+set(SOL_BUILD_DIR       "${SOL_DIR}/${SOL_BUILD_DIR_NAME}")
 
 # A place where should we look for *.cmake files
 list(APPEND CMAKE_MODULE_PATH ${ETH_CMAKE_DIR})
@@ -18,7 +21,8 @@ set(PROJECT_VERSION "0.9.42")
 project(alethzero VERSION ${PROJECT_VERSION})
 
 # A place where we should look for ethereum libraries 
-set(CMAKE_LIBRARY_PATH ${ETH_BUILD_DIR})
+set(CMAKE_LIBRARY_PATH ${ETH_BUILD_DIR} ${CMAKE_LIBRARY_PATH})
+set(CMAKE_LIBRARY_PATH ${SOL_BUILD_DIR} ${CMAKE_LIBRARY_PATH})
 
 set(GUI 1)		# TODO: remove once packages are all changed to optional
 set(JSONRPC 1)	# TODO: remove once packages are all changed to optional
@@ -59,7 +63,8 @@ eth_add_executable(${EXECUTABLE}
 find_package(Qt5Widgets)
 
 include_directories(src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
+include_directories(${ETH_DIR})
+include_directories(${SOL_DIR})
 
 eth_use_QtCore(${EXECUTABLE} REQUIRED)
 eth_use_QtWidgets(${EXECUTABLE} REQUIRED)
