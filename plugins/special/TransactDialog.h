@@ -100,7 +100,7 @@ private:
 
 	void timerEvent(QTimerEvent*) override;
 
-	Ui::TransactDialog* ui = nullptr;
+	Ui::TransactDialog* m_ui = nullptr;
 
 	unsigned m_backupGas = 0;
 	dev::bytes m_data;

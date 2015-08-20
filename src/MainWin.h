@@ -264,7 +264,6 @@ private:
 	static std::string fromRaw(h256 const& _n, unsigned* _inc = nullptr);
 	NatspecHandler m_natSpecDB;
 
-	Transact* m_transact;
 	Connect m_connect;
 
 	std::unordered_set<AccountNamer*> m_namers;

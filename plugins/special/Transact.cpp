@@ -35,6 +35,8 @@ Transact::Transact(MainFace* _m):
 	m_dialog = new TransactDialog(_m);
 	m_dialog->setWindowFlags(Qt::Dialog);
 	m_dialog->setWindowModality(Qt::WindowModal);
+
+	connect(addMenuItem("New Transaction...", "menuSpecial", true), SIGNAL(triggered()), SLOT(injectOne()));
 }
 
 Transact::~Transact()
@@ -42,7 +44,7 @@ Transact::~Transact()
 	delete m_dialog;
 }
 
-void Main::newTransaction()
+void Transact::newTransaction()
 {
 	m_dialog->setEnvironment(m_keyManager.accountsHash(), ethereum(), &m_natSpecDB);
 	m_dialog->show();
