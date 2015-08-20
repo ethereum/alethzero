@@ -45,89 +45,42 @@ include(EthExecutableHelper)
 # Include a directory with BuildInfo.h
 include_directories(${ETH_BUILD_DIR})
 
-find_package(Eth)
-find_package(Qt5Core)
-find_package(Qt5Widgets)
-
-if (("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang") AND NOT (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.6") AND NOT APPLE)
-	# Supress warnings for qt headers for clang+ccache
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
-endif ()
-
-set(CMAKE_AUTOMOC ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
-
-file(GLOB_RECURSE UI_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ui" "${CMAKE_CURRENT_SOURCE_DIR}/plugins/*.ui")
-foreach(ITEM ${UI_FILES})
-    get_filename_component(UI_NAME ${ITEM} NAME_WE)
-    qt5_wrap_ui(ui_${UI_NAME}.h ./${ITEM})
-endforeach()
-
-include_directories(BEFORE ${JSONCPP_INCLUDE_DIRS})
-include_directories(BEFORE ..)
-include_directories(${JSON_RPC_CPP_INCLUDE_DIRS})
-include_directories(${Boost_INCLUDE_DIRS})
-include_directories(src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
-include_directories(${CPPETHEREUM_BUILD})
-
-find_package (Qt5WebEngine)
-find_package (Qt5WebEngineWidgets)
-if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
-# TODO: remove indirect dependencies once macdeployqt is fixed
-	find_package (Qt5WebEngineCore)
-	find_package (Qt5DBus)
-	find_package (Qt5PrintSupport)
-endif()
 
 if (APPLE)
 	set(EXECUTABLE AlethZero)
 else ()
 	set(EXECUTABLE alethzero)
 endif ()
-	
+
+# required for qt5_wrap_ui below, TODO: remove this
+# find_package(Qt5Core)
+find_package(Qt5Widgets)
+
+include_directories(src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
+
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
-eth_add_executable(${EXECUTABLE} 
-	ICON alethzero
-	UI_RESOURCES ${UI_FILES} src/alethzero.icns
-	WIN_RESOURCES src/alethzero.rc
+eth_add_executable(${EXECUTABLE}
+    ICON alethzero
+    UI_RESOURCES src/Main.ui src/GetPassword.ui src/GasPricing.ui src/alethzero.icns
+    WIN_RESOURCES src/alethzero.rc
 )
 
-target_link_libraries(${EXECUTABLE} Qt5::Core)
-target_link_libraries(${EXECUTABLE} Qt5::Widgets)
-target_link_libraries(${EXECUTABLE} Qt5::WebEngine)
-target_link_libraries(${EXECUTABLE} Qt5::WebEngineWidgets)
+eth_use_QtCore(${EXECUTABLE} REQUIRED)
+eth_use_QtWidgets(${EXECUTABLE} REQUIRED)
+eth_use_QtWebEngineWidgets(${EXECUTABLE} REQUIRED)
+eth_use_EthCore(${EXECUTABLE})
+eth_use_Solidity(${EXECUTABLE} REQUIRED)
+eth_use_WebThreeJsonRpc(${EXECUTABLE} REQUIRED)
 
-if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
-	target_link_libraries(${EXECUTABLE} Qt5::WebEngineCore)
-	target_link_libraries(${EXECUTABLE} Qt5::DBus)
-	target_link_libraries(${EXECUTABLE} Qt5::PrintSupport)
-endif()
-
-target_link_libraries(${EXECUTABLE} ${ETH_CORE_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${ETH_SOLIDITY_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${JSON_RPC_CPP_SERVER_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${JSONCPP_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${CURL_LIBRARIES})
-if (DEFINED WIN32 AND NOT DEFINED CMAKE_COMPILER_IS_MINGW)
-	eth_copy_dlls(${EXECUTABLE} CURL_DLLS)
-endif()
-target_link_libraries(${EXECUTABLE} ${Boost_THREAD_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${Boost_RANDOM_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${Boost_FILESYSTEM_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${Boost_SYSTEM_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${LEVELDB_LIBRARIES})	#TODO: use the correct database library according to cpp-ethereum
-target_link_libraries(${EXECUTABLE} ${CRYPTOPP_LIBRARIES})
-target_link_libraries(${EXECUTABLE} ${MHD_LIBRARIES})
-if (UNIX)
-	target_link_libraries(${EXECUTABLE} pthread)
-endif()
-
-# eth_install_executable is defined in cmake/EthExecutableHelper.cmake
-eth_install_executable(${EXECUTABLE} DLLS MHD_DLLS EVMJIT_DLLS OpenCL_DLLS)
+# required because AUTOUIC can't handle multiple ui includes in one cpp file
+qt5_wrap_ui(ui_Main.h src/Main.ui)
+qt5_wrap_ui(ui_GetPassword.h src/GetPassword.ui)
+qt5_wrap_ui(ui_GasPricing.h src/GasPricing.ui)
 
 if (APPLE)
 	add_custom_target(appdmg
