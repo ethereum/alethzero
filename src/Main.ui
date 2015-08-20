@@ -178,7 +178,6 @@
     <property name="title">
      <string>&amp;Config</string>
     </property>
-    <addaction name="gasPrices"/>
     <addaction name="sentinel"/>
    </widget>
    <addaction name="menuFile"/>

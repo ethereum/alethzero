@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0)
 
 cmake_policy(SET CMP0015 NEW)
 # let cmake autolink dependencies on windows
 cmake_policy(SET CMP0020 NEW)
+
+cmake_policy(SET CMP0028 OLD)
 # this policy was introduced in cmake 3.0
 # remove if, once 3.0 will be used on unix
 if (${CMAKE_MAJOR_VERSION} GREATER 2)
@@ -41,6 +43,9 @@ include(EthCompilerSettings)
 # Include helper macros
 include(EthExecutableHelper)
 
+# Include utils
+include(EthUtils)
+
 # Include a directory with BuildInfo.h
 include_directories(${ETH_BUILD_DIR})
 
@@ -48,11 +53,10 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
 
-if (APPLE)
-	set(EXECUTABLE AlethZero)
-else ()
-	set(EXECUTABLE alethzero)
-endif ()
+eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
+list(APPEND HEADERS "${CMAKE_CURRENT_BINARY_DIR}/AlethZeroResources.hpp")
+
+eth_name(EXECUTABLE AlethZero)
 
 # required for qt5_wrap_ui below, TODO: remove this
 # find_package(Qt5Core)
@@ -64,7 +68,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE}
 	ICON alethzero
-	UI_RESOURCES src/Main.ui src/GetPassword.ui src/GasPricing.ui src/alethzero.icns
+	UI_RESOURCES src/Main.ui src/GetPassword.ui src/alethzero.icns
 	WIN_RESOURCES src/alethzero.rc
 )
 
@@ -74,7 +78,6 @@ eth_use(${EXECUTABLE} OPTIONAL Solidity)
 # required because AUTOUIC can't handle multiple ui includes in one cpp file
 qt5_wrap_ui(ui_Main.h src/Main.ui)
 qt5_wrap_ui(ui_GetPassword.h src/GetPassword.ui)
-qt5_wrap_ui(ui_GasPricing.h src/GasPricing.ui)
 
 eth_package(${EXECUTABLE}
 	NAME "Ethereum"

@@ -34,6 +34,8 @@
 #include <libethereum/Client.h>
 #include <libwebthree/WebThree.h>
 #include "DappLoader.h"
+#include "AlethZeroResources.hpp"
+
 using namespace dev;
 using namespace az;
 using namespace eth;
@@ -187,14 +189,17 @@ QByteArray const& DappLoader::web3Content()
 {
 	if (m_web3Js.isEmpty())
 	{
+		AlethZeroResources resources;
+
 		QString code;
+
 		code += contentsOfQResource(":/js/bignumber.min.js");
 		code += "\n";
-		code += contentsOfQResource(":/js/webthree.js");
+		code += QString::fromStdString(resources.loadResourceAsString("web"));
 		code += "\n";
-		code += contentsOfQResource(":/js/setup.js");
+		code += QString::fromStdString(resources.loadResourceAsString("setup"));
 		code += "\n";
-		code += contentsOfQResource(":/js/admin.js");
+		code += QString::fromStdString(resources.loadResourceAsString("admin"));
 		code += "\n";
 		m_web3Js = code.toLatin1();
 	}

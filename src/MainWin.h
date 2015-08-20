@@ -95,8 +95,6 @@ public:
 	std::pair<Address, bytes> fromString(std::string const& _a) const override;
 	std::string renderDiff(eth::StateDiff const& _d) const override;
 
-	u256 gasPrice() const override;
-
 	eth::KeyManager& keyManager() override { return m_keyManager; }
 	void noteKeysChanged() override { refreshBalances(); }
 	bool doConfirm();
@@ -189,7 +187,6 @@ private slots:
 	void on_dumpBlockState_triggered();
 
 	// Config
-	void on_gasPrices_triggered();
 	void on_sentinel_triggered();
 
 	void refreshBlockChain();
