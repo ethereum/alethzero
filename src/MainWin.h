@@ -144,12 +144,8 @@ private slots:
 
 	// Account management
 	void on_killAccount_triggered();
-	void on_importKey_triggered();
 	void on_reencryptKey_triggered();
 	void on_reencryptAll_triggered();
-	void on_importKeyFile_triggered();
-	void on_claimPresale_triggered();
-	void on_importPresale_triggered();
 	void on_exportKey_triggered();
 
 	// Tools
