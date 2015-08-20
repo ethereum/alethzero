@@ -24,6 +24,8 @@
 #include <QWebEngineView>
 #include "JsConsoleWidget.h"
 #include "OurWebThreeStubServer.h"
+#include "AlethZeroResources.hpp"
+
 using namespace std;
 using namespace dev;
 using namespace az;
@@ -43,14 +45,15 @@ JsConsole::JsConsole(MainFace* _m):
 	dock(Qt::BottomDockWidgetArea, "JavaScript Console")->setWidget(jsConsole);
 	std::string adminSessionKey = _m->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
 
+	AlethZeroResources resources;
+
 	QString content = "<script>\n";
-	content += contentsOfQResource(":/js/bignumber.min.js");
+
+	content += QString::fromStdString(resources.loadResourceAsString("web"));
 	content += "\n";
-	content += contentsOfQResource(":/js/webthree.js");
+	content += QString::fromStdString(resources.loadResourceAsString("setup"));
 	content += "\n";
-	content += contentsOfQResource(":/js/setup.js");
-	content += "\n";
-	content += contentsOfQResource(":/js/admin.js");
+	content += QString::fromStdString(resources.loadResourceAsString("admin"));
 	content += "\nweb3.admin.setSessionKey('" + QString::fromStdString(adminSessionKey) + "');";
 	content += "</script>\n";
 	webView->setHtml(content);
