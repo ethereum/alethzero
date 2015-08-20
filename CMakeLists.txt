@@ -42,6 +42,9 @@ include(EthCompilerSettings)
 # Include helper macros
 include(EthExecutableHelper)
 
+# Include utils
+include(EthUtils)
+
 # Include a directory with BuildInfo.h
 include_directories(${ETH_BUILD_DIR})
 
@@ -82,17 +85,15 @@ if (APPLE AND (NOT "${Qt5Core_VERSION_STRING}" VERSION_LESS "5.5"))
 	find_package (Qt5DBus)
 	find_package (Qt5PrintSupport)
 endif()
-
-if (APPLE)
-	set(EXECUTABLE AlethZero)
-else ()
-	set(EXECUTABLE alethzero)
-endif ()
 	
+eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
+
+eth_name(EXECUTABLE AlethZero)
+
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE} 
 	ICON alethzero
-	UI_RESOURCES ${UI_FILES} src/alethzero.icns
+	UI_RESOURCES ${UI_FILES} src/alethzero.icns ${JSRES}
 	WIN_RESOURCES src/alethzero.rc
 )
 
