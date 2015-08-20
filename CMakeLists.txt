@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0)
 
 cmake_policy(SET CMP0015 NEW)
 # let cmake autolink dependencies on windows
 cmake_policy(SET CMP0020 NEW)
+
+cmake_policy(SET CMP0028 OLD)
 # this policy was introduced in cmake 3.0
 # remove if, once 3.0 will be used on unix
 if (${CMAKE_MAJOR_VERSION} GREATER 2)
