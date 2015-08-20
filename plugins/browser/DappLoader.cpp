@@ -195,7 +195,7 @@ QByteArray const& DappLoader::web3Content()
 
 		code += contentsOfQResource(":/js/bignumber.min.js");
 		code += "\n";
-		code += QString::fromStdString(resources.loadResourceAsString("web"));
+		code += QString::fromStdString(resources.loadResourceAsString("web3"));
 		code += "\n";
 		code += QString::fromStdString(resources.loadResourceAsString("setup"));
 		code += "\n";
