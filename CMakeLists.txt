@@ -17,11 +17,10 @@ eth_policy()
 set(PROJECT_VERSION "0.9.42")
 project(alethzero VERSION ${PROJECT_VERSION})
 
-# A place where we should look for ethereum libraries 
+# A place where we should look for ethereum libraries
 set(CMAKE_LIBRARY_PATH ${ETH_BUILD_DIR})
 
 set(GUI 1)		# TODO: remove once packages are all changed to optional
-set(JSONRPC 1)	# TODO: remove once packages are all changed to optional
 
 # Let's find our dependencies
 include(EthDependencies)
@@ -38,21 +37,14 @@ include(EthUtils)
 # Include a directory with BuildInfo.h
 include_directories(${ETH_BUILD_DIR})
 
-
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
 
 eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
+list(APPEND HEADERS "${CMAKE_CURRENT_BINARY_DIR}/AlethZeroResources.hpp")
 
 eth_name(EXECUTABLE AlethZero)
-
-# eth_add_executable is defined in cmake/EthExecutableHelper.cmake
-eth_add_executable(${EXECUTABLE} 
-	ICON alethzero
-	UI_RESOURCES ${UI_FILES} src/alethzero.icns ${JSRES}
-	WIN_RESOURCES src/alethzero.rc
-)
 
 # required for qt5_wrap_ui below, TODO: remove this
 # find_package(Qt5Core)
@@ -61,59 +53,24 @@ find_package(Qt5Widgets)
 include_directories(src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
 
-eth_use_QtCore(${EXECUTABLE} REQUIRED)
-eth_use_QtWidgets(${EXECUTABLE} REQUIRED)
-eth_use_QtWebEngineWidgets(${EXECUTABLE} REQUIRED)
-eth_use_EthCore(${EXECUTABLE})
-eth_use_Solidity(${EXECUTABLE} REQUIRED)
-eth_use_WebThreeJsonRpc(${EXECUTABLE} REQUIRED)
+# eth_add_executable is defined in cmake/EthExecutableHelper.cmake
+eth_add_executable(${EXECUTABLE}
+	ICON alethzero
+	UI_RESOURCES src/Main.ui src/GetPassword.ui src/alethzero.icns
+	WIN_RESOURCES src/alethzero.rc
+)
+
+eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets EthCore WebThreeJsonRpc)
+eth_use(${EXECUTABLE} OPTIONAL Solidity)
 
 # required because AUTOUIC can't handle multiple ui includes in one cpp file
 qt5_wrap_ui(ui_Main.h src/Main.ui)
 qt5_wrap_ui(ui_GetPassword.h src/GetPassword.ui)
-qt5_wrap_ui(ui_GasPricing.h src/GasPricing.ui)
 
-if (APPLE)
-	add_custom_target(appdmg
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-		COMMAND ${CMAKE_COMMAND}
-		-DAPP_DMG_EXE=${ETH_APP_DMG}
-		-DAPP_DMG_FILE=appdmg.json.in
-		-DAPP_DMG_ICON="alethzero/alethzero.icns"
-		-DAPP_DMG_BACKGROUND="install-folder-bg.png"
-		-DETH_BUILD_DIR="${CMAKE_BINARY_DIR}"
-		-DETH_ALETHZERO_APP="$<TARGET_FILE_DIR:AlethZero>"
-		-P "${ETH_SCRIPTS_DIR}/appdmg.cmake"
-	)
-endif ()
+eth_package(${EXECUTABLE}
+	NAME "Ethereum"
+	DESCRIPTION "The Ethereum Toolset"
+	WIN_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.ico"
+	OSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.icns"
+)
 
-if (WIN32)
-	# packaging stuff
-	include(InstallRequiredSystemLibraries)
-	set(CPACK_PACKAGE_NAME "Ethereum")
-	set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "The Ethereum Toolset")
-	set(CPACK_PACKAGE_VENDOR "ethereum.org")
-	set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-	set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-	set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-	set(CPACK_GENERATOR "NSIS")
-	
-    # nsis specific stuff
-	if (CMAKE_CL_64)
-		set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES64")
-		set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION} (Win64)")
-	else ()
-		set(CPACK_NSIS_INSTALL_ROOT "$PROGRAMFILES")
-		set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "${CPACK_PACKAGE_NAME} ${CPACK_PACKAGE_VERSION}")
-	endif()
-
-	set(CPACK_NSIS_DISPLAY_NAME "Ethereum")
-	set(CPACK_NSIS_HELP_LINK "https://github.com/ethereum/cpp-ethereum")
-	set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/ethereum/cpp-ethereum")
-	set(CPACK_NSIS_CONTACT "ethereum.org")
-	set(CPACK_NSIS_MODIFY_PATH ON)
-	set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/alethzero/alethzero.ico")
-	set(CPACK_NSIS_MUI_UNIICON "${CMAKE_CURRENT_SOURCE_DIR}/alethzero/alethzero.ico")
-
-	include(CPack)
-endif (WIN32)
