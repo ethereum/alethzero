@@ -32,6 +32,7 @@
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QListWidgetItem>
+#include <QtWidgets/QAbstractButton>
 #include <QtGui/QClipboard>
 #include <QtCore/QtCore>
 #include <boost/algorithm/string.hpp>
@@ -68,7 +69,6 @@
 #include "Debugger.h"
 #include "ui_Main.h"
 #include "ui_GetPassword.h"
-#include "ui_GasPricing.h"
 using namespace std;
 using namespace dev;
 using namespace az;
@@ -329,23 +329,6 @@ Addresses Main::allKnownAddresses() const
 bool Main::confirm() const
 {
 	return true; //ui->natSpec->isChecked();
-}
-
-void Main::on_gasPrices_triggered()
-{
-	QDialog d;
-	Ui_GasPricing gp;
-	gp.setupUi(&d);
-	d.setWindowTitle("Gas Pricing");
-	setValueUnits(gp.bidUnits, gp.bidValue, static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->bid());
-	setValueUnits(gp.askUnits, gp.askValue, static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->ask());
-
-	if (d.exec() == QDialog::Accepted)
-	{
-		static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->setBid(fromValueUnits(gp.bidUnits, gp.bidValue));
-		static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->setAsk(fromValueUnits(gp.askUnits, gp.askValue));
-		m_transact->resetGasPrice();
-	}
 }
 
 void Main::on_sentinel_triggered()
@@ -672,11 +655,6 @@ void Main::on_paranoia_triggered()
 	ethereum()->setParanoia(ui->paranoia->isChecked());
 }
 
-dev::u256 Main::gasPrice() const
-{
-	return ethereum()->gasPricer()->bid();
-}
-
 void Main::writeSettings()
 {
 	QSettings s("ethereum", "alethzero");
@@ -914,7 +892,10 @@ void Main::on_claimPresale_triggered()
 		KeyPair k = m_keyManager.presaleSecret(dev::contentsString(s.toStdString()), [&](bool){ return QInputDialog::getText(this, "Enter Password", "Enter the wallet's passphrase", QLineEdit::Password).toStdString(); });
 		cnote << k.address();
 		if (!m_keyManager.hasAccount(k.address()))
-			ethereum()->submitTransaction(k.sec(), ethereum()->balanceAt(k.address()) - gasPrice() * c_txGas, m_beneficiary, {}, c_txGas, gasPrice());
+		{
+			auto gasPrice = ethereum()->gasPricer()->bid();
+			ethereum()->submitTransaction(k.sec(), ethereum()->balanceAt(k.address()) - gasPrice * c_txGas, m_beneficiary, {}, c_txGas, gasPrice);
+		}
 		else
 			QMessageBox::warning(this, "Already Have Key", "Could not import the secret key: we already own this account.");
 	}

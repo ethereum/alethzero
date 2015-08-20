@@ -76,8 +76,6 @@ public:
 	virtual dev::Secret retrieveSecret(dev::Address const& _a) const = 0;
 	virtual dev::eth::KeyManager& keyManager() = 0;
 	virtual void noteKeysChanged() = 0;
-
-	virtual dev::u256 gasPrice() const = 0;
 };
 
 }
