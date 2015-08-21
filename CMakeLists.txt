@@ -28,6 +28,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
 
+# required for eth_add_resources, TODO: remove this
+set(ETH_DIR             "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
+
 eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
 
 eth_name(EXECUTABLE AlethZero)
