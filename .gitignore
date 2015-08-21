@@ -28,3 +28,6 @@
 *.app
 
 build
+
+# vim stuff
+*.swp
