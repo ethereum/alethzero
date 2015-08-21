@@ -118,11 +118,6 @@
     <addaction name="turboMining"/>
     <addaction name="prepNextDAG"/>
     <addaction name="separator"/>
-    <addaction name="newTransaction"/>
-    <addaction name="importKey"/>
-    <addaction name="importKeyFile"/>
-    <addaction name="importPresale"/>
-    <addaction name="claimPresale"/>
     <addaction name="exportKey"/>
     <addaction name="reencryptAll"/>
     <addaction name="reencryptKey"/>
@@ -486,7 +481,6 @@
     <bool>false</bool>
    </attribute>
    <addaction name="go"/>
-   <addaction name="newTransaction"/>
    <addaction name="preview"/>
    <addaction name="mine"/>
    <addaction name="refresh"/>
@@ -1039,11 +1033,6 @@
   <action name="killAccount">
    <property name="text">
     <string>&amp;Kill Account</string>
-   </property>
-  </action>
-  <action name="newTransaction">
-   <property name="text">
-    <string>New &amp;Transaction...</string>
    </property>
   </action>
   <action name="natSpec">

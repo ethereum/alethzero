@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file Transact.cpp
+/** @file TransactDialog.cpp
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
@@ -22,7 +22,7 @@
 // Make sure boost/asio.hpp is included before windows.h.
 #include <boost/asio.hpp>
 
-#include "Transact.h"
+#include "TransactDialog.h"
 
 #include <fstream>
 #include <boost/algorithm/string.hpp>
@@ -47,108 +47,108 @@
 #include <libserpent/util.h>
 #endif
 #include "Debugger.h"
-#include "ui_Transact.h"
+#include "ui_TransactDialog.h"
 using namespace std;
 using namespace dev;
 using namespace az;
 using namespace eth;
 
-Transact::Transact(MainFace* _c, QWidget* _parent):
-	QDialog(_parent),
-	ui(new Ui::Transact),
-	m_main(_c)
+TransactDialog::TransactDialog(MainFace* _main):
+	QDialog(_main),
+	m_ui(new Ui::TransactDialog),
+	m_main(_main)
 {
-	ui->setupUi(this);
+	m_ui->setupUi(this);
 
 	resetGasPrice();
-	setValueUnits(ui->valueUnits, ui->value, 0);
+	setValueUnits(m_ui->valueUnits, m_ui->value, 0);
 
 	on_destination_currentTextChanged(QString());
 }
 
-Transact::~Transact()
+TransactDialog::~TransactDialog()
 {
-	delete ui;
+	delete m_ui;
 }
 
-void Transact::setEnvironment(AddressHash const& _accounts, dev::eth::Client* _eth, NatSpecFace* _natSpecDB)
+void TransactDialog::setEnvironment(AddressHash const& _accounts, dev::eth::Client* _eth, NatSpecFace* _natSpecDB)
 {
 	m_accounts = _accounts;
 	m_ethereum = _eth;
 	m_natSpecDB = _natSpecDB;
 
-	auto old = ui->from->currentIndex();
-	ui->from->clear();
+	auto old = m_ui->from->currentIndex();
+	m_ui->from->clear();
 	for (auto const& address: m_accounts)
 	{
 		u256 b = ethereum()->balanceAt(address, PendingBlock);
 		QString s = QString("%2: %1").arg(formatBalance(b).c_str()).arg(QString::fromStdString(m_main->render(address)));
-		ui->from->addItem(s);
+		m_ui->from->addItem(s);
 	}
 	updateDestination();
-	if (old > -1 && old < ui->from->count())
-		ui->from->setCurrentIndex(old);
-	else if (ui->from->count())
-		ui->from->setCurrentIndex(0);
+	if (old > -1 && old < m_ui->from->count())
+		m_ui->from->setCurrentIndex(old);
+	else if (m_ui->from->count())
+		m_ui->from->setCurrentIndex(0);
 }
 
-void Transact::resetGasPrice()
+void TransactDialog::resetGasPrice()
 {
-	setValueUnits(ui->gasPriceUnits, ui->gasPrice, m_main->ethereum()->gasPricer()->bid());
+	setValueUnits(m_ui->gasPriceUnits, m_ui->gasPrice, m_main->ethereum()->gasPricer()->bid());
 }
 
-bool Transact::isCreation() const
+bool TransactDialog::isCreation() const
 {
-	return ui->destination->currentText().isEmpty() || ui->destination->currentText() == "(Create Contract)";
+	return m_ui->destination->currentText().isEmpty() || m_ui->destination->currentText() == "(Create Contract)";
 }
 
-u256 Transact::fee() const
+u256 TransactDialog::fee() const
 {
 	return gas() * gasPrice();
 }
 
-u256 Transact::gas() const
+u256 TransactDialog::gas() const
 {
-	return ui->gas->value() == -1 ? m_upperBound : ui->gas->value();
+	return m_ui->gas->value() == -1 ? m_upperBound : m_ui->gas->value();
 }
 
-u256 Transact::value() const
+u256 TransactDialog::value() const
 {
-	if (ui->valueUnits->currentIndex() == -1)
+	if (m_ui->valueUnits->currentIndex() == -1)
 		return 0;
-	return ui->value->value() * units()[units().size() - 1 - ui->valueUnits->currentIndex()].first;
+	return m_ui->value->value() * units()[units().size() - 1 - m_ui->valueUnits->currentIndex()].first;
 }
 
-u256 Transact::gasPrice() const
+u256 TransactDialog::gasPrice() const
 {
-	if (ui->gasPriceUnits->currentIndex() == -1)
+	if (m_ui->gasPriceUnits->currentIndex() == -1)
 		return 0;
-	return ui->gasPrice->value() * units()[units().size() - 1 - ui->gasPriceUnits->currentIndex()].first;
+	return m_ui->gasPrice->value() * units()[units().size() - 1 - m_ui->gasPriceUnits->currentIndex()].first;
 }
 
-u256 Transact::total() const
+u256 TransactDialog::total() const
 {
 	return value() + fee();
 }
 
-void Transact::updateDestination()
+void TransactDialog::updateDestination()
 {
 	// TODO: should be a Qt model.
-	ui->destination->clear();
-	ui->destination->addItem("(Create Contract)");
+	m_ui->destination->clear();
+	m_ui->destination->addItem("(Create Contract)");
 	QMultiMap<QString, QString> in;
 	for (Address const& a: m_main->allKnownAddresses())
 		in.insert(QString::fromStdString(m_main->toName(a) + " (" + ICAP(a).encoded() + ")"), QString::fromStdString(a.hex()));
 	for (auto i = in.begin(); i != in.end(); ++i)
-		ui->destination->addItem(i.key(), i.value());
+		m_ui->destination->addItem(i.key(), i.value());
 
 }
 
-void Transact::updateFee()
+void TransactDialog::updateFee()
 {
 //	ui->fee->setText(QString("(gas sub-total: %1)").arg(formatBalance(fee()).c_str()));
 	auto totalReq = total();
-	ui->total->setText(QString("Total: %1").arg(formatBalance(totalReq).c_str()));
+	m_ui->total->setText(QString("Total: %1").arg(formatBalance(totalReq).c_str()));
 
 	bool ok = false;
 	for (auto const& i: m_accounts)
@@ -158,46 +158,46 @@ void Transact::updateFee()
 			break;
 		}
 //	ui->send->setEnabled(ok);
-	QPalette p = ui->total->palette();
+	QPalette p = m_ui->total->palette();
 	p.setColor(QPalette::WindowText, QColor(ok ? 0x00 : 0x80, 0x00, 0x00));
-	ui->total->setPalette(p);
+	m_ui->total->setPalette(p);
 }
 
-void Transact::on_destination_currentTextChanged(QString)
+void TransactDialog::on_destination_currentTextChanged(QString)
 {
-	if (ui->destination->currentText().size() && ui->destination->currentText() != "(Create Contract)")
+	if (m_ui->destination->currentText().size() && m_ui->destination->currentText() != "(Create Contract)")
 	{
 		auto p = toAccount();
 		if (p.first)
-			ui->calculatedName->setText(QString::fromStdString(m_main->render(p.first)));
+			m_ui->calculatedName->setText(QString::fromStdString(m_main->render(p.first)));
 		else
-			ui->calculatedName->setText("Unknown Address");
+			m_ui->calculatedName->setText("Unknown Address");
 
 //		ui->calculatedName->setText(m_main->toName(a) + " (" + ICAP(a).encoded() + ")");
 
 		if (!p.second.empty())
 		{
 			m_data = p.second;
-			ui->data->setPlainText(QString::fromStdString("0x" + toHex(m_data)));
-			ui->data->setEnabled(false);
+			m_ui->data->setPlainText(QString::fromStdString("0x" + toHex(m_data)));
+			m_ui->data->setEnabled(false);
 		}
-		else if (!ui->data->isEnabled())
+		else if (!m_ui->data->isEnabled())
 		{
 			m_data.clear();
-			ui->data->setPlainText("");
-			ui->data->setEnabled(true);
+			m_ui->data->setPlainText("");
+			m_ui->data->setEnabled(true);
 		}
 	}
 	else
-		ui->calculatedName->setText("Create Contract");
+		m_ui->calculatedName->setText("Create Contract");
 	rejigData();
 	//	updateFee();
 }
 
-void Transact::on_copyUnsigned_clicked()
+void TransactDialog::on_copyUnsigned_clicked()
 {
 	auto a = fromAccount();
-	u256 nonce = ui->autoNonce->isChecked() ? ethereum()->countAt(a, PendingBlock) : ui->nonce->value();
+	u256 nonce = m_ui->autoNonce->isChecked() ? ethereum()->countAt(a, PendingBlock) : m_ui->nonce->value();
 
 	Transaction t;
 	if (isCreation())
@@ -310,7 +310,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 	return make_tuple(errors, data, lll + solidity);
 }
 
-string Transact::natspecNotice(Address _to, bytes const& _data)
+string TransactDialog::natspecNotice(Address _to, bytes const& _data)
 {
 	if (ethereum()->codeAt(_to, PendingBlock).size())
 	{
@@ -327,20 +327,20 @@ string Transact::natspecNotice(Address _to, bytes const& _data)
 		return "Destination not a contract.";
 }
 
-pair<Address, bytes> Transact::toAccount()
+pair<Address, bytes> TransactDialog::toAccount()
 {
 	pair<Address, bytes> p;
 	if (!isCreation())
 	{
-		if (!ui->destination->currentData().isNull() && ui->destination->currentText() == ui->destination->itemText(ui->destination->currentIndex()))
-			p.first = Address(ui->destination->currentData().toString().trimmed().toStdString());
+		if (!m_ui->destination->currentData().isNull() && m_ui->destination->currentText() == m_ui->destination->itemText(m_ui->destination->currentIndex()))
+			p.first = Address(m_ui->destination->currentData().toString().trimmed().toStdString());
 		else
-			p = m_main->fromString(ui->destination->currentText().trimmed().toStdString());
+			p = m_main->fromString(m_ui->destination->currentText().trimmed().toStdString());
 	}
 	return p;
 }
 
-void Transact::timerEvent(QTimerEvent*)
+void TransactDialog::timerEvent(QTimerEvent*)
 {
 	Address from = fromAccount();
 	Address to = toAccount().first;
@@ -367,31 +367,31 @@ void Transact::timerEvent(QTimerEvent*)
 		finaliseBounds();
 }
 
-void Transact::updateBounds()
+void TransactDialog::updateBounds()
 {
-	ui->minGas->setValue(m_lowerBound);
-	ui->maxGas->setValue(m_upperBound);
+	m_ui->minGas->setValue(m_lowerBound);
+	m_ui->maxGas->setValue(m_upperBound);
 	double oran = m_startUpperBound - m_startLowerBound;
 	double nran = m_upperBound - m_lowerBound;
 	int x = int(log2(oran / nran) * 100.0 / log2(oran * 2));
-	ui->progressGas->setValue(x);
-	ui->progressGas->setVisible(true);
-	ui->gas->setSpecialValueText(QString("Auto (%1 gas)").arg(m_upperBound));
+	m_ui->progressGas->setValue(x);
+	m_ui->progressGas->setVisible(true);
+	m_ui->gas->setSpecialValueText(QString("Auto (%1 gas)").arg(m_upperBound));
 }
 
-void Transact::finaliseBounds()
+void TransactDialog::finaliseBounds()
 {
 	killTimer(m_gasCalcTimer);
 
 	quint64 baseGas = (quint64)Transaction::gasRequired(m_data, 0);
-	ui->progressGas->setVisible(false);
+	m_ui->progressGas->setVisible(false);
 
 	quint64 executionGas = m_upperBound - baseGas;
 	QString htmlInfo = QString("<div class=\"info\"><span class=\"icon\">INFO</span> Gas required: %1 total = %2 base, %3 exec [%4 refunded later]</div>").arg(m_upperBound).arg(baseGas).arg(executionGas).arg((qint64)m_lastGood.gasRefunded);
 
 	auto bail = [&](QString he) {
-		ui->send->setEnabled(false);
-		ui->code->setHtml(he + htmlInfo + m_dataInfo);
+		m_ui->send->setEnabled(false);
+		m_ui->code->setHtml(he + htmlInfo + m_dataInfo);
 	};
 
 	auto s = fromAccount();
@@ -421,11 +421,11 @@ void Transact::finaliseBounds()
 	}
 
 	updateFee();
-	ui->code->setHtml(htmlInfo + m_dataInfo);
-	ui->send->setEnabled(true);
+	m_ui->code->setHtml(htmlInfo + m_dataInfo);
+	m_ui->send->setEnabled(true);
 }
 
-GasRequirements Transact::determineGasRequirements()
+GasRequirements TransactDialog::determineGasRequirements()
 {
 	// Determine the minimum amount of gas we need to play...
 	qint64 baseGas = (qint64)Transaction::gasRequired(m_data, 0);
@@ -463,7 +463,7 @@ GasRequirements Transact::determineGasRequirements()
 	return GasRequirements();
 }
 
-void Transact::rejigData()
+void TransactDialog::rejigData()
 {
 	if (!ethereum())
 		return;
@@ -477,9 +477,9 @@ void Transact::rejigData()
 	QString htmlInfo;
 
 	auto bail = [&](QString he) {
-		ui->send->setEnabled(false);
+		m_ui->send->setEnabled(false);
 		m_dataInfo = he + htmlInfo;
-		ui->code->setHtml(m_dataInfo);
+		m_ui->code->setHtml(m_dataInfo);
 	};
 
 	// Determine m_info.
@@ -487,7 +487,7 @@ void Transact::rejigData()
 	{
 		string info;
 		vector<string> errors;
-		tie(errors, m_data, info) = userInputToCode(ui->data->toPlainText().toStdString(), ui->optimize->isChecked());
+		tie(errors, m_data, info) = userInputToCode(m_ui->data->toPlainText().toStdString(), m_ui->optimize->isChecked());
 		if (errors.size())
 		{
 			// Errors determining transaction data (i.e. init code). Bail.
@@ -501,7 +501,7 @@ void Transact::rejigData()
 	}
 	else
 	{
-		m_data = parseData(ui->data->toPlainText().toStdString());
+		m_data = parseData(m_ui->data->toPlainText().toStdString());
 		htmlInfo = "<h4>Dump</h4>" + QString::fromStdString(dev::memDump(m_data, 8, true));
 	}
 
@@ -514,11 +514,11 @@ void Transact::rejigData()
 	determineGasRequirements();
 
 	m_dataInfo = htmlInfo;
-	ui->code->setHtml(m_dataInfo);
-	ui->send->setEnabled(true);
+	m_ui->code->setHtml(m_dataInfo);
+	m_ui->send->setEnabled(true);
 }
 
-Secret Transact::findSecret(u256 _totalReq) const
+Secret TransactDialog::findSecret(u256 _totalReq) const
 {
 	if (!ethereum())
 		return Secret();
@@ -539,27 +539,27 @@ Secret Transact::findSecret(u256 _totalReq) const
 	return m_main->retrieveSecret(best);
 }
 
-Address Transact::fromAccount()
+Address TransactDialog::fromAccount()
 {
-	if (ui->from->currentIndex() < 0 || ui->from->currentIndex() >= (int)m_accounts.size())
+	if (m_ui->from->currentIndex() < 0 || m_ui->from->currentIndex() >= (int)m_accounts.size())
 		return Address();
 	auto it = m_accounts.begin();
-	std::advance(it, ui->from->currentIndex());
+	std::advance(it, m_ui->from->currentIndex());
 	return *it;
 }
 
-void Transact::updateNonce()
+void TransactDialog::updateNonce()
 {
 	u256 n = ethereum()->countAt(fromAccount(), PendingBlock);
-	ui->nonce->setMaximum((unsigned)n);
-	ui->nonce->setMinimum(0);
-	ui->nonce->setValue((unsigned)n);
+	m_ui->nonce->setMaximum((unsigned)n);
+	m_ui->nonce->setMinimum(0);
+	m_ui->nonce->setValue((unsigned)n);
 }
 
-void Transact::on_send_clicked()
+void TransactDialog::on_send_clicked()
 {
 //	Secret s = findSecret(value() + fee());
-	u256 nonce = ui->autoNonce->isChecked() ? ethereum()->countAt(fromAccount(), PendingBlock) : ui->nonce->value();
+	u256 nonce = m_ui->autoNonce->isChecked() ? ethereum()->countAt(fromAccount(), PendingBlock) : m_ui->nonce->value();
 	auto a = fromAccount();
 	auto b = ethereum()->balanceAt(a, PendingBlock);
 
@@ -600,7 +600,7 @@ void Transact::on_send_clicked()
 	close();
 }
 
-void Transact::on_debug_clicked()
+void TransactDialog::on_debug_clicked()
 {
 //	Secret s = findSecret(value() + fee());
 	Address from = fromAccount();

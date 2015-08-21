@@ -65,7 +65,6 @@
 #include "MiningView.h"
 #include "BuildInfo.h"
 #include "OurWebThreeStubServer.h"
-#include "Transact.h"
 #include "Debugger.h"
 #include "ui_Main.h"
 #include "ui_GetPassword.h"
@@ -85,14 +84,9 @@ QString dev::az::contentsOfQResource(string const& res)
 	return in.readAll();
 }
 
-//Address c_config = Address("661005d2720d855f1d9976f88bb10c1a3398c77f");
-//Address c_newConfig = Address("c6d9d2cd449a754c494264e1809c50e34d64562b");
-Address c_nameReg = Address("96d76ae3397b52d9f61215270df65d72358709e3");
-
 Main::Main(QWidget* _parent):
 	MainFace(_parent),
-	ui(new Ui::Main),
-	m_transact(nullptr)
+	ui(new Ui::Main)
 {
 	setWindowFlags(Qt::Window);
 	ui->setupUi(this);
@@ -208,10 +202,6 @@ Main::Main(QWidget* _parent):
 #endif
 
 	readSettings(true, false);
-
-	m_transact = new Transact(this, this);
-	m_transact->setWindowFlags(Qt::Dialog);
-	m_transact->setWindowModality(Qt::WindowModal);
 
 	connect(ui->blockChainDockWidget, &QDockWidget::visibilityChanged, [=]() { refreshBlockChain(); });
 
@@ -510,12 +500,6 @@ void Main::on_forceMining_triggered()
 QString Main::contents(QString _s)
 {
 	return QString::fromStdString(dev::asString(dev::contents(_s.toStdString())));
-}
-
-void Main::on_newTransaction_triggered()
-{
-	m_transact->setEnvironment(m_keyManager.accountsHash(), ethereum(), &m_natSpecDB);
-	m_transact->show();
 }
 
 void Main::note(QString _s)
@@ -825,109 +809,6 @@ std::string Main::getPassword(std::string const& _title, std::string const& _for
 	if (_ok)
 		*_ok = true;
 	return password.toStdString();
-}
-
-void Main::on_importKey_triggered()
-{
-	QString s = QInputDialog::getText(this, "Import Account Key", "Enter account's secret key", QLineEdit::Password);
-	bytes b = fromHex(s.toStdString());
-	if (b.size() == 32)
-	{
-		auto k = KeyPair(Secret(bytesConstRef(&b)));
-		if (!m_keyManager.hasAccount(k.address()))
-		{
-			QString s = QInputDialog::getText(this, "Import Account Key", "Enter this account's name");
-			if (QMessageBox::question(this, "Additional Security?", "Would you like to use additional security for this key? This lets you protect it with a different password to other keys, but also means you must re-enter the key's password every time you wish to use the account.", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes)
-			{
-				bool ok;
-				std::string hint;
-				std::string password = getPassword("Import Account Key", "Enter the password you would like to use for this key. Don't forget it!", &hint, &ok);
-				if (!ok)
-					return;
-				m_keyManager.import(k.secret(), s.toStdString(), password, hint);
-			}
-			else
-				m_keyManager.import(k.secret(), s.toStdString());
-			keysChanged();
-		}
-		else
-			QMessageBox::warning(this, "Already Have Key", "Could not import the secret key: we already own this account.");
-	}
-	else
-		QMessageBox::warning(this, "Invalid Entry", "Could not import the secret key; invalid key entered. Make sure it is 64 hex characters (0-9 or A-F).");
-}
-
-void Main::on_importKeyFile_triggered()
-{
-	QString s = QFileDialog::getOpenFileName(this, "Claim Account Contents", QDir::homePath(), "JSON Files (*.json);;All Files (*)");
-	h128 uuid = m_keyManager.store().importKey(s.toStdString());
-	if (!uuid)
-	{
-		QMessageBox::warning(this, "Key File Invalid", "Could not find secret key definition. This is probably not an Web3 key file.");
-		return;
-	}
-
-	QString info = QInputDialog::getText(this, "Import Key File", "Enter a description of this key to help you recognise it in the future.");
-
-	QString pass;
-	for (Secret s; !s;)
-	{
-		s = Secret(m_keyManager.store().secret(uuid, [&](){
-			pass = QInputDialog::getText(this, "Import Key File", "Enter the password for the key to complete the import.", QLineEdit::Password);
-			return pass.toStdString();
-		}, false));
-		if (!s && QMessageBox::question(this, "Import Key File", "The password you provided is incorrect. Would you like to try again?", QMessageBox::Retry, QMessageBox::Cancel) == QMessageBox::Cancel)
-			return;
-	}
-
-	QString hint = QInputDialog::getText(this, "Import Key File", "Enter a hint for this password to help you remember it.");
-	m_keyManager.importExisting(uuid, info.toStdString(), pass.toStdString(), hint.toStdString());
-}
-
-void Main::on_claimPresale_triggered()
-{
-	QString s = QFileDialog::getOpenFileName(this, "Claim Account Contents", QDir::homePath(), "JSON Files (*.json);;All Files (*)");
-	try
-	{
-		KeyPair k = m_keyManager.presaleSecret(dev::contentsString(s.toStdString()), [&](bool){ return QInputDialog::getText(this, "Enter Password", "Enter the wallet's passphrase", QLineEdit::Password).toStdString(); });
-		cnote << k.address();
-		if (!m_keyManager.hasAccount(k.address()))
-		{
-			auto gasPrice = ethereum()->gasPricer()->bid();
-			ethereum()->submitTransaction(k.sec(), ethereum()->balanceAt(k.address()) - gasPrice * c_txGas, m_beneficiary, {}, c_txGas, gasPrice);
-		}
-		else
-			QMessageBox::warning(this, "Already Have Key", "Could not import the secret key: we already own this account.");
-	}
-	catch (dev::eth::PasswordUnknown&) {}
-	catch (...)
-	{
-		cerr << "Unhandled exception!" << endl <<
-			boost::current_exception_diagnostic_information();
-		QMessageBox::warning(this, "Key File Invalid", "Could not find secret key definition. This is probably not an Ethereum key file.");
-	}
-}
-
-void Main::on_importPresale_triggered()
-{
-	QString s = QFileDialog::getOpenFileName(this, "Claim Account Contents", QDir::homePath(), "JSON Files (*.json);;All Files (*)");
-	try
-	{
-		string pass;
-		KeyPair k = m_keyManager.presaleSecret(dev::contentsString(s.toStdString()), [&](bool){ return (pass = QInputDialog::getText(this, "Enter Password", "Enter the wallet's passphrase", QLineEdit::Password).toStdString()); });
-		cnote << k.address();
-		if (!m_keyManager.hasAccount(k.address()))
-			keyManager().import(k.secret(), "Presale wallet (" + s.toStdString() + ")", pass, "Same password as for the presale wallet");
-		else
-			QMessageBox::warning(this, "Already Have Key", "Could not import the secret key: we already own this account.");
-	}
-	catch (dev::eth::PasswordUnknown&) {}
-	catch (...)
-	{
-		cerr << "Unhandled exception!" << endl <<
-			boost::current_exception_diagnostic_information();
-		QMessageBox::warning(this, "Key File Invalid", "Could not find secret key definition. This is probably not an Ethereum key file.");
-	}
 }
 
 void Main::on_exportKey_triggered()
