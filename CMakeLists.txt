@@ -1,15 +1,10 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-# Figure out environment.
-set(ETH_CMAKE_DIR   "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum-cmake"   CACHE PATH "The the path to the cmake directory")
-set(ETH_DIR         "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
-set(BUILD_DIR_NAME  "build"                                             CACHE STRING "The name of the build directory in cpp-ethereum")
-set(ETH_BUILD_DIR   "${ETH_DIR}/${BUILD_DIR_NAME}")
-
 # A place where should we look for *.cmake files
+set(ETH_CMAKE_DIR   "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum-cmake"   CACHE PATH "The the path to the cmake directory")
 list(APPEND CMAKE_MODULE_PATH ${ETH_CMAKE_DIR})
 
-# set cmake_policies
+# Set cmake_policies
 include(EthPolicy)
 eth_policy()
 
@@ -17,8 +12,9 @@ eth_policy()
 set(PROJECT_VERSION "0.9.42")
 project(alethzero VERSION ${PROJECT_VERSION})
 
-# A place where we should look for ethereum libraries
-set(CMAKE_LIBRARY_PATH ${ETH_BUILD_DIR})
+# Set default variables
+include(EthDefaults)
+eth_defaults()
 
 set(GUI 1)		# TODO: remove once packages are all changed to optional
 
@@ -34,9 +30,6 @@ include(EthExecutableHelper)
 # Include utils
 include(EthUtils)
 
-# Include a directory with BuildInfo.h
-include_directories(${ETH_BUILD_DIR})
-
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
@@ -50,7 +43,6 @@ eth_name(EXECUTABLE AlethZero)
 find_package(Qt5Widgets)
 
 include_directories(src)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
 
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE}
