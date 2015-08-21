@@ -97,6 +97,7 @@ public:
 	virtual dev::eth::Client* ethereum() const = 0;
 	virtual OurWebThreeStubServer* web3Server() const = 0;
 	virtual std::shared_ptr<dev::shh::WhisperHost> whisper() const = 0;
+	virtual NatSpecFace* natSpec() = 0;
 
 	virtual unsigned installWatch(dev::eth::LogFilter const& _tf, WatchHandler const& _f) = 0;
 	virtual unsigned installWatch(dev::h256 const& _tf, WatchHandler const& _f) = 0;
