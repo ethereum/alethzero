@@ -38,7 +38,7 @@ Transact::Transact(MainFace* _m):
 	m_dialog->setWindowFlags(Qt::Dialog);
 	m_dialog->setWindowModality(Qt::WindowModal);
 
-	connect(addMenuItem("New Transaction...", "menuSpecial", true), SIGNAL(triggered()), SLOT(injectOne()));
+	connect(addMenuItem("New Transaction...", "menuSpecial", true), SIGNAL(triggered()), SLOT(newTransaction()));
 }
 
 Transact::~Transact()
