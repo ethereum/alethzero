@@ -59,7 +59,7 @@ eth_add_executable(${EXECUTABLE}
 	WIN_RESOURCES src/alethzero.rc
 )
 
-eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets EthCore WebThreeJsonRpc)
+eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngine Qt::WebEngineWidgets EthCore WebThreeJsonRpc)
 eth_use(${EXECUTABLE} OPTIONAL Solidity)
 
 # required because AUTOUIC can't handle multiple ui includes in one cpp file
