@@ -12,10 +12,6 @@ eth_policy()
 set(PROJECT_VERSION "0.9.42")
 project(alethzero VERSION ${PROJECT_VERSION})
 
-# Set default variables
-include(EthDefaults)
-eth_defaults()
-
 # Let's find our dependencies
 include(EthDependencies)
 
