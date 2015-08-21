@@ -22,6 +22,8 @@
 #include "Transact.h"
 #include <libdevcore/Log.h>
 #include <libethereum/Client.h>
+#include <libethcore/KeyManager.h>
+#include "TransactDialog.h"
 using namespace std;
 using namespace dev;
 using namespace az;
@@ -46,7 +48,7 @@ Transact::~Transact()
 
 void Transact::newTransaction()
 {
-	m_dialog->setEnvironment(m_keyManager.accountsHash(), ethereum(), &m_natSpecDB);
+	m_dialog->setEnvironment(main()->keyManager().accountsHash(), ethereum(), main()->natSpec());
 	m_dialog->show();
 }
 

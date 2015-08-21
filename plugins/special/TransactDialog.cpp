@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file Transact.cpp
+/** @file TransactDialog.cpp
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
@@ -53,9 +53,9 @@ using namespace dev;
 using namespace az;
 using namespace eth;
 
-Transact::Transact(MainFace* _main):
+TransactDialog::TransactDialog(MainFace* _main):
 	QDialog(_main),
-	m_ui(new Ui::Transact),
+	m_ui(new Ui::TransactDialog),
 	m_main(_main)
 {
 	m_ui->setupUi(this);
@@ -66,12 +66,12 @@ Transact::Transact(MainFace* _main):
 	on_destination_currentTextChanged(QString());
 }
 
-Transact::~Transact()
+TransactDialog::~TransactDialog()
 {
 	delete m_ui;
 }
 
-void Transact::setEnvironment(AddressHash const& _accounts, dev::eth::Client* _eth, NatSpecFace* _natSpecDB)
+void TransactDialog::setEnvironment(AddressHash const& _accounts, dev::eth::Client* _eth, NatSpecFace* _natSpecDB)
 {
 	m_accounts = _accounts;
 	m_ethereum = _eth;
@@ -92,46 +92,46 @@ void Transact::setEnvironment(AddressHash const& _accounts, dev::eth::Client* _e
 		m_ui->from->setCurrentIndex(0);
 }
 
-void Transact::resetGasPrice()
+void TransactDialog::resetGasPrice()
 {
 	setValueUnits(m_ui->gasPriceUnits, m_ui->gasPrice, m_main->ethereum()->gasPricer()->bid());
 }
 
-bool Transact::isCreation() const
+bool TransactDialog::isCreation() const
 {
 	return m_ui->destination->currentText().isEmpty() || m_ui->destination->currentText() == "(Create Contract)";
 }
 
-u256 Transact::fee() const
+u256 TransactDialog::fee() const
 {
 	return gas() * gasPrice();
 }
 
-u256 Transact::gas() const
+u256 TransactDialog::gas() const
 {
 	return m_ui->gas->value() == -1 ? m_upperBound : m_ui->gas->value();
 }
 
-u256 Transact::value() const
+u256 TransactDialog::value() const
 {
 	if (m_ui->valueUnits->currentIndex() == -1)
 		return 0;
 	return m_ui->value->value() * units()[units().size() - 1 - m_ui->valueUnits->currentIndex()].first;
 }
 
-u256 Transact::gasPrice() const
+u256 TransactDialog::gasPrice() const
 {
 	if (m_ui->gasPriceUnits->currentIndex() == -1)
 		return 0;
 	return m_ui->gasPrice->value() * units()[units().size() - 1 - m_ui->gasPriceUnits->currentIndex()].first;
 }
 
-u256 Transact::total() const
+u256 TransactDialog::total() const
 {
 	return value() + fee();
 }
 
-void Transact::updateDestination()
+void TransactDialog::updateDestination()
 {
 	// TODO: should be a Qt model.
 	m_ui->destination->clear();
@@ -144,7 +144,7 @@ void Transact::updateDestination()
 
 }
 
-void Transact::updateFee()
+void TransactDialog::updateFee()
 {
 //	ui->fee->setText(QString("(gas sub-total: %1)").arg(formatBalance(fee()).c_str()));
 	auto totalReq = total();
@@ -163,7 +163,7 @@ void Transact::updateFee()
 	m_ui->total->setPalette(p);
 }
 
-void Transact::on_destination_currentTextChanged(QString)
+void TransactDialog::on_destination_currentTextChanged(QString)
 {
 	if (m_ui->destination->currentText().size() && m_ui->destination->currentText() != "(Create Contract)")
 	{
@@ -194,7 +194,7 @@ void Transact::on_destination_currentTextChanged(QString)
 	//	updateFee();
 }
 
-void Transact::on_copyUnsigned_clicked()
+void TransactDialog::on_copyUnsigned_clicked()
 {
 	auto a = fromAccount();
 	u256 nonce = m_ui->autoNonce->isChecked() ? ethereum()->countAt(a, PendingBlock) : m_ui->nonce->value();
@@ -310,7 +310,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 	return make_tuple(errors, data, lll + solidity);
 }
 
-string Transact::natspecNotice(Address _to, bytes const& _data)
+string TransactDialog::natspecNotice(Address _to, bytes const& _data)
 {
 	if (ethereum()->codeAt(_to, PendingBlock).size())
 	{
@@ -327,7 +327,7 @@ string Transact::natspecNotice(Address _to, bytes const& _data)
 		return "Destination not a contract.";
 }
 
-pair<Address, bytes> Transact::toAccount()
+pair<Address, bytes> TransactDialog::toAccount()
 {
 	pair<Address, bytes> p;
 	if (!isCreation())
@@ -340,7 +340,7 @@ pair<Address, bytes> Transact::toAccount()
 	return p;
 }
 
-void Transact::timerEvent(QTimerEvent*)
+void TransactDialog::timerEvent(QTimerEvent*)
 {
 	Address from = fromAccount();
 	Address to = toAccount().first;
@@ -367,7 +367,7 @@ void Transact::timerEvent(QTimerEvent*)
 		finaliseBounds();
 }
 
-void Transact::updateBounds()
+void TransactDialog::updateBounds()
 {
 	m_ui->minGas->setValue(m_lowerBound);
 	m_ui->maxGas->setValue(m_upperBound);
@@ -379,7 +379,7 @@ void Transact::updateBounds()
 	m_ui->gas->setSpecialValueText(QString("Auto (%1 gas)").arg(m_upperBound));
 }
 
-void Transact::finaliseBounds()
+void TransactDialog::finaliseBounds()
 {
 	killTimer(m_gasCalcTimer);
 
@@ -425,7 +425,7 @@ void Transact::finaliseBounds()
 	m_ui->send->setEnabled(true);
 }
 
-GasRequirements Transact::determineGasRequirements()
+GasRequirements TransactDialog::determineGasRequirements()
 {
 	// Determine the minimum amount of gas we need to play...
 	qint64 baseGas = (qint64)Transaction::gasRequired(m_data, 0);
@@ -463,7 +463,7 @@ GasRequirements Transact::determineGasRequirements()
 	return GasRequirements();
 }
 
-void Transact::rejigData()
+void TransactDialog::rejigData()
 {
 	if (!ethereum())
 		return;
@@ -518,7 +518,7 @@ void Transact::rejigData()
 	m_ui->send->setEnabled(true);
 }
 
-Secret Transact::findSecret(u256 _totalReq) const
+Secret TransactDialog::findSecret(u256 _totalReq) const
 {
 	if (!ethereum())
 		return Secret();
@@ -539,7 +539,7 @@ Secret Transact::findSecret(u256 _totalReq) const
 	return m_main->retrieveSecret(best);
 }
 
-Address Transact::fromAccount()
+Address TransactDialog::fromAccount()
 {
 	if (m_ui->from->currentIndex() < 0 || m_ui->from->currentIndex() >= (int)m_accounts.size())
 		return Address();
@@ -548,7 +548,7 @@ Address Transact::fromAccount()
 	return *it;
 }
 
-void Transact::updateNonce()
+void TransactDialog::updateNonce()
 {
 	u256 n = ethereum()->countAt(fromAccount(), PendingBlock);
 	m_ui->nonce->setMaximum((unsigned)n);
@@ -556,7 +556,7 @@ void Transact::updateNonce()
 	m_ui->nonce->setValue((unsigned)n);
 }
 
-void Transact::on_send_clicked()
+void TransactDialog::on_send_clicked()
 {
 //	Secret s = findSecret(value() + fee());
 	u256 nonce = m_ui->autoNonce->isChecked() ? ethereum()->countAt(fromAccount(), PendingBlock) : m_ui->nonce->value();
@@ -600,7 +600,7 @@ void Transact::on_send_clicked()
 	close();
 }
 
-void Transact::on_debug_clicked()
+void TransactDialog::on_debug_clicked()
 {
 //	Secret s = findSecret(value() + fee());
 	Address from = fromAccount();
