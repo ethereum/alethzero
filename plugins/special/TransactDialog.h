@@ -29,7 +29,7 @@
 #include <QList>
 #include "MainFace.h"
 
-namespace Ui { class Transact; }
+namespace Ui { class TransactDialog; }
 
 namespace dev
 {
@@ -49,13 +49,13 @@ struct GasRequirements
 	dev::eth::ExecutionResult er;
 };
 
-class Transact: public QDialog
+class TransactDialog: public QDialog
 {
 	Q_OBJECT
 
 public:
-	explicit Transact(MainFace* _context, QWidget* _parent = 0);
-	~Transact();
+	explicit TransactDialog(MainFace* _main);
+	~TransactDialog();
 
 	void resetGasPrice();
 	void setEnvironment(dev::AddressHash const& _accounts, dev::eth::Client* _eth, NatSpecFace* _natSpecDB);
@@ -100,7 +100,7 @@ private:
 
 	void timerEvent(QTimerEvent*) override;
 
-	Ui::Transact* ui = nullptr;
+	Ui::TransactDialog* m_ui = nullptr;
 
 	unsigned m_backupGas = 0;
 	dev::bytes m_data;

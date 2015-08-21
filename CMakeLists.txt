@@ -16,8 +16,6 @@ project(alethzero VERSION ${PROJECT_VERSION})
 include(EthDefaults)
 eth_defaults()
 
-set(GUI 1)		# TODO: remove once packages are all changed to optional
-
 # Let's find our dependencies
 include(EthDependencies)
 
@@ -39,7 +37,6 @@ eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH
 eth_name(EXECUTABLE AlethZero)
 
 # required for qt5_wrap_ui below, TODO: remove this
-# find_package(Qt5Core)
 find_package(Qt5Widgets)
 
 include_directories(src)

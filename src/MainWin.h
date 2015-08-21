@@ -38,7 +38,6 @@
 #include <libwebthree/WebThree.h>
 #include <libsolidity/CompilerStack.h>
 #include "Context.h"
-#include "Transact.h"
 #include "NatspecHandler.h"
 #include "Connect.h"
 #include "MainFace.h"
@@ -87,7 +86,7 @@ public:
 	std::shared_ptr<shh::WhisperHost> whisper() const override { return m_webThree->whisper(); }
 
 	bool confirm() const;
-	NatSpecFace* natSpec() { return &m_natSpecDB; }
+	NatSpecFace* natSpec() override { return &m_natSpecDB; }
 
 	std::string pretty(dev::Address const& _a) const override;
 	std::string prettyU256(u256 const& _n) const override;
@@ -144,16 +143,9 @@ private slots:
 
 	// Account management
 	void on_killAccount_triggered();
-	void on_importKey_triggered();
 	void on_reencryptKey_triggered();
 	void on_reencryptAll_triggered();
-	void on_importKeyFile_triggered();
-	void on_claimPresale_triggered();
-	void on_importPresale_triggered();
 	void on_exportKey_triggered();
-
-	// Tools
-	void on_newTransaction_triggered();
 
 	// Stuff concerning the blocks/transactions/accounts panels
 	void on_ourAccounts_itemClicked(QListWidgetItem* _i);
@@ -268,7 +260,6 @@ private:
 	static std::string fromRaw(h256 const& _n, unsigned* _inc = nullptr);
 	NatspecHandler m_natSpecDB;
 
-	Transact* m_transact;
 	Connect m_connect;
 
 	std::unordered_set<AccountNamer*> m_namers;
