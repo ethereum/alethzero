@@ -42,7 +42,6 @@ file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
 
 eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
-list(APPEND HEADERS "${CMAKE_CURRENT_BINARY_DIR}/AlethZeroResources.hpp")
 
 eth_name(EXECUTABLE AlethZero)
 
@@ -56,7 +55,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../cpp-ethereum)
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE}
 	ICON alethzero
-	UI_RESOURCES src/Main.ui src/GetPassword.ui src/alethzero.icns
+	UI_RESOURCES src/Main.ui src/GetPassword.ui src/alethzero.icns ${JSRES}
 	WIN_RESOURCES src/alethzero.rc
 )
 

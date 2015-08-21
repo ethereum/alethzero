@@ -49,7 +49,7 @@ JsConsole::JsConsole(MainFace* _m):
 
 	QString content = "<script>\n";
 
-	content += QString::fromStdString(resources.loadResourceAsString("web"));
+	content += QString::fromStdString(resources.loadResourceAsString("web3"));
 	content += "\n";
 	content += QString::fromStdString(resources.loadResourceAsString("setup"));
 	content += "\n";
