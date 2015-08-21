@@ -20,6 +20,7 @@
  */
 
 #include "Transact.h"
+#include <QToolBar>
 #include <libdevcore/Log.h>
 #include <libethereum/Client.h>
 #include <libethcore/KeyManager.h>
@@ -38,7 +39,9 @@ Transact::Transact(MainFace* _m):
 	m_dialog->setWindowFlags(Qt::Dialog);
 	m_dialog->setWindowModality(Qt::WindowModal);
 
-	connect(addMenuItem("New Transaction...", "menuSpecial", true), SIGNAL(triggered()), SLOT(newTransaction()));
+	QAction* a = addMenuItem("New Transaction...", "menuTools", true);
+	connect(a, SIGNAL(triggered()), SLOT(newTransaction()));
+	main()->findChild<QToolBar*>()->addAction(a);
 }
 
 Transact::~Transact()
