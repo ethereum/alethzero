@@ -66,6 +66,8 @@ eth_use(${EXECUTABLE} OPTIONAL Solidity)
 qt5_wrap_ui(ui_Main.h src/Main.ui)
 qt5_wrap_ui(ui_GetPassword.h src/GetPassword.ui)
 
+eth_install_executable(${EXECUTABLE})
+
 eth_package(${EXECUTABLE}
 	NAME "Ethereum"
 	DESCRIPTION "The Ethereum Toolset"
