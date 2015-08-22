@@ -63,3 +63,5 @@ eth_package(${EXECUTABLE}
 	OSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.icns"
 )
 
+add_subdirectory(libnatspec)
+target_link_libraries(${EXECUTABLE} natspec)
