@@ -39,8 +39,18 @@ namespace eth { class Client; }
 namespace az
 {
 
+class ExportState: public QObject, public Plugin
+{
+	Q_OBJECT
 
-class ExportStateDialog: public QDialog, public Plugin
+public:
+	ExportState(MainFace* _m);
+
+private slots:
+	void create();
+};
+
+class ExportStateDialog: public QDialog
 {
 	Q_OBJECT
 
@@ -54,12 +64,12 @@ private slots:
 	void on_saveButton_clicked();
 
 private:
-	void showEvent(QShowEvent* _event) override;
 	void fillBlocks();
 	void fillContracts();
 	void generateJSON();
 
 private:
+	MainFace* m_main;
 	std::unique_ptr<Ui::ExportState> m_ui;
 	int m_recentBlocks = 0;
 	eth::BlockNumber m_block = eth::LatestBlock;
