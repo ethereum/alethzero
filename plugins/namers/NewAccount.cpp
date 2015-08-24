@@ -22,6 +22,8 @@
 #include "NewAccount.h"
 #include <QMenu>
 #include <QDialog>
+#include <QCheckBox>
+#include <QLineEdit>
 #include <libdevcore/Log.h>
 #include <libethcore/KeyManager.h>
 #include <libethereum/Client.h>
@@ -56,79 +58,52 @@ void NewAccount::create()
 	QDialog d;
 	Ui::NewAccount u;
 	u.setupUi(&d);
-	d.setWindowTitle("New Account Wallet");
-	u.hexText->setEnabled(false);
-	u.passwordText->setEnabled(false);
-	u.passwordAgainText->setEnabled(false);
-	u.hintText->setEnabled(false);
+	u.keysPath->setText(QString::fromStdString(getDataDir("web3/keys")));
 
-	QStringList items =
+	auto updateStatus = [&]()
 	{
-		"No vanity (instant)",
-		"Direct ICAP address",
-		"Two pairs first (a few seconds)",
-		"Two pairs first and second (a few minutes)",
-		"Three pairs first (a few minutes)",
-		"Four pairs first (several hours)",
-		"Specific hex string"
-	};
-	u.typeComboBox->addItems(items);
-
-	void (QComboBox:: *indexChangedSignal)(int) = &QComboBox::currentIndexChanged;
-	connect(u.typeComboBox, indexChangedSignal, [&](int index)
-	{
-		u.hexText->setEnabled(index == StringMatch);
-	});
-
-	connect(u.additionalCheckBox, &QCheckBox::clicked, [&]()
-	{
-		bool checked = u.additionalCheckBox->checkState() == Qt::CheckState::Checked;
-		u.passwordText->setEnabled(checked);
-		u.passwordAgainText->setEnabled(checked);
-		u.hintText->setEnabled(checked);
-	});
-
-	connect(u.create, &QPushButton::clicked, [&]()
-	{
-		if (u.additionalCheckBox->checkState() == Qt::CheckState::Checked && !validatePassword(u))
+		bool useMaster = u.useMaster->isChecked();
+		u.password->setEnabled(!useMaster);
+		u.confirm->setEnabled(!useMaster);
+		u.hint->setEnabled(!useMaster);
+		u.status->setText("");
+		bool ok = (useMaster || (!u.password->text().isEmpty() && u.password->text() == u.confirm->text()));
+		if (!ok)
+			u.status->setText("Passphrases must match");
+		if (u.keyName->text().isEmpty())
 		{
-			u.passwordAgainLabel->setStyleSheet("QLabel { color : red }");
-			u.passwordAgainLabel->setText("Invalid! Please re-enter password correctly:");
-			return;
+			ok = false;
+			u.status->setText("Name must not be empty");
+		}
+		u.create->setEnabled(ok);
+	};
+
+	connect(u.useMaster, &QCheckBox::toggled, [&]() { updateStatus(); });
+	connect(u.useOwn, &QCheckBox::toggled, [&]() { updateStatus(); });
+	connect(u.password, &QLineEdit::textChanged, [&]() { updateStatus(); });
+	connect(u.keyName, &QLineEdit::textChanged, [&]() { updateStatus(); });
+	connect(u.confirm, &QLineEdit::textChanged, [&]() { updateStatus(); });
+
+	updateStatus();
+	if (d.exec() == QDialog::Accepted)
+	{
+		Type v = (Type)u.keyType->currentIndex();
+		KeyPair p = newKeyPair(v);
+		QString s = u.keyName->text();
+		if (u.useMaster->isChecked())
+			main()->keyManager().import(p.secret(), s.toStdString());
+		else
+		{
+			std::string hint = u.hint->toPlainText().toStdString();
+			std::string password = u.password->text().toStdString();
+			main()->keyManager().import(p.secret(), s.toStdString(), password, hint);
 		}
 
-		d.accept();
-	});
-
-	if (d.exec() == QDialog::Accepted)
-		onDialogAccepted(u);
-
-}
-
-bool NewAccount::validatePassword(Ui::NewAccount const& _u)
-{
-	return QString::compare(_u.passwordText->toPlainText(), _u.passwordAgainText->toPlainText()) == 0;
-}
-
-void NewAccount::onDialogAccepted(Ui::NewAccount const& _u)
-{
-	Type v = (Type)_u.typeComboBox->currentIndex();
-	bytes bs = fromHex(_u.hexText->toPlainText().toStdString());
-	KeyPair p = newKeyPair(v, bs);
-	QString s = _u.nameText->toPlainText();
-	if (_u.additionalCheckBox->checkState() == Qt::CheckState::Checked)
-	{
-		std::string hint = _u.hintText->toPlainText().toStdString();
-		std::string password = _u.passwordText->toPlainText().toStdString();
-		main()->keyManager().import(p.secret(), s.toStdString(), password, hint);
+		main()->noteKeysChanged();
 	}
-	else
-		main()->keyManager().import(p.secret(), s.toStdString());
-
-	main()->noteKeysChanged();
 }
 
-KeyPair NewAccount::newKeyPair(Type _type, bytes const& _prefix)
+KeyPair NewAccount::newKeyPair(Type _type)
 {
 	KeyPair p;
 	bool keepGoing = true;
@@ -143,13 +118,12 @@ KeyPair NewAccount::newKeyPair(Type _type, bytes const& _prefix)
 			lp = KeyPair::create();
 			auto a = lp.address();
 			if (_type == NoVanity ||
-					(_type == DirectICAP && !a[0]) ||
-					(_type == FirstTwo && a[0] == a[1]) ||
-					(_type == FirstTwoNextTwo && a[0] == a[1] && a[2] == a[3]) ||
-					(_type == FirstThree && a[0] == a[1] && a[1] == a[2]) ||
-					(_type == FirstFour && a[0] == a[1] && a[1] == a[2] && a[2] == a[3]) ||
-					(_type == StringMatch && beginsWith(lp.address(), _prefix))
-					)
+				(_type == DirectICAP && !a[0]) ||
+				(_type == FirstTwo && a[0] == a[1]) ||
+				(_type == FirstTwoNextTwo && a[0] == a[1] && a[2] == a[3]) ||
+				(_type == FirstThree && a[0] == a[1] && a[1] == a[2]) ||
+				(_type == FirstFour && a[0] == a[1] && a[1] == a[2] && a[2] == a[3])
+			)
 				break;
 		}
 		if (keepGoing)

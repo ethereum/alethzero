@@ -46,10 +46,8 @@ private slots:
 	void create();
 
 private:
-	enum Type { NoVanity = 0, DirectICAP, FirstTwo, FirstTwoNextTwo, FirstThree, FirstFour, StringMatch };
-	bool validatePassword(Ui::NewAccount const& _u);
-	void onDialogAccepted(Ui::NewAccount const& _u);
-	KeyPair newKeyPair(Type _type, bytes const& _prefix);
+	enum Type { DirectICAP = 0, NoVanity, FirstTwo, FirstTwoNextTwo, FirstThree, FirstFour };
+	static KeyPair newKeyPair(Type _type);
 };
 
 }

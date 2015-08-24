@@ -56,7 +56,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>New &amp;Password:</string>
+        <string>New &amp;Passphrase:</string>
        </property>
        <attribute name="buttonGroup">
         <string notr="true">buttonGroup</string>
@@ -86,7 +86,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>&amp;Master password</string>
+        <string>&amp;Master Passphrase</string>
        </property>
        <property name="checked">
         <bool>true</bool>
@@ -105,7 +105,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>&amp;Old password</string>
+        <string>&amp;Old Passphrase</string>
        </property>
        <attribute name="buttonGroup">
         <string notr="true">buttonGroup</string>
@@ -115,7 +115,7 @@
      <item row="8" column="2">
       <widget class="QLineEdit" name="password">
        <property name="placeholderText">
-        <string>Enter the password you wish to use for the key here</string>
+        <string>Enter the passphrase you wish to use for the key here</string>
        </property>
       </widget>
      </item>
@@ -129,7 +129,7 @@
      <item row="10" column="0" colspan="2">
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Password &amp;Hash:</string>
+        <string>Passphrase &amp;Hash:</string>
        </property>
        <property name="buddy">
         <cstring>passwordHash</cstring>
@@ -139,7 +139,7 @@
      <item row="11" column="0" colspan="2">
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Password Hin&amp;t:</string>
+        <string>Passphrase Hin&amp;t:</string>
        </property>
        <property name="buddy">
         <cstring>hint</cstring>
@@ -152,7 +152,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Use same password for the key as for the master.</string>
+        <string>Use same passphrase for the key as for the master.</string>
        </property>
        <property name="wordWrap">
         <bool>false</bool>
@@ -185,7 +185,7 @@
         <bool>false</bool>
        </property>
        <property name="text">
-        <string>Use the same password as in the key file.</string>
+        <string>Use the same passphrase as in the key file.</string>
        </property>
       </widget>
      </item>

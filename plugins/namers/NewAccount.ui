@@ -7,66 +7,27 @@
     <x>0</x>
     <y>0</y>
     <width>511</width>
-    <height>600</height>
+    <height>444</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>New Account</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QLabel" name="typeLabel">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>50</height>
-      </size>
-     </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="8" column="0" colspan="2">
+    <widget class="QRadioButton" name="useOwn">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Select new account type:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>Encrypt the key with its &amp;own passphrase (more security)</string>
      </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
+     <attribute name="buttonGroup">
+      <string notr="true">passType</string>
+     </attribute>
     </widget>
    </item>
-   <item>
-    <widget class="QComboBox" name="typeComboBox">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>16777215</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="hexLabel">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>50</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter some hex digits it should begin with.&lt;br/&gt;NOTE: The more you enter, the longer generation will take.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QTextEdit" name="hexText">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>21</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item>
+   <item row="1" column="0">
     <widget class="QLabel" name="nameLabel">
      <property name="maximumSize">
       <size>
@@ -75,21 +36,73 @@
       </size>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Enter this account name:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;amp;Name:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="buddy">
+      <cstring>keyName</cstring>
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="QTextEdit" name="nameText">
+   <item row="2" column="0">
+    <widget class="QLabel" name="typeLabel">
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>21</height>
+       <height>50</height>
       </size>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;amp;Address Type:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+     <property name="buddy">
+      <cstring>keyType</cstring>
      </property>
     </widget>
    </item>
-   <item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="keyType">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <item>
+      <property name="text">
+       <string>Normal address</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>ICAP-35 address (IBAN incompatible)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Two pairs first (a few seconds)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Two pairs first and second (a few minutes)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Three pairs first (a few minutes)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Four pairs first (several hours)</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="2">
     <widget class="QLabel" name="additionalLabel">
      <property name="maximumSize">
       <size>
@@ -98,25 +111,18 @@
       </size>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Would you like to add additional security for this key? This lets you protect it with a different password to other keys, but also means that you need to re-enter the key's password every time you wish to use the account.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Creating a new account will give you a new &amp;quot;identity&amp;quot;.&lt;/span&gt; Accounts can hold ether but can also be used to identify you to services. Accounts are usable by anyone who has the key (a file on your computer) and the passphrase for it. You should never share your passphrase. You should always back-up your keys.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="QCheckBox" name="additionalCheckBox">
-     <property name="text">
-      <string>Yes</string>
-     </property>
-     <property name="checked">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
+   <item row="9" column="0">
     <widget class="QLabel" name="passwordLabel">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
@@ -124,62 +130,35 @@
       </size>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Enter password:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;amp;Passphrase:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="buddy">
+      <cstring>password</cstring>
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="QTextEdit" name="passwordText">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>21</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="passwordAgainLabel">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>50</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Enter password again:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QTextEdit" name="passwordAgainText">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>21</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item>
+   <item row="14" column="0" alignment="Qt::AlignTop">
     <widget class="QLabel" name="hintLabel">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Enter hint:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Passphrase &amp;amp;Hint:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="buddy">
+      <cstring>hint</cstring>
      </property>
     </widget>
    </item>
-   <item>
-    <widget class="QTextEdit" name="hintText">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>50</height>
-      </size>
-     </property>
-    </widget>
-   </item>
-   <item>
+   <item row="16" column="0" colspan="2">
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLabel" name="status">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
@@ -211,6 +190,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="create">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -236,8 +218,122 @@
      </item>
     </layout>
    </item>
+   <item row="11" column="0">
+    <widget class="QLabel" name="passwordAgainLabel">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>50</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&amp;amp;Confirm Passphrase:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="buddy">
+      <cstring>confirm</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QLineEdit" name="password">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="placeholderText">
+      <string>Enter a passphrase here</string>
+     </property>
+    </widget>
+   </item>
+   <item row="11" column="1">
+    <widget class="QLineEdit" name="confirm">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="placeholderText">
+      <string>Enter the same passphrase here</string>
+     </property>
+    </widget>
+   </item>
+   <item row="14" column="1">
+    <widget class="QTextEdit" name="hint">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>50</height>
+      </size>
+     </property>
+     <property name="placeholderText">
+      <string>Provide a hint to help you remember the passphrase here</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLineEdit" name="keyName">
+     <property name="placeholderText">
+      <string>Enter a name for the account here</string>
+     </property>
+    </widget>
+   </item>
+   <item row="15" column="1">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QRadioButton" name="useMaster">
+     <property name="text">
+      <string>Encrypt the key with the &amp;Master passphrase (less security)</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <attribute name="buttonGroup">
+      <string notr="true">passType</string>
+     </attribute>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Your key is in the directory</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1">
+    <widget class="QLineEdit" name="keysPath">
+     <property name="readOnly">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>keyName</tabstop>
+  <tabstop>keyType</tabstop>
+  <tabstop>keysPath</tabstop>
+  <tabstop>useMaster</tabstop>
+  <tabstop>useOwn</tabstop>
+  <tabstop>password</tabstop>
+  <tabstop>confirm</tabstop>
+  <tabstop>hint</tabstop>
+  <tabstop>cancel</tabstop>
+  <tabstop>create</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -247,14 +343,33 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>381</x>
-     <y>483</y>
+     <x>372</x>
+     <y>407</y>
     </hint>
     <hint type="destinationlabel">
      <x>351</x>
-     <y>506</y>
+     <y>443</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>create</sender>
+   <signal>clicked()</signal>
+   <receiver>NewAccount</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>487</x>
+     <y>422</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>173</x>
+     <y>428</y>
     </hint>
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="passType"/>
+ </buttongroups>
 </ui>
