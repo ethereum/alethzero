@@ -22,6 +22,8 @@
 #include "JsConsoleWidget.h"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <QWebEngineView>
+#include <QScrollBar>
+#include <QKeyEvent>
 #include "WebPage.h"
 #include "Context.h"
 #include "ui_JsConsoleWidget.h"
@@ -34,6 +36,8 @@ JsConsoleWidget::JsConsoleWidget(QWidget* _p):
 	m_ui(new Ui::JsConsoleWidget())
 {
 	m_ui->setupUi(this);
+	m_ui->jsInput->setAlignment(Qt::AlignBottom);
+	m_ui->jsInput->installEventFilter(this);
 }
 
 JsConsoleWidget::~JsConsoleWidget()
@@ -83,11 +87,45 @@ void JsConsoleWidget::addConsoleMessage(QString const& _js, QString const& _s)
 				"<div style=\"border-bottom: 1 solid #eee; width: 100%\"><span style=\"float: left; width: 1em\">&nbsp;</span><span>" + i.second + "</span></div>";
 	r += "</div></body></html>";
 	m_ui->jsConsole->setHtml(r);
+	m_ui->jsConsole->verticalScrollBar()->setSliderPosition(m_ui->jsConsole->verticalScrollBar()->maximum());
 }
 
 void JsConsoleWidget::execConsoleCommand()
 {
-	eval(m_ui->jsInput->text());
-	m_ui->jsInput->setText("");
+	if (!m_ui->jsInput->text().isEmpty())
+	{
+		m_inputHistory.push_back(m_ui->jsInput->text());
+		eval(m_ui->jsInput->text());
+		m_ui->jsInput->setText("");
+		m_historyIndex = m_inputHistory.size();
+	}
+}
+
+bool JsConsoleWidget::eventFilter(QObject* _obj, QEvent* _event)
+{
+	(void)_obj;
+	if (_event->type() == QEvent::KeyPress)
+	{
+		QKeyEvent* keyEvent = static_cast<QKeyEvent*>(_event);
+		if (keyEvent->key() == Qt::Key_Up)
+		{
+			if (m_historyIndex > 0 && !m_inputHistory.empty())
+			{
+				m_historyIndex--;
+				m_ui->jsInput->setText(m_inputHistory[m_historyIndex]);
+			}
+			return true;
+		}
+		else if(keyEvent->key() == Qt::Key_Down)
+		{
+			if (m_historyIndex + 1 < m_inputHistory.size())
+			{
+				m_historyIndex++;
+				m_ui->jsInput->setText(m_inputHistory[m_historyIndex]);
+			}
+			return true;
+		}
+	}
+	return false;
 }
 

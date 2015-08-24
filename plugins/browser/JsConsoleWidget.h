@@ -45,6 +45,9 @@ public:
 	void eval(QString const& _js);
 	void setWebView(QWebEngineView* _webview);
 
+protected:
+	bool eventFilter(QObject* _obj, QEvent* _event) override;
+
 private slots:
 	void addConsoleMessage(QString const& _js, QString const& _s);
 	void execConsoleCommand();
@@ -52,7 +55,9 @@ private slots:
 private:
 	std::unique_ptr<Ui::JsConsoleWidget> m_ui;
 	QList<QPair<QString, QString>> m_consoleHistory;
+	QList<QString> m_inputHistory;
 	QWebEngineView* m_webView = nullptr;
+	int m_historyIndex = 0;
 };
 
 }

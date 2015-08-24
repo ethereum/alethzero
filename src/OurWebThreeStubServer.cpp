@@ -23,7 +23,7 @@
 #include <QMessageBox>
 #include <QAbstractButton>
 #include <libwebthree/WebThree.h>
-#include <libnatspec/NatspecExpressionEvaluator.h>
+#include "QNatspec.h"
 #include "MainWin.h"
 using namespace std;
 using namespace dev;
@@ -164,8 +164,8 @@ bool OurAccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _
 	if (userNotice.empty())
 		return showUnknownCallNotice(_t, _toProxy);
 
-	NatspecExpressionEvaluator evaluator;
-	userNotice = evaluator.evalExpression(QString::fromStdString(userNotice)).toStdString();
+	QNatspecExpressionEvaluator evaluator;
+	userNotice = evaluator.evalExpression(userNotice);
 
 	// otherwise it's a transaction to a contract for which we have the natspec
 	return showAuthenticationPopup("Contract Transaction",

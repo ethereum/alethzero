@@ -27,6 +27,7 @@ include(EthUtils)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
+file(GLOB_RECURSE UI_RESOURCES "src/*.ui" "plugins/*.ui")
 
 # required for eth_add_resources, TODO: remove this
 set(ETH_DIR             "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
@@ -43,7 +44,7 @@ include_directories(src)
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE}
 	ICON alethzero
-	UI_RESOURCES src/Main.ui src/GetPassword.ui src/alethzero.icns ${JSRES}
+	UI_RESOURCES ${UI_RESOURCES} src/alethzero.icns ${JSRES}
 	WIN_RESOURCES src/alethzero.rc
 )
 
@@ -63,5 +64,3 @@ eth_package(${EXECUTABLE}
 	OSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.icns"
 )
 
-add_subdirectory(libnatspec)
-target_link_libraries(${EXECUTABLE} natspec)
