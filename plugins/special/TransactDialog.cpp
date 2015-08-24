@@ -37,7 +37,7 @@
 #include <libsolidity/AST.h>
 #include <libsolidity/SourceReferenceFormatter.h>
 #endif
-#include <libnatspec/NatspecExpressionEvaluator.h>
+#include "QNatspec.h"
 #include <libethereum/Client.h>
 #include <libethereum/Utility.h>
 #include <libethcore/ICAP.h>
@@ -319,8 +319,8 @@ string TransactDialog::natspecNotice(Address _to, bytes const& _data)
 			return "Destination contract unknown.";
 		else
 		{
-			NatspecExpressionEvaluator evaluator;
-			return evaluator.evalExpression(QString::fromStdString(userNotice)).toStdString();
+			QNatspecExpressionEvaluator evaluator;
+			return evaluator.evalExpression(userNotice);
 		}
 	}
 	else
