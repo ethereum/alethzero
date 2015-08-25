@@ -579,12 +579,12 @@ void TransactDialog::on_send_clicked()
 		// a local Natspec LEVELDB
 		ethereum()->submitTransaction(s, value(), m_data, gas(), gasPrice(), nonce);
 #if ETH_SOLIDITY
-		string src = ui->data->toPlainText().toStdString();
+		string src = m_ui->data->toPlainText().toStdString();
 		if (sourceIsSolidity(src))
 			try
 			{
 				dev::solidity::CompilerStack compiler(true);
-				m_data = compiler.compile(src, ui->optimize->isChecked());
+				m_data = compiler.compile(src, m_ui->optimize->isChecked());
 				for (string const& s: compiler.getContractNames())
 				{
 					h256 contractHash = compiler.getContractCodeHash(s);
