@@ -30,7 +30,11 @@ file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
 file(GLOB_RECURSE UI_RESOURCES "src/*.ui" "plugins/*.ui")
 
 # required for eth_add_resources, TODO: remove this
-set(ETH_DIR             "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
+if (DEFINED ethereum_SOURCE_DIR)
+	set(ETH_DIR ${ethereum_SOURCE_DIR})
+else()
+	set(ETH_DIR             "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
+endif()
 
 eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
 
@@ -63,4 +67,3 @@ eth_package(${EXECUTABLE}
 	WIN_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.ico"
 	OSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.icns"
 )
-
