@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>477</width>
-    <height>221</height>
+    <width>824</width>
+    <height>142</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,7 +48,7 @@
      <item row="3" column="0" colspan="2">
       <widget class="QCheckBox" name="required">
        <property name="text">
-        <string>Required (Always Connect to this Peer)</string>
+        <string>Required (always connect to this peer)</string>
        </property>
        <property name="checked">
         <bool>true</bool>
