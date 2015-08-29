@@ -19,10 +19,9 @@
  * @date 2015
  */
 
-#include <libweb3jsonrpc/SafeHttpServer.h>
 #include "Cors.h"
+#include <libweb3jsonrpc/SafeHttpServer.h>
 #include "ui_Cors.h"
-
 using namespace std;
 using namespace dev;
 using namespace az;
@@ -33,21 +32,39 @@ DEV_AZ_NOTE_PLUGIN(Cors);
 Cors::Cors(MainFace* _m):
 	Plugin(_m, "Cors")
 {
-	connect(addMenuItem("Change cors domain", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
+	connect(addMenuItem("Change CORS Domain...", "menuTools", true), SIGNAL(triggered()), SLOT(showDialog()));
 }
 
 Cors::~Cors()
 {
 }
 
-void Cors::create()
+void Cors::showDialog()
 {
 	QDialog d;
 	Ui::Cors u;
 	u.setupUi(&d);
 
-	u.domain->setText(QString::fromStdString(main()->web3ServerConnector()->allowedOrigin()));
-	if (d.exec() == QDialog::Accepted)	
-		main()->web3ServerConnector()->setAllowedOrigin(u.domain->text().toStdString());
+	string domain = main()->web3ServerConnector()->allowedOrigin();
+	if (domain == "")
+		u.disallow->setChecked(true);
+	else if (domain == "*")
+		u.allow->setChecked(true);
+	else
+	{
+		u.special->setChecked(true);
+		u.domain->setText(QString::fromStdString(domain));
+	}
+
+	if (d.exec() == QDialog::Accepted)
+	{
+		if (u.allow->isChecked())
+			domain = "*";
+		else if (u.disallow->isChecked())
+			domain = "";
+		else
+			domain = u.domain->text().toStdString();
+		main()->web3ServerConnector()->setAllowedOrigin(domain);
+	}
 }
 

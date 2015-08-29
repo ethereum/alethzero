@@ -43,7 +43,7 @@ public:
 	~Cors();
 
 private slots:
-	void create();
+	void showDialog();
 };
 
 }
