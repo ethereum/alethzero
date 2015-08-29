@@ -49,12 +49,10 @@ namespace Ui {
 class Main;
 }
 
-namespace jsonrpc {
-class HttpServer;
-}
-
 namespace dev
 {
+
+class SafeHttpServer;
 
 namespace eth
 {
@@ -82,6 +80,7 @@ public:
 
 	WebThreeDirect* web3() const override { return m_webThree.get(); }
 	OurWebThreeStubServer* web3Server() const override { return m_server.get(); }
+	dev::SafeHttpServer* web3ServerConnector() const override { return m_httpConnector.get(); }
 	eth::Client* ethereum() const override { return m_webThree->ethereum(); }
 	std::shared_ptr<shh::WhisperHost> whisper() const override { return m_webThree->whisper(); }
 
@@ -254,7 +253,7 @@ private:
 
 	QActionGroup* m_vmSelectionGroup = nullptr;
 
-	std::unique_ptr<jsonrpc::HttpServer> m_httpConnector;
+	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;
 	std::unique_ptr<OurWebThreeStubServer> m_server;
 
 	static std::string fromRaw(h256 const& _n, unsigned* _inc = nullptr);
