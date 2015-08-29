@@ -38,6 +38,7 @@ namespace dev
 {
 
 class WebThreeDirect;
+class SafeHttpServer;
 namespace eth { class Client; class LogFilter; }
 namespace shh { class WhisperHost; }
 
@@ -96,6 +97,7 @@ public:
 	virtual dev::WebThreeDirect* web3() const = 0;
 	virtual dev::eth::Client* ethereum() const = 0;
 	virtual OurWebThreeStubServer* web3Server() const = 0;
+	virtual dev::SafeHttpServer* web3ServerConnector() const = 0;
 	virtual std::shared_ptr<dev::shh::WhisperHost> whisper() const = 0;
 	virtual NatSpecFace* natSpec() = 0;
 
