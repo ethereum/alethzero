@@ -52,11 +52,8 @@ protected:
 	virtual dev::h256 authenticate(dev::eth::TransactionSkeleton const& _t) override;
 
 private:
+	std::pair<bool, std::string> getUserNotice(eth::TransactionSkeleton const& _t);
 	bool showAuthenticationPopup(std::string const& _title, std::string const& _text);
-	bool showCreationNotice(eth::TransactionSkeleton const& _t, bool _toProxy);
-	bool showSendNotice(eth::TransactionSkeleton const& _t, bool _toProxy);
-	bool showUnknownCallNotice(eth::TransactionSkeleton const& _t, bool _toProxy);
-
 	bool validateTransaction(eth::TransactionSkeleton const& _t, bool _toProxy);
 
 	std::queue<eth::TransactionSkeleton> m_queued;

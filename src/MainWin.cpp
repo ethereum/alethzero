@@ -62,7 +62,6 @@
 #include <jsonrpccpp/server/connectors/httpserver.h>
 #include "MainWin.h"
 #include "DownloadView.h"
-#include "MiningView.h"
 #include "BuildInfo.h"
 #include "OurWebThreeStubServer.h"
 #include "Debugger.h"
@@ -888,17 +887,6 @@ void Main::refreshMining()
 		t = QString("DAG for #%1-#%2: %3% complete; ").arg(gp.first).arg(gp.first + ETHASH_EPOCH_LENGTH - 1).arg(gp.second);
 	WorkingProgress p = ethereum()->miningProgress();
 	ui->mineStatus->setText(t + (ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
-	if (ethereum()->isMining() && p.hashes > 0)
-	{
-		if (!ui->miningView->isVisible())
-			return;
-		list<MineInfo> l = ethereum()->miningHistory();
-		static unsigned lh = 0;
-		if (p.hashes < lh)
-			ui->miningView->resetStats();
-		lh = p.hashes;
-		ui->miningView->appendStats(l, p);
-	}
 }
 
 void Main::setBeneficiary(Address const& _b)

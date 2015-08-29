@@ -73,33 +73,6 @@ bool OurAccountHolder::showAuthenticationPopup(string const& _title, string cons
 	//return button == QMessageBox::Ok;
 }
 
-bool OurAccountHolder::showCreationNotice(TransactionSkeleton const& _t, bool _toProxy)
-{
-	return showAuthenticationPopup("Contract Creation Transaction", string("ÐApp is attemping to create a contract; ") + (_toProxy ? "(this transaction is not executed directly, but forwarded to another ÐApp) " : "") + "to be endowed with " + formatBalance(_t.value) + ", with additional network fees of up to " + formatBalance(_t.gas * _t.gasPrice) + ".\n\nMaximum total cost is " + formatBalance(_t.value + _t.gas * _t.gasPrice) + ".");
-}
-
-bool OurAccountHolder::showSendNotice(TransactionSkeleton const& _t, bool _toProxy)
-{
-	return showAuthenticationPopup("Fund Transfer Transaction", "ÐApp is attempting to send " + formatBalance(_t.value) + " to a recipient " + m_main->pretty(_t.to) + (_toProxy ? " (this transaction is not executed directly, but forwarded to another ÐApp)" : "") +
-", with additional network fees of up to " + formatBalance(_t.gas * _t.gasPrice) + ".\n\nMaximum total cost is " + formatBalance(_t.value + _t.gas * _t.gasPrice) + ".");
-}
-
-bool OurAccountHolder::showUnknownCallNotice(TransactionSkeleton const& _t, bool _toProxy)
-{
-	return showAuthenticationPopup("DANGEROUS! Unknown Contract Transaction!",
-		"ÐApp is attempting to call into an unknown contract at address " +
-		m_main->pretty(_t.to) + ".\n\n" +
-		(_toProxy ? "This transaction is not executed directly, but forwarded to another ÐApp.\n\n" : "")  +
-		"Call involves sending " +
-		formatBalance(_t.value) + " to the recipient, with additional network fees of up to " +
-		formatBalance(_t.gas * _t.gasPrice) +
-		"However, this also does other stuff which we don't understand, and does so in your name.\n\n" +
-		"WARNING: This is probably going to cost you at least " +
-		formatBalance(_t.value + _t.gas * _t.gasPrice) +
-		", however this doesn't include any side-effects, which could be of far greater importance.\n\n" +
-		"REJECT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!");
-}
-
 h256 OurAccountHolder::authenticate(TransactionSkeleton const& _t)
 {
 	Guard l(x_queued);
@@ -146,40 +119,17 @@ bool OurAccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _
 	if (!m_main->doConfirm())
 		return true;
 
-	if (_t.creation)
-	{
-		// show notice concerning the creation code. TODO: this needs entering into natspec.
-		return showCreationNotice(_t, _toProxy);
-	}
-
-	h256 contractCodeHash = m_main->ethereum()->postState().codeHash(_t.to);
-	if (contractCodeHash == EmptySHA3)
-	{
-		// recipient has no code - nothing special about this transaction, show basic value transfer info
-		return showSendNotice(_t, _toProxy);
-	}
-
-	string userNotice = m_main->natSpec()->getUserNotice(contractCodeHash, _t.data);
-
-	if (userNotice.empty())
-		return showUnknownCallNotice(_t, _toProxy);
-
-	QNatspecExpressionEvaluator evaluator;
-	userNotice = evaluator.evalExpression(userNotice);
-
-	// otherwise it's a transaction to a contract for which we have the natspec
-	return showAuthenticationPopup("Contract Transaction",
-		"ÐApp attempting to conduct contract interaction with " +
-		m_main->pretty(_t.to) +
-		": <b>" + userNotice + "</b>.\n\n" +
-		(_toProxy ? "This transaction is not executed directly, but forwarded to another ÐApp.\n\n" : "") +
-		(_t.value > 0 ?
-			"In addition, ÐApp is attempting to send " +
-			formatBalance(_t.value) + " to said recipient, with additional network fees of up to " +
-			formatBalance(_t.gas * _t.gasPrice) + " = " +
-			formatBalance(_t.value + _t.gas * _t.gasPrice) + "."
-		:
-			"Additional network fees are at most" +
-			formatBalance(_t.gas * _t.gasPrice) + ".")
-		);
+	return showAuthenticationPopup("Transaction", _t.userReadable(_toProxy,
+		[&](TransactionSkeleton const& _t) -> pair<bool, string>
+		{
+			h256 contractCodeHash = m_main->ethereum()->postState().codeHash(_t.to);
+			if (contractCodeHash == EmptySHA3)
+				return make_pair(false, std::string());
+			string userNotice = m_main->natSpec()->getUserNotice(contractCodeHash, _t.data);
+			QNatspecExpressionEvaluator evaluator;
+			userNotice = evaluator.evalExpression(userNotice);
+			return std::make_pair(true, userNotice);
+		},
+		[&](Address const& _a) -> string { return m_main->pretty(_a); }
+	));
 }

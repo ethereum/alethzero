@@ -646,39 +646,6 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QDockWidget" name="dockWidget_10">
-   <property name="features">
-    <set>QDockWidget::DockWidgetFeatureMask</set>
-   </property>
-   <property name="windowTitle">
-    <string>Mining</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>1</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_10">
-    <layout class="QHBoxLayout" name="horizontalLayout_6">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="dev::az::MiningView" name="miningView" native="true"/>
-     </item>
-    </layout>
-   </widget>
-  </widget>
   <widget class="QDockWidget" name="dockWidget_12">
    <property name="features">
     <set>QDockWidget::DockWidgetFeatureMask</set>
@@ -1168,12 +1135,6 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
-  <customwidget>
-   <class>dev::az::MiningView</class>
-   <extends>QWidget</extends>
-   <header>MiningView.h</header>
-   <container>1</container>
-  </customwidget>
   <customwidget>
    <class>dev::az::SyncView</class>
    <extends>QWidget</extends>
