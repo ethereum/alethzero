@@ -148,7 +148,6 @@ private slots:
 	// Stuff concerning the blocks/transactions/accounts panels
 	void on_ourAccounts_itemClicked(QListWidgetItem* _i);
 	void on_ourAccounts_doubleClicked();
-	void on_transactionQueue_currentItemChanged();
 
 	// Misc
 	void on_nameReg_textChanged();
@@ -166,9 +165,6 @@ private slots:
 	void on_vmJIT_triggered();
 	void on_vmSmart_triggered();
 	void on_rewindChain_triggered();
-
-	// Debugger
-	void on_debugPending_triggered();
 
 	// Config
 	void on_sentinel_triggered();
@@ -199,7 +195,6 @@ private:
 
 	void keysChanged();
 
-	void onNewPending();
 	void onNewBlock();
 	void onNameRegChange();
 	void onCurrenciesChange();
@@ -214,10 +209,8 @@ private:
 
 	void refreshNetwork();
 	void refreshMining();
-	void refreshCache();
 
 	void refreshAll();
-	void refreshPending();
 	void refreshBlockCount();
 	void refreshBalances();
 

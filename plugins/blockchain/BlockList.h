@@ -59,6 +59,7 @@ private:
 	Ui::BlockList* m_ui;
 
 	unsigned m_newBlockWatch;
+	bool m_inhibitInfoRefresh;
 };
 
 }

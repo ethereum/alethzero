@@ -185,7 +185,7 @@ Main::Main(QWidget* _parent):
 
 	ethereum()->setDefault(LatestBlock);
 
-	m_vmSelectionGroup = new QActionGroup{ui->menuDebug};
+	m_vmSelectionGroup = new QActionGroup{ui->menuConfig};
 	m_vmSelectionGroup->addAction(ui->vmInterpreter);
 	m_vmSelectionGroup->addAction(ui->vmJIT);
 	m_vmSelectionGroup->addAction(ui->vmSmart);
@@ -393,18 +393,11 @@ void Main::installWatches()
 {
 	auto newBlockId = installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
 		onNewBlock();
-		onNewPending();
-	});
-	auto newPendingId = installWatch(PendingChangedFilter, [=](LocalisedLogEntries const&){
-		onNewPending();
 	});
 
 	cdebug << "newBlock watch ID: " << newBlockId;
-	cdebug << "newPending watch ID: " << newPendingId;
-
-//	installWatch(LogFilter().address(c_newConfig), [=](LocalisedLogEntries const&) { installNameRegWatch(); });
-//	installWatch(LogFilter().address(c_newConfig), [=](LocalisedLogEntries const&) { installCurrenciesWatch(); });
 }
+
 Address Main::getCurrencies() const
 {
 //	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)3)).output);
@@ -478,14 +471,6 @@ void Main::onNewBlock()
 
 	// We must update balances since we can't filter updates to basic accounts.
 	refreshBalances();
-}
-
-void Main::onNewPending()
-{
-	cwatch << "Pending transactions changed!";
-
-	// update any pending-transaction dependent views.
-	refreshPending();
 }
 
 void Main::on_forceMining_triggered()
@@ -969,31 +954,8 @@ void Main::refreshNetwork()
 void Main::refreshAll()
 {
 	refreshBlockCount();
-	refreshPending();
 	refreshBalances();
 	allChange();
-}
-
-void Main::refreshPending()
-{
-	cwatch << "refreshPending()";
-	ui->transactionQueue->clear();
-	for (Transaction const& t: ethereum()->pending())
-	{
-		QString s = t.receiveAddress() ?
-			QString("%2 %5> %3: %1 [%4]")
-				.arg(formatBalance(t.value()).c_str())
-				.arg(QString::fromStdString(render(t.safeSender())))
-				.arg(QString::fromStdString(render(t.receiveAddress())))
-				.arg((unsigned)t.nonce())
-				.arg(ethereum()->codeAt(t.receiveAddress()).size() ? '*' : '-') :
-			QString("%2 +> %3: %1 [%4]")
-				.arg(formatBalance(t.value()).c_str())
-				.arg(QString::fromStdString(render(t.safeSender())))
-				.arg(QString::fromStdString(render(right160(sha3(rlpList(t.safeSender(), t.nonce()))))))
-				.arg((unsigned)t.nonce());
-		ui->transactionQueue->addItem(s);
-	}
 }
 
 void Main::refreshBlockCount()
@@ -1022,7 +984,7 @@ void Main::on_refresh_triggered()
 {
 	refreshAll();
 }
-
+/*
 static std::string niceUsed(unsigned _n)
 {
 	static const vector<std::string> c_units = { "bytes", "KB", "MB", "GB", "TB", "PB" };
@@ -1060,7 +1022,7 @@ void Main::refreshCache()
 	t += ")";
 	ui->cacheUsage->setText(t);
 }
-
+*/
 void Main::timerEvent(QTimerEvent*)
 {
 	// 7/18, Alex: aggregating timers, prelude to better threading?
@@ -1079,7 +1041,6 @@ void Main::timerEvent(QTimerEvent*)
 	{
 		interval = 0;
 		refreshNetwork();
-		refreshCache();
 		refreshBlockCount();
 		poll();
 	}
@@ -1159,61 +1120,6 @@ string Main::renderDiff(StateDiff const& _d) const
 	return s.str();
 }
 
-void Main::on_transactionQueue_currentItemChanged()
-{
-	ui->pendingInfo->clear();
-
-	stringstream s;
-	int i = ui->transactionQueue->currentRow();
-	if (i >= 0 && i < (int)ethereum()->pending().size())
-	{
-		ui->debugPending->setEnabled(true);
-		Transaction tx(ethereum()->pending()[i]);
-		TransactionReceipt receipt(ethereum()->postState().receipt(i));
-		auto ss = tx.safeSender();
-		h256 th = sha3(rlpList(ss, tx.nonce()));
-		s << "<h3>" << th << "</h3>";
-		s << "From: <b>" << pretty(ss) << "</b> " << ss;
-		if (tx.isCreation())
-			s << "<br/>Creates: <b>" << pretty(right160(th)) << "</b> " << right160(th);
-		else
-			s << "<br/>To: <b>" << pretty(tx.receiveAddress()) << "</b> " << tx.receiveAddress();
-		s << "<br/>Value: <b>" << formatBalance(tx.value()) << "</b>";
-		s << "&nbsp;&emsp;&nbsp;#<b>" << tx.nonce() << "</b>";
-		s << "<br/>Gas price: <b>" << formatBalance(tx.gasPrice()) << "</b>";
-		s << "<br/>Gas: <b>" << tx.gas() << "</b>";
-		if (tx.isCreation())
-		{
-			if (tx.data().size())
-				s << "<h4>Code</h4>" << disassemble(tx.data());
-		}
-		else
-		{
-			if (tx.data().size())
-				s << dev::memDump(tx.data(), 16, true);
-		}
-		s << "<div>Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(tx.rlp()) << "</span></div>";
-		s << "<hr/>";
-		if (!!receipt.bloom())
-			s << "<div>Log Bloom: " << receipt.bloom() << "</div>";
-		else
-			s << "<div>Log Bloom: <b><i>Uneventful</i></b></div>";
-		s << "<div>Gas Used: <b>" << receipt.gasUsed() << "</b></div>";
-		s << "<div>End State: <b>" << receipt.stateRoot().abridged() << "</b></div>";
-		auto r = receipt.rlp();
-		s << "<div>Receipt: " << toString(RLP(r)) << "</div>";
-		s << "<div>Receipt-Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(receipt.rlp()) << "</span></div>";
-		s << renderDiff(ethereum()->diff(i, PendingBlock));
-//		s << "Pre: " << fs.rootHash() << "<br/>";
-//		s << "Post: <b>" << ts.rootHash() << "</b>";
-	}
-	else
-		ui->debugPending->setEnabled(false);
-
-	ui->pendingInfo->setHtml(QString::fromStdString(s.str()));
-	ui->pendingInfo->moveCursor(QTextCursor::Start);
-}
-
 void Main::on_injectBlock_triggered()
 {
 	QString s = QInputDialog::getText(this, "Inject Block", "Enter block dump in hex");
@@ -1231,22 +1137,6 @@ void Main::on_injectBlock_triggered()
 	{
 		cwarn << "block rejected";
 	}
-}
-
-void Main::on_debugPending_triggered()
-{
-	int txi = ui->transactionQueue->currentRow();
-	if (txi == -1)
-		return;
-
-	Block b = ethereum()->postState();
-	bytes t = b.pending()[txi].rlp();
-	State s(ethereum()->state(txi));
-	BlockInfo bi(b.info());
-	Executive e(s, ethereum()->blockChain(), EnvInfo(bi));
-	Debugger dw(this, this);
-	dw.populate(e, Transaction(t, CheckTransaction::Everything));
-	dw.exec();
 }
 
 void Main::on_idealPeers_valueChanged(int)
