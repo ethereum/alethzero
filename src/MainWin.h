@@ -137,7 +137,6 @@ private slots:
 
 	// View
 	void on_refresh_triggered();
-	void on_showAll_triggered() { refreshBlockChain(); }
 	void on_preview_triggered();
 
 	// Account management
@@ -150,8 +149,6 @@ private slots:
 	void on_ourAccounts_itemClicked(QListWidgetItem* _i);
 	void on_ourAccounts_doubleClicked();
 	void on_transactionQueue_currentItemChanged();
-	void on_blockChainFilter_textChanged();
-	void on_blocks_currentItemChanged();
 
 	// Misc
 	void on_nameReg_textChanged();
@@ -171,16 +168,10 @@ private slots:
 	void on_rewindChain_triggered();
 
 	// Debugger
-	void on_debugCurrent_triggered();
 	void on_debugPending_triggered();
-	void on_debugDumpState_triggered() { debugDumpState(1); }
-	void on_debugDumpStatePre_triggered() { debugDumpState(0); }
-	void on_dumpBlockState_triggered();
 
 	// Config
 	void on_sentinel_triggered();
-
-	void refreshBlockChain();
 
 signals:
 	void poll();
@@ -190,8 +181,6 @@ private:
 	void initPlugin(Plugin* _p);
 	void finalisePlugin(Plugin* _p);
 	void unloadPlugin(std::string const& _name);
-
-	void debugDumpState(int _add);
 
 	p2p::NetworkPreferences netPrefs() const;
 

@@ -155,18 +155,15 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
-    <addaction name="showAll"/>
-    <addaction name="separator"/>
     <addaction name="preview"/>
+    <addaction name="separator"/>
+    <addaction name="refresh"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
      <string>&amp;Debug</string>
     </property>
     <addaction name="debugPending"/>
-    <addaction name="debugCurrent"/>
-    <addaction name="debugDumpState"/>
-    <addaction name="debugDumpStatePre"/>
     <addaction name="dumpBlockState"/>
    </widget>
    <widget class="QMenu" name="menuConfig">
@@ -481,9 +478,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="go"/>
-   <addaction name="preview"/>
    <addaction name="mine"/>
-   <addaction name="refresh"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget_7">
    <property name="features">
@@ -526,84 +521,6 @@
        <property name="sortingEnabled">
         <bool>true</bool>
        </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="blockChainDockWidget">
-   <property name="features">
-    <set>QDockWidget::DockWidgetFeatureMask</set>
-   </property>
-   <property name="windowTitle">
-    <string>Block  Chain</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_8">
-    <layout class="QVBoxLayout" name="verticalLayout_7">
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
-     <item>
-      <widget class="QLineEdit" name="blockChainFilter">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="placeholderText">
-        <string>Filter...</string>
-       </property>
-       <property name="clearButtonEnabled">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QSplitter" name="splitter_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <widget class="QListWidget" name="blocks">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-       </widget>
-       <widget class="QPlainTextEdit" name="info">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>2</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::WheelFocus</enum>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
       </widget>
      </item>
     </layout>
@@ -913,30 +830,6 @@
     <string>Ctrl+Shift+F11</string>
    </property>
   </action>
-  <action name="debugCurrent">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Debug Current Transaction</string>
-   </property>
-  </action>
-  <action name="debugDumpState">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Dump &amp;Current Transaction State (post)</string>
-   </property>
-  </action>
-  <action name="debugDumpStatePre">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Dump Current &amp;Transaction State (pre)</string>
-   </property>
-  </action>
   <action name="dumpTracePretty">
    <property name="enabled">
     <bool>false</bool>
@@ -1147,7 +1040,6 @@
   <tabstop>port</tabstop>
   <tabstop>transactionQueue</tabstop>
   <tabstop>pendingInfo</tabstop>
-  <tabstop>blockChainFilter</tabstop>
   <tabstop>nameReg</tabstop>
   <tabstop>nodes</tabstop>
  </tabstops>

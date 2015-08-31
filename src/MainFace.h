@@ -54,6 +54,12 @@ class OurWebThreeStubServer;
 
 using WatchHandler = std::function<void(dev::eth::LocalisedLogEntries const&)>;
 
+/// Simple HTML escaping utility function for STL strings.
+inline std::string htmlEscaped(std::string const& _s)
+{
+	return QString::fromStdString(_s).toHtmlEscaped().toStdString();
+}
+
 class AccountNamer
 {
 	friend class Main;

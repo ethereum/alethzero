@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file AllAccounts.h
+/** @file BlockChain.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
@@ -27,7 +27,7 @@
 
 namespace Ui
 {
-class AllAccounts;
+class BlockList;
 }
 
 namespace dev
@@ -35,25 +35,30 @@ namespace dev
 namespace az
 {
 
-class AllAccounts: public QObject, public Plugin
+class BlockList: public QObject, public Plugin
 {
 	Q_OBJECT
 
 public:
-	AllAccounts(MainFace* _m);
-	~AllAccounts();
+	BlockList(MainFace* _m);
+	~BlockList();
 
 private slots:
-	void on_accounts_currentItemChanged();
-	void on_accounts_doubleClicked();
-
-	void onAllChange();
-	void refresh();
+	void refreshBlocks();
+	void refreshInfo();
+	void debugCurrent();
+	void filterChanged();
 
 private:
-	void installWatches();
+	void dumpState(bool _post);
 
-	Ui::AllAccounts* m_ui;
+	void onAllChange() override { refreshBlocks(); }
+	void readSettings(QSettings const&) override {}
+	void writeSettings(QSettings&) override {}
+
+	Ui::BlockList* m_ui;
+
+	unsigned m_newBlockWatch;
 };
 
 }

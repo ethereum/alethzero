@@ -19,8 +19,6 @@
  * @date 2015
  */
 
-#include "BuildInfo.h"
-
 #include "AllAccounts.h"
 #include <sstream>
 #include <QClipboard>
@@ -28,6 +26,7 @@
 #include <libdevcore/SHA3.h>
 #include <libevmcore/Instruction.h>
 #include <libethereum/Client.h>
+#include "ConfigInfo.h"
 #include "ui_AllAccounts.h"
 using namespace std;
 using namespace dev;
