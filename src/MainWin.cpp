@@ -74,17 +74,8 @@ using namespace p2p;
 using namespace eth;
 namespace js = json_spirit;
 
-QString dev::az::contentsOfQResource(string const& res)
-{
-	QFile file(QString::fromStdString(res));
-	if (!file.open(QFile::ReadOnly))
-		BOOST_THROW_EXCEPTION(FileError());
-	QTextStream in(&file);
-	return in.readAll();
-}
-
 Main::Main(QWidget* _parent):
-	MainFace(_parent),
+	AlethZeroBase(_parent),
 	ui(new Ui::Main)
 {
 	setWindowFlags(Qt::Window);

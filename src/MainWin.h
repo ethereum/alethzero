@@ -68,9 +68,22 @@ class DappLoader;
 class DappHost;
 struct Dapp;
 
-QString contentsOfQResource(std::string const& res);
+class AlethZeroBase: public MainFace
+{
+public:
+	explicit AlethZeroBase(QWidget* _parent = nullptr): MainFace(_parent)
+	{
+	}
 
-class Main: public MainFace
+	virtual ~AlethZeroBase()
+	{
+	}
+
+
+
+};
+
+class Main: public AlethZeroBase
 {
 	Q_OBJECT
 
