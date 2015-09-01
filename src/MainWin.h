@@ -149,9 +149,6 @@ private slots:
 	void on_ourAccounts_itemClicked(QListWidgetItem* _i);
 	void on_ourAccounts_doubleClicked();
 
-	// Misc
-	void on_nameReg_textChanged();
-
 	// Special (debug) stuff
 	void on_paranoia_triggered();
 	void on_killBlockchain_triggered();
@@ -181,7 +178,6 @@ private:
 	p2p::NetworkPreferences netPrefs() const;
 
 	QString lookup(QString const& _n) const;
-	Address getCurrencies() const;
 
 	void updateFee();
 	void readSettings(bool _skipGeometry = false, bool _onlyGeometry = false);
@@ -196,14 +192,7 @@ private:
 	void keysChanged();
 
 	void onNewBlock();
-	void onNameRegChange();
-	void onCurrenciesChange();
-	void onBalancesChange();
-
 	void installWatches();
-	void installCurrenciesWatch();
-	void installNameRegWatch();
-	void installBalancesWatch();
 
 	virtual void timerEvent(QTimerEvent*) override;
 
@@ -218,19 +207,13 @@ private:
 	std::string getPassword(std::string const& _title, std::string const& _for, std::string* _hint = nullptr, bool* _ok = nullptr);
 
 	std::unique_ptr<Ui::Main> ui;
-
 	std::unique_ptr<WebThreeDirect> m_webThree;
-
 	std::map<unsigned, WatchHandler> m_handlers;
-	unsigned m_nameRegFilter = (unsigned)-1;
-	unsigned m_currenciesFilter = (unsigned)-1;
-	unsigned m_balancesFilter = (unsigned)-1;
 
 	QByteArray m_networkConfig;
 	QStringList m_servers;
 	eth::KeyManager m_keyManager;
 	QString m_privateChain;
-	dev::Address m_nameReg;
 	dev::Address m_beneficiary;
 
 	QActionGroup* m_vmSelectionGroup = nullptr;

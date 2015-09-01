@@ -158,8 +158,6 @@ Main::Main(QWidget* _parent):
 	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
 	cerr << "Client database version: " << c_databaseVersion << endl;
 
-	ui->configDock->close();
-
 //	statusBar()->addPermanentWidget(ui->cacheUsage);
 	ui->cacheUsage->hide();
 	statusBar()->addPermanentWidget(ui->balance);
@@ -363,7 +361,7 @@ NetworkPreferences Main::netPrefs() const
 
 void Main::onKeysChanged()
 {
-	installBalancesWatch();
+	// TODO: reinstall balance watchers
 }
 
 unsigned Main::installWatch(LogFilter const& _tf, WatchHandler const& _f)
@@ -398,68 +396,9 @@ void Main::installWatches()
 	cdebug << "newBlock watch ID: " << newBlockId;
 }
 
-Address Main::getCurrencies() const
-{
-//	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)3)).output);
-	return Address();
-}
-
 bool Main::doConfirm()
 {
-	return true; //ui->confirm->isChecked();
-}
-
-void Main::installNameRegWatch()
-{
-	uninstallWatch(m_nameRegFilter);
-	m_nameRegFilter = installWatch(LogFilter().address((u160)getNameReg()), [=](LocalisedLogEntries const&){ onNameRegChange(); });
-}
-
-void Main::installCurrenciesWatch()
-{
-	uninstallWatch(m_currenciesFilter);
-	m_currenciesFilter = installWatch(LogFilter().address((u160)getCurrencies()), [=](LocalisedLogEntries const&){ onCurrenciesChange(); });
-}
-
-void Main::installBalancesWatch()
-{
-	LogFilter tf;
-
-	vector<Address> altCoins;
-	Address coinsAddr = getCurrencies();
-
-	// TODO: Update for new currencies reg.
-	for (unsigned i = 0; i < ethereum()->stateAt(coinsAddr, PendingBlock); ++i)
-		altCoins.push_back(right160(ethereum()->stateAt(coinsAddr, i + 1)));
-	for (auto const& address: m_keyManager.accounts())
-		for (auto c: altCoins)
-			tf.address(c).topic(0, h256(address, h256::AlignRight));
-
-	uninstallWatch(m_balancesFilter);
-	m_balancesFilter = installWatch(tf, [=](LocalisedLogEntries const&){ onBalancesChange(); });
-}
-
-void Main::onNameRegChange()
-{
-	cwatch << "NameReg changed!";
-
-	// update any namereg-dependent stuff - for now force a full update.
-	refreshAll();
-}
-
-void Main::onCurrenciesChange()
-{
-	cwatch << "Currencies changed!";
-	installBalancesWatch();
-
-	// TODO: update any currency-dependent stuff?
-}
-
-void Main::onBalancesChange()
-{
-	cwatch << "Our balances changed!";
-
-	refreshBalances();
+	return ui->confirm->isChecked();
 }
 
 void Main::onNewBlock()
@@ -633,7 +572,6 @@ void Main::writeSettings()
 	if (!d.empty())
 		m_networkConfig = QByteArray((char*)d.data(), (int)d.size());
 	s.setValue("peers", m_networkConfig);
-	s.setValue("nameReg", ui->nameReg->text());
 
 	s.setValue("geometry", saveGeometry());
 	s.setValue("windowState", saveState());
@@ -663,24 +601,6 @@ void Main::setPrivateChain(QString const& _private, bool _forceConfigure)
 	readSettings(true);
 	installWatches();
 	refreshAll();
-}
-
-Secret Main::retrieveSecret(Address const& _address) const
-{
-	while (true)
-	{
-		Secret s = m_keyManager.secret(_address, [&](){
-			QDialog d;
-			Ui_GetPassword gp;
-			gp.setupUi(&d);
-			d.setWindowTitle("Unlock Account");
-			gp.label->setText(QString("Enter the password for the account %2 (%1).").arg(QString::fromStdString(_address.abridged())).arg(QString::fromStdString(m_keyManager.accountName(_address))));
-			gp.entry->setPlaceholderText("Hint: " + QString::fromStdString(m_keyManager.passwordHint(_address)));
-			return d.exec() == QDialog::Accepted ? gp.entry->text().toStdString() : string();
-		});
-		if (s || QMessageBox::warning(nullptr, "Unlock Account", "The password you gave is incorrect for this key.", QMessageBox::Retry, QMessageBox::Cancel) == QMessageBox::Cancel)
-			return s;
-	}
 }
 
 void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
@@ -717,7 +637,6 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	ui->idealPeers->setValue(s.value("idealPeers", ui->idealPeers->value()).toInt());
 	ui->listenIP->setText(s.value("listenIP", "").toString());
 	ui->port->setValue(s.value("port", ui->port->value()).toInt());
-	ui->nameReg->setText(s.value("nameReg", "").toString());
 	setPrivateChain(s.value("privateChain", "").toString());
 
 #if ETH_EVMJIT // We care only if JIT is enabled. Otherwise it can cause misconfiguration.
@@ -741,6 +660,24 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 		}
 	}
 #endif
+}
+
+Secret Main::retrieveSecret(Address const& _address) const
+{
+	while (true)
+	{
+		Secret s = m_keyManager.secret(_address, [&](){
+			QDialog d;
+			Ui_GetPassword gp;
+			gp.setupUi(&d);
+			d.setWindowTitle("Unlock Account");
+			gp.label->setText(QString("Enter the password for the account %2 (%1).").arg(QString::fromStdString(_address.abridged())).arg(QString::fromStdString(m_keyManager.accountName(_address))));
+			gp.entry->setPlaceholderText("Hint: " + QString::fromStdString(m_keyManager.passwordHint(_address)));
+			return d.exec() == QDialog::Accepted ? gp.entry->text().toStdString() : string();
+		});
+		if (s || QMessageBox::warning(nullptr, "Unlock Account", "The password you gave is incorrect for this key.", QMessageBox::Retry, QMessageBox::Cancel) == QMessageBox::Cancel)
+			return s;
+	}
 }
 
 std::string Main::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
@@ -812,18 +749,6 @@ void Main::on_rewindChain_triggered()
 		ethereum()->rewind(n);
 		refreshAll();
 	}
-}
-
-void Main::on_nameReg_textChanged()
-{
-	string s = ui->nameReg->text().toStdString();
-	if (s.size() == 40)
-	{
-		m_nameReg = Address(fromHex(s));
-		refreshAll();
-	}
-	else
-		m_nameReg = Address();
 }
 
 void Main::on_preview_triggered()
@@ -1246,7 +1171,7 @@ void Main::on_mine_triggered()
 void Main::keysChanged()
 {
 	emit keyManagerChanged();
-	onBalancesChange();
+	refreshBalances();
 }
 
 void Main::on_killAccount_triggered()
