@@ -27,12 +27,12 @@
 #include "TransactDialog.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(Transact);
 
-Transact::Transact(MainFace* _m):
+Transact::Transact(AlethFace* _m):
 	Plugin(_m, "Transact")
 {
 	m_dialog = new TransactDialog(_m);

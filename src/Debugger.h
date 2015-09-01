@@ -35,7 +35,7 @@ namespace Ui { class Debugger; }
 namespace dev
 {
 
-namespace az
+namespace aleth
 {
 
 struct WorldState

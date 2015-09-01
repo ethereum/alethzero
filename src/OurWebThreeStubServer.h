@@ -30,17 +30,17 @@
 namespace dev
 {
 
-namespace az
+namespace aleth
 {
 
-class Main;
+class AlethZero;
 
 class OurAccountHolder: public QObject, public eth::AccountHolder
 {
 	Q_OBJECT
 
 public:
-	OurAccountHolder(Main* _main);
+	OurAccountHolder(AlethZero* _main);
 
 public slots:
 	void doValidations();
@@ -59,7 +59,7 @@ private:
 	std::queue<eth::TransactionSkeleton> m_queued;
 	Mutex x_queued;
 
-	Main* m_main;
+	AlethZero* m_main;
 };
 
 class OurWebThreeStubServer: public QObject, public WebThreeStubServer
@@ -67,7 +67,7 @@ class OurWebThreeStubServer: public QObject, public WebThreeStubServer
 	Q_OBJECT
 
 public:
-	OurWebThreeStubServer(jsonrpc::AbstractServerConnector& _conn, Main* main);
+	OurWebThreeStubServer(jsonrpc::AbstractServerConnector& _conn, AlethZero* main);
 
 	virtual std::string shh_newIdentity() override;
 
@@ -75,7 +75,7 @@ signals:
 	void onNewId(QString _s);
 
 private:
-	Main* m_main;
+	AlethZero* m_main;
 };
 
 }

@@ -19,10 +19,10 @@
  * @author Lefteris Karapetsas <lefteris@ethdev.com>
  * @date 2015
  */
+
 #include "NatspecHandler.h"
 #include <string>
 #include <boost/filesystem.hpp>
-
 #include <libdevcore/Common.h>
 #include <libdevcore/CommonData.h>
 #include <libdevcore/Exceptions.h>
@@ -30,7 +30,7 @@
 #include <libdevcore/SHA3.h>
 #include <libethereum/Defaults.h>
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 using namespace std;
 namespace fs = boost::filesystem;
@@ -64,7 +64,7 @@ string NatspecHandler::retrieve(dev::h256 const& _contractHash) const
 	return ret;
 }
 
-string NatspecHandler::getUserNotice(string const& json, dev::bytes const& _transactionData)
+string NatspecHandler::userNotice(string const& json, dev::bytes const& _transactionData)
 {
 	Json::Value natspec;
 	Json::Value userNotice;
@@ -95,9 +95,9 @@ string NatspecHandler::getUserNotice(string const& json, dev::bytes const& _tran
 	return string();
 }
 
-string NatspecHandler::getUserNotice(dev::h256 const& _contractHash, dev::bytes const& _transactionData)
+string NatspecHandler::userNotice(dev::h256 const& _contractHash, dev::bytes const& _transactionData)
 {
-	return getUserNotice(retrieve(_contractHash), _transactionData);
+	return userNotice(retrieve(_contractHash), _transactionData);
 }
 
 

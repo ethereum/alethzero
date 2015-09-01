@@ -32,7 +32,7 @@ struct MHD_Connection;
 namespace dev
 {
 
-namespace az
+namespace aleth
 {
 
 /// DApp web server. Servers web content, resolves paths by hashes

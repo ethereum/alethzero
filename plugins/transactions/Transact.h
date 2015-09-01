@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class TransactDialog;
@@ -35,7 +35,7 @@ class Transact: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Transact(MainFace* _m);
+	Transact(AlethFace* _m);
 	~Transact();
 
 private slots:

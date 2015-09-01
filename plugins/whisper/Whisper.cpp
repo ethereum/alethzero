@@ -29,7 +29,7 @@
 #include "ui_Whisper.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(Whisper);
@@ -100,7 +100,7 @@ static shh::Topics topicFromText(QString _s)
 }
 
 
-Whisper::Whisper(MainFace* _m):
+Whisper::Whisper(AlethFace* _m):
 	Plugin(_m, "Whisper"),
 	m_ui(new Ui::Whisper)
 {

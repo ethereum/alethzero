@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class JsConsole: public QObject, public Plugin
@@ -33,7 +33,7 @@ class JsConsole: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	JsConsole(MainFace* _m);
+	JsConsole(AlethFace* _m);
 	~JsConsole();
 };
 

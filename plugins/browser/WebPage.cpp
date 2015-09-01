@@ -21,7 +21,7 @@
 
 #include "WebPage.h"
 using namespace dev;
-using namespace az;
+using namespace aleth;
 
 void WebPage::javaScriptConsoleMessage(QWebEnginePage::JavaScriptConsoleMessageLevel _level, QString const& _message, int _lineNumber, QString const& _sourceID)
 {

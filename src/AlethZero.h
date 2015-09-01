@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file MainWin.h
+/** @file AlethZero.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
@@ -38,10 +38,9 @@
 #include <libethereum/Executive.h>
 #include <libwebthree/WebThree.h>
 #include <libsolidity/CompilerStack.h>
-#include "Context.h"
 #include "NatspecHandler.h"
 #include "Connect.h"
-#include "MainFace.h"
+#include "Aleth.h"
 
 class QListWidgetItem;
 class QActionGroup;
@@ -61,7 +60,7 @@ class Client;
 class State;
 }
 
-namespace az
+namespace aleth
 {
 
 class OurWebThreeStubServer;
@@ -69,35 +68,13 @@ class DappLoader;
 class DappHost;
 struct Dapp;
 
-class AlethZeroBase: public MainFace
+class AlethZero: public Aleth
 {
 	Q_OBJECT
 
 public:
-	explicit AlethZeroBase(QWidget* _parent = nullptr);
-	virtual ~AlethZeroBase();
-
-protected:
-	void init();
-
-	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
-	unsigned installWatch(h256 const& _tf, WatchHandler const& _f) override;
-	void uninstallWatch(unsigned _w) override;
-
-private slots:
-	void checkHandlers();
-
-private:
-	std::map<unsigned, WatchHandler> m_handlers;
-};
-
-class Main: public AlethZeroBase
-{
-	Q_OBJECT
-
-public:
-	explicit Main(QWidget *parent = 0);
-	~Main();
+	explicit AlethZero(QWidget *parent = 0);
+	~AlethZero();
 
 	WebThreeDirect* web3() const override { return m_webThree.get(); }
 	OurWebThreeStubServer* web3Server() const override { return m_server.get(); }
@@ -109,7 +86,6 @@ public:
 	NatSpecFace* natSpec() override { return &m_natSpecDB; }
 
 	std::string pretty(dev::Address const& _a) const override;
-	std::string prettyU256(u256 const& _n) const override;
 	std::string render(dev::Address const& _a) const override;
 	std::pair<Address, bytes> fromString(std::string const& _a) const override;
 	std::string renderDiff(eth::StateDiff const& _d) const override;
@@ -237,7 +213,6 @@ private:
 	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;
 	std::unique_ptr<OurWebThreeStubServer> m_server;
 
-	static std::string fromRaw(h256 const& _n, unsigned* _inc = nullptr);
 	NatspecHandler m_natSpecDB;
 
 	Connect m_connect;

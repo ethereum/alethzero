@@ -31,12 +31,12 @@
 #include "ui_ExportState.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(ExportState);
 
-ExportState::ExportState(MainFace* _m):
+ExportState::ExportState(AlethFace* _m):
 	Plugin(_m, "Export State")
 {
 	connect(addMenuItem("Export State...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
@@ -48,7 +48,7 @@ void ExportState::create()
 	dialog.exec();
 }
 
-ExportStateDialog::ExportStateDialog(MainFace* _m):
+ExportStateDialog::ExportStateDialog(AlethFace* _m):
 	QDialog(_m),
 	m_main(_m),
 	m_ui(new Ui::ExportState)

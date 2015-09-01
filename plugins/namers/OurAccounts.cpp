@@ -25,12 +25,12 @@
 #include <libethcore/KeyManager.h>
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(OurAccounts);
 
-OurAccounts::OurAccounts(MainFace* _m):
+OurAccounts::OurAccounts(AlethFace* _m):
 	AccountNamerPlugin(_m, "OurAccounts")
 {
 	connect(main(), SIGNAL(keyManagerChanged()), SLOT(updateNames()));

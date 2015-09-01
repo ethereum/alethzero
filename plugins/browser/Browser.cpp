@@ -32,12 +32,12 @@
 #include "ui_Browser.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(Browser);
 
-Browser::Browser(MainFace* _m):
+Browser::Browser(AlethFace* _m):
 	Plugin(_m, "Web view"),
 	m_ui(new Ui::Browser)
 {
@@ -47,7 +47,7 @@ Browser::Browser(MainFace* _m):
 	m_ui->jsConsole->setWebView(m_ui->webView);
 	std::string adminSessionKey = _m->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
 	m_dappHost.reset(new DappHost(8081));
-	m_dappLoader = new DappLoader(this, web3(), MainFace::getNameReg());
+	m_dappLoader = new DappLoader(this, web3(), AlethFace::getNameReg());
 	m_dappLoader->setSessionKey(adminSessionKey);
 	connect(m_dappLoader, &DappLoader::dappReady, this, &Browser::dappLoaded);
 	connect(m_dappLoader, &DappLoader::pageReady, this, &Browser::pageLoaded);

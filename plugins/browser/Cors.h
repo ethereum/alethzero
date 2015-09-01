@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 
 namespace Ui
@@ -31,7 +31,7 @@ class Cors;
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class Cors: public QObject, public Plugin
@@ -39,7 +39,7 @@ class Cors: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Cors(MainFace* _m);
+	Cors(AlethFace* _m);
 	~Cors();
 
 private slots:

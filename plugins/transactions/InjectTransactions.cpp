@@ -27,12 +27,12 @@
 #include "ui_InjectTransactions.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(InjectTransactions);
 
-InjectTransactions::InjectTransactions(MainFace* _m):
+InjectTransactions::InjectTransactions(AlethFace* _m):
 	Plugin(_m, "InjectTransactions")
 {
 	connect(addMenuItem("Inject Transaction...", "menuSpecial", true), SIGNAL(triggered()), SLOT(injectOne()));

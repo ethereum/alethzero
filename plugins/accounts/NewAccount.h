@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 
 namespace Ui
@@ -31,7 +31,7 @@ class NewAccount;
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class NewAccount: public QObject, public Plugin
@@ -39,7 +39,7 @@ class NewAccount: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	NewAccount(MainFace* _m);
+	NewAccount(AlethFace* _m);
 	~NewAccount();
 
 private slots:

@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file MainFace.h
+/** @file AlethFace.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
@@ -31,6 +31,7 @@
 #include <QtWidgets/QDockWidget>
 #include <libevm/ExtVMFace.h>
 #include "Context.h"
+#include "Common.h"
 
 class QSettings;
 
@@ -42,27 +43,21 @@ class SafeHttpServer;
 namespace eth { class Client; class LogFilter; }
 namespace shh { class WhisperHost; }
 
-namespace az
+namespace aleth
 {
 
-#define DEV_AZ_NOTE_PLUGIN(ClassName) static DEV_UNUSED dev::az::PluginRegistrar<ClassName> s_notePlugin(#ClassName)
+#define DEV_AZ_NOTE_PLUGIN(ClassName) static DEV_UNUSED dev::aleth::PluginRegistrar<ClassName> s_notePlugin(#ClassName)
 
 class Plugin;
-class MainFace;
-class Main;
+class AlethFace;
+class AlethZero;
 class OurWebThreeStubServer;
 
 using WatchHandler = std::function<void(dev::eth::LocalisedLogEntries const&)>;
 
-/// Simple HTML escaping utility function for STL strings.
-inline std::string htmlEscaped(std::string const& _s)
-{
-	return QString::fromStdString(_s).toHtmlEscaped().toStdString();
-}
-
 class AccountNamer
 {
-	friend class Main;
+	friend class AlethZero;
 
 public:
 	virtual std::string toName(Address const&) const { return std::string(); }
@@ -74,17 +69,17 @@ protected:
 	void noteNamesChanged();
 
 private:
-	MainFace* m_main = nullptr;
+	AlethFace* m_main = nullptr;
 };
 
-using PluginFactory = std::function<Plugin*(MainFace*)>;
+using PluginFactory = std::function<Plugin*(AlethFace*)>;
 
-class MainFace: public QMainWindow, public Context
+class AlethFace: public QMainWindow, public Context
 {
 	Q_OBJECT
 
 public:
-	explicit MainFace(QWidget* _parent = nullptr): QMainWindow(_parent) {}
+	explicit AlethFace(QWidget* _parent = nullptr): QMainWindow(_parent) {}
 
 	static void notePlugin(std::string const& _name, PluginFactory const& _new);
 	static void unnotePlugin(std::string const& _name);
@@ -93,8 +88,6 @@ public:
 	void killPlugins();
 
 	void allChange();
-
-	using Context::render;
 
 	static Address getNameReg();
 
@@ -120,6 +113,14 @@ public:
 	virtual std::string toName(Address const&) const = 0;
 	virtual Addresses allKnownAddresses() const = 0;
 
+	// Originally in Context
+	virtual std::pair<dev::Address, dev::bytes> fromString(std::string const& _a) const = 0;
+	virtual std::string renderDiff(dev::eth::StateDiff const& _d) const = 0;
+	virtual std::string render(dev::Address const& _a) const = 0;
+	virtual dev::Secret retrieveSecret(dev::Address const& _a) const = 0;
+	virtual dev::eth::KeyManager& keyManager() = 0;
+	virtual void noteKeysChanged() = 0;
+
 	virtual void noteSettingsChanged() = 0;
 
 protected:
@@ -140,7 +141,7 @@ private:
 class Plugin
 {
 public:
-	Plugin(MainFace* _f, std::string const& _name);
+	Plugin(AlethFace* _f, std::string const& _name);
 	virtual ~Plugin() {}
 
 	std::string const& name() const { return m_name; }
@@ -148,7 +149,7 @@ public:
 	dev::WebThreeDirect* web3() const { return m_main->web3(); }
 	dev::eth::Client* ethereum() const { return m_main->ethereum(); }
 	std::shared_ptr<dev::shh::WhisperHost> whisper() const { return m_main->whisper(); }
-	MainFace* main() const { return m_main; }
+	AlethFace* main() const { return m_main; }
 	QDockWidget* dock(Qt::DockWidgetArea _area = Qt::RightDockWidgetArea, QString _title = QString());
 	void addToDock(Qt::DockWidgetArea _area, QDockWidget* _dockwidget, Qt::Orientation _orientation);
 	void addAction(QAction* _a);
@@ -159,7 +160,7 @@ public:
 	virtual void writeSettings(QSettings&) {}
 
 private:
-	MainFace* m_main = nullptr;
+	AlethFace* m_main = nullptr;
 	std::string m_name;
 	QDockWidget* m_dock = nullptr;
 };
@@ -167,7 +168,7 @@ private:
 class AccountNamerPlugin: public Plugin, public AccountNamer
 {
 protected:
-	AccountNamerPlugin(MainFace* _m, std::string const& _name): Plugin(_m, _name) { main()->install(this); }
+	AccountNamerPlugin(AlethFace* _m, std::string const& _name): Plugin(_m, _name) { main()->install(this); }
 	~AccountNamerPlugin() { main()->uninstall(this); }
 };
 
@@ -185,7 +186,7 @@ template<class ClassName>
 class PluginRegistrar: public PluginRegistrarBase
 {
 public:
-	PluginRegistrar(std::string const& _name): PluginRegistrarBase(_name, [](MainFace* m){ return new ClassName(m); }) {}
+	PluginRegistrar(std::string const& _name): PluginRegistrarBase(_name, [](AlethFace* m){ return new ClassName(m); }) {}
 };
 
 }

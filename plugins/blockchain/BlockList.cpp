@@ -31,12 +31,12 @@
 #include "ui_BlockList.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(BlockList);
 
-BlockList::BlockList(MainFace* _m):
+BlockList::BlockList(AlethFace* _m):
 	Plugin(_m, "Blockchain"),
 	m_ui(new Ui::BlockList)
 {

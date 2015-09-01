@@ -50,10 +50,10 @@
 #include "ui_TransactDialog.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
-TransactDialog::TransactDialog(MainFace* _main):
+TransactDialog::TransactDialog(AlethFace* _main):
 	QDialog(_main),
 	m_ui(new Ui::TransactDialog),
 	m_main(_main)
@@ -314,7 +314,7 @@ string TransactDialog::natspecNotice(Address _to, bytes const& _data)
 {
 	if (ethereum()->codeAt(_to, PendingBlock).size())
 	{
-		string userNotice = m_natSpecDB->getUserNotice(ethereum()->postState().codeHash(_to), _data);
+		string userNotice = m_natSpecDB->userNotice(ethereum()->postState().codeHash(_to), _data);
 		if (userNotice.empty())
 			return "Destination contract unknown.";
 		else

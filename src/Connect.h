@@ -31,7 +31,7 @@ namespace dev
 
 namespace p2p { class Host; }
 
-namespace az
+namespace aleth
 {
 
 class Connect: public QDialog

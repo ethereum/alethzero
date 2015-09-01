@@ -25,7 +25,7 @@
 #include <QString>
 #include <QPair>
 #include <QList>
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace Ui
 {
@@ -34,7 +34,7 @@ class LogPanel;
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class LogPanel: public QObject, public Plugin
@@ -42,7 +42,7 @@ class LogPanel: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	LogPanel(MainFace* _m);
+	LogPanel(AlethFace* _m);
 	~LogPanel();
 
 private slots:

@@ -30,12 +30,12 @@
 #include "ui_ImportKey.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(ImportKey);
 
-ImportKey::ImportKey(MainFace* _m):
+ImportKey::ImportKey(AlethFace* _m):
 	Plugin(_m, "ImportKey")
 {
 	connect(addMenuItem("Import Key...", "menuTools", true), SIGNAL(triggered()), SLOT(import()));

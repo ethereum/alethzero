@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 class QWebEnginePage;
 
@@ -29,7 +29,7 @@ namespace Ui { class Browser; }
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class DappLoader;
@@ -41,7 +41,7 @@ class Browser: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Browser(MainFace* _m);
+	Browser(AlethFace* _m);
 	~Browser();
 
 private slots:

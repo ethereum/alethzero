@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class InjectTransactions: public QObject, public Plugin
@@ -33,7 +33,7 @@ class InjectTransactions: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	InjectTransactions(MainFace* _m);
+	InjectTransactions(AlethFace* _m);
 	~InjectTransactions();
 
 private slots:

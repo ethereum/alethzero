@@ -23,7 +23,7 @@
 
 #include <QListWidget>
 #include <QPlainTextEdit>
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace Ui
 {
@@ -32,7 +32,7 @@ class BlockList;
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class BlockList: public QObject, public Plugin
@@ -40,7 +40,7 @@ class BlockList: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	BlockList(MainFace* _m);
+	BlockList(AlethFace* _m);
 	~BlockList();
 
 private slots:

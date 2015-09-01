@@ -25,7 +25,7 @@
 #include <QString>
 #include <QPair>
 #include <QList>
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace Ui
 {
@@ -34,7 +34,7 @@ class Whisper;
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class Whisper: public QObject, public Plugin
@@ -42,7 +42,7 @@ class Whisper: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Whisper(MainFace* _m);
+	Whisper(AlethFace* _m);
 
 private:
 	void readSettings(QSettings const&) override;

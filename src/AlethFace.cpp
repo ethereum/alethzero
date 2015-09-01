@@ -14,17 +14,17 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file MainFace.cpp
+/** @file AlethFace.cpp
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
 
-#include "MainFace.h"
+#include "AlethFace.h"
 #include <QMenu>
 #include <libdevcore/Log.h>
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 
 
 void AccountNamer::noteKnownChanged()
@@ -39,7 +39,7 @@ void AccountNamer::noteNamesChanged()
 		m_main->noteAddressNamesChanged(this);
 }
 
-Plugin::Plugin(MainFace* _f, std::string const& _name):
+Plugin::Plugin(AlethFace* _f, std::string const& _name):
 	m_main(_f),
 	m_name(_name)
 {
@@ -80,37 +80,37 @@ QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep)
 	return a;
 }
 
-unordered_map<string, function<Plugin*(MainFace*)>>* MainFace::s_linkedPlugins = nullptr;
+unordered_map<string, function<Plugin*(AlethFace*)>>* AlethFace::s_linkedPlugins = nullptr;
 
-Address MainFace::getNameReg()
+Address AlethFace::getNameReg()
 {
 	return Address("c6d9d2cd449a754c494264e1809c50e34d64562b");
 //	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)1)).output);
 }
-void MainFace::notePlugin(string const& _name, PluginFactory const& _new)
+void AlethFace::notePlugin(string const& _name, PluginFactory const& _new)
 {
 	if (!s_linkedPlugins)
 		s_linkedPlugins = new std::unordered_map<string, PluginFactory>();
 	s_linkedPlugins->insert(make_pair(_name, _new));
 }
 
-void MainFace::unnotePlugin(string const& _name)
+void AlethFace::unnotePlugin(string const& _name)
 {
 	if (s_linkedPlugins)
 		s_linkedPlugins->erase(_name);
 }
 
-void MainFace::adoptPlugin(Plugin* _p)
+void AlethFace::adoptPlugin(Plugin* _p)
 {
 	m_plugins[_p->name()] = shared_ptr<Plugin>(_p);
 }
 
-void MainFace::killPlugins()
+void AlethFace::killPlugins()
 {
 	m_plugins.clear();
 }
 
-void MainFace::allChange()
+void AlethFace::allChange()
 {
 	for (auto const& p: m_plugins)
 		p.second->onAllChange();
@@ -120,11 +120,11 @@ PluginRegistrarBase::PluginRegistrarBase(std::string const& _name, PluginFactory
 	m_name(_name)
 {
 	cdebug << "Noting linked plugin" << _name;
-	MainFace::notePlugin(_name, _f);
+	AlethFace::notePlugin(_name, _f);
 }
 
 PluginRegistrarBase::~PluginRegistrarBase()
 {
 	cdebug << "Noting unlinked plugin" << m_name;
-	MainFace::unnotePlugin(m_name);
+	AlethFace::unnotePlugin(m_name);
 }

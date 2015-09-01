@@ -60,76 +60,22 @@
 #include <libethereum/DownloadMan.h>
 #include <libweb3jsonrpc/WebThreeStubServer.h>
 #include <libweb3jsonrpc/SafeHttpServer.h>
-#include "MainWin.h"
-#include "DownloadView.h"
+#include "AlethZero.h"
+#include "SyncView.h"
 #include "BuildInfo.h"
 #include "OurWebThreeStubServer.h"
 #include "Debugger.h"
-#include "ui_Main.h"
+#include "ui_AlethZero.h"
 #include "ui_GetPassword.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace p2p;
 using namespace eth;
 namespace js = json_spirit;
 
-AlethZeroBase::AlethZeroBase(QWidget* _parent):
-	MainFace(_parent)
-{
-}
-
-AlethZeroBase::~AlethZeroBase()
-{
-}
-
-void AlethZeroBase::init()
-{
-	{
-		QTimer* t = new QTimer(this);
-		connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
-		t->start(200);
-	}
-}
-
-unsigned AlethZeroBase::installWatch(LogFilter const& _tf, WatchHandler const& _f)
-{
-	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
-	m_handlers[ret] = _f;
-	_f(LocalisedLogEntries());
-	return ret;
-}
-
-unsigned AlethZeroBase::installWatch(h256 const& _tf, WatchHandler const& _f)
-{
-	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
-	m_handlers[ret] = _f;
-	_f(LocalisedLogEntries());
-	return ret;
-}
-
-void AlethZeroBase::uninstallWatch(unsigned _w)
-{
-	cdebug << "!!! Main: uninstalling watch" << _w;
-	ethereum()->uninstallWatch(_w);
-	m_handlers.erase(_w);
-}
-
-void AlethZeroBase::checkHandlers()
-{
-	for (auto const& i: m_handlers)
-	{
-		auto ls = ethereum()->checkWatchSafe(i.first);
-		if (ls.size())
-		{
-//				cnote << "FIRING WATCH" << i.first << ls.size();
-			i.second(ls);
-		}
-	}
-}
-
-Main::Main(QWidget* _parent):
-	AlethZeroBase(_parent),
+AlethZero::AlethZero(QWidget* _parent):
+	Aleth(_parent),
 	ui(new Ui::Main)
 {
 	setWindowFlags(Qt::Window);
@@ -266,7 +212,7 @@ Main::Main(QWidget* _parent):
 	readSettings(false, true);
 }
 
-Main::~Main()
+AlethZero::~AlethZero()
 {
 	m_httpConnector->StopListening();
 
@@ -280,58 +226,33 @@ Main::~Main()
 	killPlugins();
 }
 
-string Main::fromRaw(h256 const& _n, unsigned* _inc)
-{
-	if (_n)
-	{
-		string s((char const*)_n.data(), 32);
-		auto l = s.find_first_of('\0');
-		if (!l)
-			return string();
-		if (l != string::npos)
-		{
-			auto p = s.find_first_not_of('\0', l);
-			if (!(p == string::npos || (_inc && p == 31)))
-				return string();
-			if (_inc)
-				*_inc = (byte)s[31];
-			s.resize(l);
-		}
-		for (auto i: s)
-			if (i < 32)
-				return string();
-		return s;
-	}
-	return string();
-}
-
-void Main::install(AccountNamer* _adopt)
+void AlethZero::install(AccountNamer* _adopt)
 {
 	m_namers.insert(_adopt);
 	_adopt->m_main = this;
 	refreshAll();
 }
 
-void Main::uninstall(AccountNamer* _kill)
+void AlethZero::uninstall(AccountNamer* _kill)
 {
 	m_namers.erase(_kill);
 	if (!m_destructing)
 		refreshAll();
 }
 
-void Main::noteKnownAddressesChanged(AccountNamer*)
+void AlethZero::noteKnownAddressesChanged(AccountNamer*)
 {
 	emit knownAddressesChanged();
 	refreshAll();
 }
 
-void Main::noteAddressNamesChanged(AccountNamer*)
+void AlethZero::noteAddressNamesChanged(AccountNamer*)
 {
 	emit addressNamesChanged();
 	refreshAll();
 }
 
-Address Main::toAddress(string const& _n) const
+Address AlethZero::toAddress(string const& _n) const
 {
 	for (AccountNamer* n: m_namers)
 		if (n->toAddress(_n))
@@ -339,7 +260,7 @@ Address Main::toAddress(string const& _n) const
 	return Address();
 }
 
-string Main::toName(Address const& _a) const
+string AlethZero::toName(Address const& _a) const
 {
 	for (AccountNamer* n: m_namers)
 		if (!n->toName(_a).empty())
@@ -347,7 +268,7 @@ string Main::toName(Address const& _a) const
 	return string();
 }
 
-Addresses Main::allKnownAddresses() const
+Addresses AlethZero::allKnownAddresses() const
 {
 	Addresses ret;
 	for (AccountNamer* i: m_namers)
@@ -356,12 +277,12 @@ Addresses Main::allKnownAddresses() const
 	return ret;
 }
 
-bool Main::confirm() const
+bool AlethZero::confirm() const
 {
 	return true; //ui->natSpec->isChecked();
 }
 
-void Main::on_sentinel_triggered()
+void AlethZero::on_sentinel_triggered()
 {
 	bool ok;
 	QString sentinel = QInputDialog::getText(nullptr, "Enter sentinel address", "Enter the sentinel address for bad block reporting (e.g. http://badblockserver.com:8080). Enter nothing to disable.", QLineEdit::Normal, QString::fromStdString(ethereum()->sentinel()), &ok);
@@ -369,7 +290,7 @@ void Main::on_sentinel_triggered()
 		ethereum()->setSentinel(sentinel.toStdString());
 }
 
-NetworkPreferences Main::netPrefs() const
+NetworkPreferences AlethZero::netPrefs() const
 {
 	auto listenIP = ui->listenIP->text().toStdString();
 	try
@@ -404,12 +325,12 @@ NetworkPreferences Main::netPrefs() const
 	return ret;
 }
 
-void Main::onKeysChanged()
+void AlethZero::onKeysChanged()
 {
 	// TODO: reinstall balance watchers
 }
 
-void Main::installWatches()
+void AlethZero::installWatches()
 {
 	auto newBlockId = installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
 		onNewBlock();
@@ -418,12 +339,12 @@ void Main::installWatches()
 	cdebug << "newBlock watch ID: " << newBlockId;
 }
 
-bool Main::doConfirm()
+bool AlethZero::doConfirm()
 {
 	return ui->confirm->isChecked();
 }
 
-void Main::onNewBlock()
+void AlethZero::onNewBlock()
 {
 	cwatch << "Blockchain changed!";
 
@@ -434,32 +355,32 @@ void Main::onNewBlock()
 	refreshBalances();
 }
 
-void Main::on_forceMining_triggered()
+void AlethZero::on_forceMining_triggered()
 {
 	ethereum()->setForceMining(ui->forceMining->isChecked());
 }
 
-QString Main::contents(QString _s)
+QString AlethZero::contents(QString _s)
 {
 	return QString::fromStdString(dev::asString(dev::contents(_s.toStdString())));
 }
 
-void Main::note(QString _s)
+void AlethZero::note(QString _s)
 {
 	cnote << _s.toStdString();
 }
 
-void Main::debug(QString _s)
+void AlethZero::debug(QString _s)
 {
 	cdebug << _s.toStdString();
 }
 
-void Main::warn(QString _s)
+void AlethZero::warn(QString _s)
 {
 	cwarn << _s.toStdString();
 }
 
-std::string Main::pretty(dev::Address const& _a) const
+std::string AlethZero::pretty(dev::Address const& _a) const
 {
 	for (auto i: m_namers)
 	{
@@ -470,7 +391,7 @@ std::string Main::pretty(dev::Address const& _a) const
 	return string();
 }
 
-std::string Main::render(dev::Address const& _a) const
+std::string AlethZero::render(dev::Address const& _a) const
 {
 	string p = pretty(_a);
 	string n;
@@ -484,7 +405,7 @@ std::string Main::render(dev::Address const& _a) const
 	return p.empty() ? n : (p + " " + n);
 }
 
-pair<Address, bytes> Main::fromString(std::string const& _n) const
+pair<Address, bytes> AlethZero::fromString(std::string const& _n) const
 {
 	if (_n == "(Create Contract)")
 		return make_pair(Address(), bytes());
@@ -524,7 +445,7 @@ pair<Address, bytes> Main::fromString(std::string const& _n) const
 	return make_pair(Address(), bytes());
 }
 
-QString Main::lookup(QString const& _a) const
+QString AlethZero::lookup(QString const& _a) const
 {
 	if (!_a.endsWith(".eth"))
 		return _a;
@@ -552,17 +473,17 @@ QString Main::lookup(QString const& _a) const
 		return _a;
 }
 
-void Main::on_about_triggered()
+void AlethZero::on_about_triggered()
 {
 	QMessageBox::about(this, "About " + windowTitle(), QString("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM) "\n" DEV_QUOTED(ETH_COMMIT_HASH) + (ETH_CLEAN_REPO ? "\nCLEAN" : "\n+ LOCAL CHANGES") + "\n\nBy Gav Wood and the Berlin ÐΞV team, 2014, 2015.\nSee the README for contributors and credits.");
 }
 
-void Main::on_paranoia_triggered()
+void AlethZero::on_paranoia_triggered()
 {
 	ethereum()->setParanoia(ui->paranoia->isChecked());
 }
 
-void Main::writeSettings()
+void AlethZero::writeSettings()
 {
 	QSettings s("ethereum", "alethzero");
 	s.remove("address");
@@ -599,7 +520,7 @@ void Main::writeSettings()
 	s.setValue("windowState", saveState());
 }
 
-void Main::setPrivateChain(QString const& _private, bool _forceConfigure)
+void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
 {
 	if (m_privateChain == _private && !_forceConfigure)
 		return;
@@ -625,7 +546,7 @@ void Main::setPrivateChain(QString const& _private, bool _forceConfigure)
 	refreshAll();
 }
 
-void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
+void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 {
 	QSettings s("ethereum", "alethzero");
 
@@ -684,7 +605,7 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 #endif
 }
 
-Secret Main::retrieveSecret(Address const& _address) const
+Secret AlethZero::retrieveSecret(Address const& _address) const
 {
 	while (true)
 	{
@@ -702,7 +623,7 @@ Secret Main::retrieveSecret(Address const& _address) const
 	}
 }
 
-std::string Main::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
+std::string AlethZero::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
 {
 	QString password;
 	while (true)
@@ -731,7 +652,7 @@ std::string Main::getPassword(std::string const& _title, std::string const& _for
 	return password.toStdString();
 }
 
-void Main::on_exportKey_triggered()
+void AlethZero::on_exportKey_triggered()
 {
 	if (ui->ourAccounts->currentRow() >= 0)
 	{
@@ -742,7 +663,7 @@ void Main::on_exportKey_triggered()
 	}
 }
 
-void Main::on_usePrivate_triggered()
+void AlethZero::on_usePrivate_triggered()
 {
 	QString pc;
 	if (ui->usePrivate->isChecked())
@@ -758,11 +679,11 @@ void Main::on_usePrivate_triggered()
 	setPrivateChain(pc);
 }
 
-void Main::on_vmInterpreter_triggered() { VMFactory::setKind(VMKind::Interpreter); }
-void Main::on_vmJIT_triggered() { VMFactory::setKind(VMKind::JIT); }
-void Main::on_vmSmart_triggered() { VMFactory::setKind(VMKind::Smart); }
+void AlethZero::on_vmInterpreter_triggered() { VMFactory::setKind(VMKind::Interpreter); }
+void AlethZero::on_vmJIT_triggered() { VMFactory::setKind(VMKind::JIT); }
+void AlethZero::on_vmSmart_triggered() { VMFactory::setKind(VMKind::Smart); }
 
-void Main::on_rewindChain_triggered()
+void AlethZero::on_rewindChain_triggered()
 {
 	bool ok;
 	int n = QInputDialog::getInt(this, "Rewind Chain", "Enter the number of the new chain head.", ethereum()->number() * 9 / 10, 1, ethereum()->number(), 1, &ok);
@@ -773,13 +694,13 @@ void Main::on_rewindChain_triggered()
 	}
 }
 
-void Main::on_preview_triggered()
+void AlethZero::on_preview_triggered()
 {
 	ethereum()->setDefault(ui->preview->isChecked() ? PendingBlock : LatestBlock);
 	refreshAll();
 }
 
-void Main::on_prepNextDAG_triggered()
+void AlethZero::on_prepNextDAG_triggered()
 {
 	EthashAux::computeFull(
 		EthashAux::seedHash(
@@ -788,7 +709,7 @@ void Main::on_prepNextDAG_triggered()
 	);
 }
 
-void Main::refreshMining()
+void AlethZero::refreshMining()
 {
 	pair<uint64_t, unsigned> gp = EthashAux::fullGeneratingProgress();
 	QString t;
@@ -798,7 +719,7 @@ void Main::refreshMining()
 	ui->mineStatus->setText(t + (ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
 }
 
-void Main::setBeneficiary(Address const& _b)
+void AlethZero::setBeneficiary(Address const& _b)
 {
 	for (int i = 0; i < ui->ourAccounts->count(); ++i)
 	{
@@ -810,13 +731,13 @@ void Main::setBeneficiary(Address const& _b)
 	ethereum()->setBeneficiary(_b);
 }
 
-void Main::on_ourAccounts_itemClicked(QListWidgetItem* _i)
+void AlethZero::on_ourAccounts_itemClicked(QListWidgetItem* _i)
 {
 	auto hba = _i->data(Qt::UserRole).toByteArray();
 	setBeneficiary(Address((byte const*)hba.data(), Address::ConstructFromPointer));
 }
 
-void Main::refreshBalances()
+void AlethZero::refreshBalances()
 {
 	cwatch << "refreshBalances()";
 	// update all the balance-dependent stuff.
@@ -864,7 +785,7 @@ void Main::refreshBalances()
 	ui->balance->setText(b + QString::fromStdString(formatBalance(totalBalance)));
 }
 
-void Main::refreshNetwork()
+void AlethZero::refreshNetwork()
 {
 	auto ps = web3()->peers();
 
@@ -898,14 +819,14 @@ void Main::refreshNetwork()
 	}
 }
 
-void Main::refreshAll()
+void AlethZero::refreshAll()
 {
 	refreshBlockCount();
 	refreshBalances();
 	allChange();
 }
 
-void Main::refreshBlockCount()
+void AlethZero::refreshBlockCount()
 {
 	auto d = ethereum()->blockChain().details();
 	SyncStatus sync = ethereum()->syncStatus();
@@ -922,12 +843,12 @@ void Main::refreshBlockCount()
 		.arg(m_privateChain.size() ? "[" + m_privateChain + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number));
 }
 
-void Main::on_turboMining_triggered()
+void AlethZero::on_turboMining_triggered()
 {
 	ethereum()->setTurboMining(ui->turboMining->isChecked());
 }
 
-void Main::on_refresh_triggered()
+void AlethZero::on_refresh_triggered()
 {
 	refreshAll();
 }
@@ -970,7 +891,7 @@ void Main::refreshCache()
 	ui->cacheUsage->setText(t);
 }
 */
-void Main::timerEvent(QTimerEvent*)
+void AlethZero::timerEvent(QTimerEvent*)
 {
 	// 7/18, Alex: aggregating timers, prelude to better threading?
 	// Runs much faster on slower dual-core processors
@@ -995,7 +916,7 @@ void Main::timerEvent(QTimerEvent*)
 		interval += 100;
 }
 
-string Main::renderDiff(StateDiff const& _d) const
+string AlethZero::renderDiff(StateDiff const& _d) const
 {
 	stringstream s;
 
@@ -1038,7 +959,7 @@ string Main::renderDiff(StateDiff const& _d) const
 				s << " * ";
 			s << "  </code>";
 
-			s << prettyU256(i.first);
+			s << toHTML(i.first);
 /*			if (i.first > u256(1) << 246)
 				s << (h256)i.first;
 			else if (i.first > u160(1) << 150)
@@ -1047,17 +968,17 @@ string Main::renderDiff(StateDiff const& _d) const
 				s << hex << i.first;
 */
 			if (!i.second.from())
-				s << ": " << prettyU256(i.second.to());
+				s << ": " << toHTML(i.second.to());
 			else if (!i.second.to())
-				s << " (" << prettyU256(i.second.from()) << ")";
+				s << " (" << toHTML(i.second.from()) << ")";
 			else
-				s << ": " << prettyU256(i.second.to()) << " (" << prettyU256(i.second.from()) << ")";
+				s << ": " << toHTML(i.second.to()) << " (" << toHTML(i.second.from()) << ")";
 		}
 	}
 	return s.str();
 }
 
-void Main::on_injectBlock_triggered()
+void AlethZero::on_injectBlock_triggered()
 {
 	QString s = QInputDialog::getText(this, "Inject Block", "Enter block dump in hex");
 	try
@@ -1076,12 +997,12 @@ void Main::on_injectBlock_triggered()
 	}
 }
 
-void Main::on_idealPeers_valueChanged(int)
+void AlethZero::on_idealPeers_valueChanged(int)
 {
 	m_webThree->setIdealPeerCount(ui->idealPeers->value());
 }
 
-void Main::on_ourAccounts_doubleClicked()
+void AlethZero::on_ourAccounts_doubleClicked()
 {
 	auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 	auto h = Address((byte const*)hba.data(), Address::ConstructFromPointer);
@@ -1094,7 +1015,7 @@ void Main::on_ourAccounts_doubleClicked()
 	m_logHistory.clear();
 }*/
 
-void Main::on_clearPending_triggered()
+void AlethZero::on_clearPending_triggered()
 {
 	writeSettings();
 	ui->mine->setChecked(false);
@@ -1106,12 +1027,12 @@ void Main::on_clearPending_triggered()
 	refreshAll();
 }
 
-void Main::on_retryUnknown_triggered()
+void AlethZero::on_retryUnknown_triggered()
 {
 	ethereum()->retryUnknown();
 }
 
-void Main::on_killBlockchain_triggered()
+void AlethZero::on_killBlockchain_triggered()
 {
 	writeSettings();
 	ui->mine->setChecked(false);
@@ -1123,7 +1044,7 @@ void Main::on_killBlockchain_triggered()
 	refreshAll();
 }
 
-void Main::on_net_triggered()
+void AlethZero::on_net_triggered()
 {
 	ui->port->setEnabled(!ui->net->isChecked());
 	ui->clientName->setEnabled(!ui->net->isChecked());
@@ -1145,7 +1066,7 @@ void Main::on_net_triggered()
 	}
 }
 
-void Main::on_connect_triggered()
+void AlethZero::on_connect_triggered()
 {
 	if (!ui->net->isChecked())
 	{
@@ -1168,7 +1089,7 @@ void Main::on_connect_triggered()
 	}
 }
 
-void Main::on_mine_triggered()
+void AlethZero::on_mine_triggered()
 {
 	if (ui->mine->isChecked())
 	{
@@ -1180,13 +1101,13 @@ void Main::on_mine_triggered()
 		ethereum()->stopMining();
 }
 
-void Main::keysChanged()
+void AlethZero::keysChanged()
 {
 	emit keyManagerChanged();
 	refreshBalances();
 }
 
-void Main::on_killAccount_triggered()
+void AlethZero::on_killAccount_triggered()
 {
 	if (ui->ourAccounts->currentRow() >= 0)
 	{
@@ -1208,7 +1129,7 @@ void Main::on_killAccount_triggered()
 	}
 }
 
-void Main::on_reencryptKey_triggered()
+void AlethZero::on_reencryptKey_triggered()
 {
 	if (ui->ourAccounts->currentRow() >= 0)
 	{
@@ -1238,7 +1159,7 @@ void Main::on_reencryptKey_triggered()
 	}
 }
 
-void Main::on_reencryptAll_triggered()
+void AlethZero::on_reencryptAll_triggered()
 {
 	QStringList kdfs = {"PBKDF2-SHA256", "Scrypt"};
 	bool ok = false;
@@ -1259,7 +1180,7 @@ void Main::on_reencryptAll_triggered()
 	catch (PasswordUnknown&) {}
 }
 
-void Main::on_go_triggered()
+void AlethZero::on_go_triggered()
 {
 	if (!ui->net->isChecked())
 	{
@@ -1270,34 +1191,7 @@ void Main::on_go_triggered()
 		web3()->requirePeer(i.first, i.second);
 }
 
-std::string Main::prettyU256(dev::u256 const& _n) const
-{
-	unsigned inc = 0;
-	string raw;
-	ostringstream s;
-	if (_n > szabo && _n < 1000000 * ether)
-		s << "<span style=\"color: #215\">" << formatBalance(_n) << "</span> <span style=\"color: #448\">(0x" << hex << (uint64_t)_n << ")</span>";
-	else if (!(_n >> 64))
-		s << "<span style=\"color: #008\">" << (uint64_t)_n << "</span> <span style=\"color: #448\">(0x" << hex << (uint64_t)_n << ")</span>";
-	else if (!~(_n >> 64))
-		s << "<span style=\"color: #008\">" << (int64_t)_n << "</span> <span style=\"color: #448\">(0x" << hex << (int64_t)_n << ")</span>";
-	else if ((_n >> 160) == 0)
-	{
-		Address a = right160(_n);
-		string n = pretty(a);
-		if (n.empty())
-			s << "<span style=\"color: #844\">0x</span><span style=\"color: #800\">" << a << "</span>";
-		else
-			s << "<span style=\"font-weight: bold; color: #800\">" << htmlEscaped(n) << "</span> (<span style=\"color: #844\">0x</span><span style=\"color: #800\">" << a.abridged() << "</span>)";
-	}
-	else if ((raw = fromRaw((h256)_n, &inc)).size())
-		return "<span style=\"color: #484\">\"</span><span style=\"color: #080\">" + htmlEscaped(raw) + "</span><span style=\"color: #484\">\"" + (inc ? " + " + toString(inc) : "") + "</span>";
-	else
-		s << "<span style=\"color: #466\">0x</span><span style=\"color: #044\">" << (h256)_n << "</span>";
-	return s.str();
-}
-
-int Main::authenticate(QString _title, QString _text)
+int AlethZero::authenticate(QString _title, QString _text)
 {
 	QMessageBox userInput(this);
 	userInput.setText(_title);
@@ -1309,19 +1203,19 @@ int Main::authenticate(QString _title, QString _text)
 	return userInput.exec();
 }
 
-void Main::initPlugin(Plugin* _p)
+void AlethZero::initPlugin(Plugin* _p)
 {
 	QSettings s("ethereum", "alethzero");
 	_p->readSettings(s);
 }
 
-void Main::finalisePlugin(Plugin* _p)
+void AlethZero::finalisePlugin(Plugin* _p)
 {
 	QSettings s("ethereum", "alethzero");
 	_p->writeSettings(s);
 }
 
-void Main::unloadPlugin(string const& _name)
+void AlethZero::unloadPlugin(string const& _name)
 {
 	shared_ptr<Plugin> p = takePlugin(_name);
 	if (p)

@@ -26,12 +26,12 @@
 #include "ConfigInfo.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(NameRegNamer);
 
-NameRegNamer::NameRegNamer(MainFace* _m):
+NameRegNamer::NameRegNamer(AlethFace* _m):
 	AccountNamerPlugin(_m, "NameRegNamer")
 {
 }

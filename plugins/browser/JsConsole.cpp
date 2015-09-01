@@ -28,14 +28,14 @@
 
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(JsConsole);
 
-namespace dev { namespace az { QString contentsOfQResource(std::string const& res); } }
+namespace dev { namespace aleth { QString contentsOfQResource(std::string const& res); } }
 
-JsConsole::JsConsole(MainFace* _m):
+JsConsole::JsConsole(AlethFace* _m):
 	Plugin(_m, "JavaScript Console")
 {
 	JsConsoleWidget* jsConsole = new JsConsoleWidget(_m);

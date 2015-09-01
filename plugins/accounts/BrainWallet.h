@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class BrainWallet: public QObject, public Plugin
@@ -33,7 +33,7 @@ class BrainWallet: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	BrainWallet(MainFace* _m);
+	BrainWallet(AlethFace* _m);
 	~BrainWallet();
 
 private slots:

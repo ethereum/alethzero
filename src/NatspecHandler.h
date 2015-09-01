@@ -25,11 +25,11 @@
 #include <libdevcore/db.h>
 #include <json/json.h>
 #include <libdevcore/FixedHash.h>
-#include "Context.h"
+#include "Common.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class NatspecHandler: public NatSpecFace
@@ -44,12 +44,12 @@ class NatspecHandler: public NatSpecFace
 	std::string retrieve(dev::h256 const& _contractHash) const override;
 
 	/// Given a json natspec string and the transaction data return the user notice
-	virtual std::string getUserNotice(std::string const& json, const dev::bytes& _transactionData) override;
+	virtual std::string userNotice(std::string const& json, const dev::bytes& _transactionData) override;
 	/// Given a contract code hash and the transaction's data retrieve the natspec documention's
 	/// user notice for that transaction.
 	/// @returns The user notice or an empty string if no natspec for the contract exists
 	///          or if the existing natspec does not document the @c _methodName
-	virtual std::string getUserNotice(dev::h256 const& _contractHash, dev::bytes const& _transactionDacta) override;
+	virtual std::string userNotice(dev::h256 const& _contractHash, dev::bytes const& _transactionDacta) override;
 	
   private:
 	ldb::ReadOptions m_readOptions;

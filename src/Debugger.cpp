@@ -20,7 +20,6 @@
  */
 
 #include "Debugger.h"
-
 #include <fstream>
 #include <QFileDialog>
 #include <libevm/VM.h>
@@ -29,7 +28,7 @@
 #include "ui_Debugger.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 Debugger::Debugger(Context* _c, QWidget* _parent):
@@ -227,7 +226,7 @@ void Debugger::update()
 
 			QString stack;
 			for (auto i: ws.stack)
-				stack.prepend("<div>" + QString::fromStdString(m_context->prettyU256(i)) + "</div>");
+				stack.prepend("<div>" + QString::fromStdString(m_context->toHTML(i)) + "</div>");
 			ui->debugStack->setHtml(stack);
 			ui->debugMemory->setHtml(QString::fromStdString(dev::memDump(ws.memory, 16, true)));
 			assert(m_session.codes.count(ws.code));
@@ -249,7 +248,7 @@ void Debugger::update()
 			auto keys = dev::keysOf(ws.storage);
 			sort(keys.begin(), keys.end());
 			for (auto const& key: keys)
-				s << "@" << m_context->prettyU256(key) << "&nbsp;&nbsp;&nbsp;&nbsp;" << m_context->prettyU256(ws.storage.at(key)) << "<br/>";
+				s << "@" << m_context->toHTML(key) << "&nbsp;&nbsp;&nbsp;&nbsp;" << m_context->toHTML(ws.storage.at(key)) << "<br/>";
 			ui->debugStorage->setHtml(QString::fromStdString(s.str()));
 		}
 	}

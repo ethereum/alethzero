@@ -27,12 +27,12 @@
 #include <ui_OtherAccounts.h>
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(OtherAccounts);
 
-OtherAccounts::OtherAccounts(MainFace* _m):
+OtherAccounts::OtherAccounts(AlethFace* _m):
 	AccountNamerPlugin(_m, "OtherAccounts")
 {
 	connect(addMenuItem("Register Third-party Address Names...", "menuTools", true), SIGNAL(triggered()), SLOT(import()));

@@ -30,7 +30,7 @@
 #include "ui_LogPanel.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 static QString filterOutTerminal(QString _s)
@@ -40,7 +40,7 @@ static QString filterOutTerminal(QString _s)
 
 DEV_AZ_NOTE_PLUGIN(LogPanel);
 
-LogPanel::LogPanel(MainFace* _m):
+LogPanel::LogPanel(AlethFace* _m):
 	Plugin(_m, "LogPanel"),
 	m_ui(new Ui::LogPanel)
 {

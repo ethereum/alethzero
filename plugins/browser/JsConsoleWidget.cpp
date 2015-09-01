@@ -24,12 +24,12 @@
 #include <QWebEngineView>
 #include <QScrollBar>
 #include <QKeyEvent>
+#include "Common.h"
 #include "WebPage.h"
-#include "Context.h"
 #include "ui_JsConsoleWidget.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 
 JsConsoleWidget::JsConsoleWidget(QWidget* _p):
 	QWidget(_p),

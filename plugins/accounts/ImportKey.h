@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class ImportKey: public QObject, public Plugin
@@ -33,7 +33,7 @@ class ImportKey: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	ImportKey(MainFace* _m);
+	ImportKey(AlethFace* _m);
 	~ImportKey();
 
 private slots:

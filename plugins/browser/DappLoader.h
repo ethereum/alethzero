@@ -37,7 +37,7 @@ namespace dev
 class WebThreeDirect;
 class RLP;
 
-namespace az
+namespace aleth
 {
 
 struct ManifestEntry

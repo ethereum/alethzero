@@ -31,12 +31,12 @@
 #include "ui_BrainWallet.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(BrainWallet);
 
-BrainWallet::BrainWallet(MainFace* _m):
+BrainWallet::BrainWallet(AlethFace* _m):
 	Plugin(_m, "BrainWallet")
 {
 	connect(addMenuItem("New Brain Wallet...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));

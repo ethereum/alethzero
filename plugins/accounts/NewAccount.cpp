@@ -30,7 +30,7 @@
 #include "ui_NewAccount.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 bool beginsWith(Address _a, bytes const& _b)
@@ -43,7 +43,7 @@ bool beginsWith(Address _a, bytes const& _b)
 
 DEV_AZ_NOTE_PLUGIN(NewAccount);
 
-NewAccount::NewAccount(MainFace* _m):
+NewAccount::NewAccount(AlethFace* _m):
 	Plugin(_m, "NewAccount")
 {
 	connect(addMenuItem("New Account...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));

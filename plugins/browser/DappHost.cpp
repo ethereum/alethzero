@@ -25,7 +25,7 @@
 #include <boost/algorithm/string.hpp>
 #include <libdevcore/Common.h>
 using namespace dev;
-using namespace az;
+using namespace aleth;
 
 DappHost::DappHost(int _port, int _threads):
 	m_port(_port),

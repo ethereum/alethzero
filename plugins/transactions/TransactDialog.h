@@ -27,7 +27,7 @@
 #include <QDialog>
 #include <QMap>
 #include <QList>
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace Ui { class TransactDialog; }
 
@@ -37,7 +37,7 @@ namespace dev
 namespace eth { class Client; }
 namespace solidity { class CompilerStack; }
 
-namespace az
+namespace aleth
 {
 
 struct GasRequirements
@@ -54,7 +54,7 @@ class TransactDialog: public QDialog
 	Q_OBJECT
 
 public:
-	explicit TransactDialog(MainFace* _main);
+	explicit TransactDialog(AlethFace* _main);
 	~TransactDialog();
 
 	void resetGasPrice();
@@ -107,7 +107,7 @@ private:
 
 	dev::AddressHash m_accounts;
 	dev::eth::Client* m_ethereum = nullptr;
-	MainFace* m_main = nullptr;
+	AlethFace* m_main = nullptr;
 	NatSpecFace* m_natSpecDB = nullptr;
 
 	QString m_dataInfo;

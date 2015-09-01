@@ -28,12 +28,12 @@
 #include "ui_WhisperPeers.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(WhisperPeers);
 
-WhisperPeers::WhisperPeers(MainFace* _m):
+WhisperPeers::WhisperPeers(AlethFace* _m):
 	Plugin(_m, "WhisperPeers"),
 	m_ui(new Ui::WhisperPeers)
 {

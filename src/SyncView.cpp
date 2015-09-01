@@ -19,14 +19,14 @@
  * @date 2014
  */
 
-#include "DownloadView.h"
+#include "SyncView.h"
 #include <QtWidgets>
 #include <QtCore>
 #include <libethereum/DownloadMan.h>
 #include "Grapher.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 SyncView::SyncView(QWidget* _p): QWidget(_p)

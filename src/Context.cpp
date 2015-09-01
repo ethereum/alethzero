@@ -23,61 +23,39 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <libethcore/Common.h>
+#include "Common.h"
 using namespace std;
 using namespace dev;
 using namespace eth;
-using namespace az;
-
-NatSpecFace::~NatSpecFace()
-{
-}
+using namespace aleth;
 
 Context::~Context()
 {
 }
 
-void dev::az::setValueUnits(QComboBox* _units, QSpinBox* _value, u256 _v)
+std::string Context::toHTML(dev::u256 const& _n) const
 {
-	initUnits(_units);
-	if (_v > 0)
+	unsigned inc = 0;
+	string raw;
+	ostringstream s;
+	if (_n > szabo && _n < 1000000 * ether)
+		s << "<span style=\"color: #215\">" << formatBalance(_n) << "</span> <span style=\"color: #448\">(0x" << hex << (uint64_t)_n << ")</span>";
+	else if (!(_n >> 64))
+		s << "<span style=\"color: #008\">" << (uint64_t)_n << "</span> <span style=\"color: #448\">(0x" << hex << (uint64_t)_n << ")</span>";
+	else if (!~(_n >> 64))
+		s << "<span style=\"color: #008\">" << (int64_t)_n << "</span> <span style=\"color: #448\">(0x" << hex << (int64_t)_n << ")</span>";
+	else if ((_n >> 160) == 0)
 	{
-		_units->setCurrentIndex(0);
-		while (_v > 50000 && _units->currentIndex() < (int)(units().size() - 2))
-		{
-			_v /= 1000;
-			_units->setCurrentIndex(_units->currentIndex() + 1);
-		}
+		Address a = right160(_n);
+		string n = pretty(a);
+		if (n.empty())
+			s << "<span style=\"color: #844\">0x</span><span style=\"color: #800\">" << a << "</span>";
+		else
+			s << "<span style=\"font-weight: bold; color: #800\">" << htmlEscaped(n) << "</span> (<span style=\"color: #844\">0x</span><span style=\"color: #800\">" << a.abridged() << "</span>)";
 	}
+	else if ((raw = fromRaw((h256)_n, &inc)).size())
+		return "<span style=\"color: #484\">\"</span><span style=\"color: #080\">" + htmlEscaped(raw) + "</span><span style=\"color: #484\">\"" + (inc ? " + " + toString(inc) : "") + "</span>";
 	else
-		_units->setCurrentIndex(6);
-	_value->setValue((unsigned)_v);
-}
-
-u256 dev::az::fromValueUnits(QComboBox* _units, QSpinBox* _value)
-{
-	return _value->value() * units()[units().size() - 1 - _units->currentIndex()].first;
-}
-
-void dev::az::initUnits(QComboBox* _b)
-{
-	for (auto n = (unsigned)units().size(); n-- != 0; )
-		_b->addItem(QString::fromStdString(units()[n].second), n);
-}
-
-vector<KeyPair> dev::az::keysAsVector(QList<KeyPair> const& keys)
-{
-	auto list = keys.toStdList();
-	return {begin(list), end(list)};
-}
-
-bool dev::az::sourceIsSolidity(string const& _source)
-{
-	// TODO: Improve this heuristic
-	return (_source.substr(0, 8) == "contract" || _source.substr(0, 5) == "//sol");
-}
-
-bool dev::az::sourceIsSerpent(string const& _source)
-{
-	// TODO: Improve this heuristic
-	return (_source.substr(0, 5) == "//ser");
+		s << "<span style=\"color: #466\">0x</span><span style=\"color: #044\">" << (h256)_n << "</span>";
+	return s.str();
 }

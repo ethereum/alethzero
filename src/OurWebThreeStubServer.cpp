@@ -24,15 +24,15 @@
 #include <QAbstractButton>
 #include <libwebthree/WebThree.h>
 #include "QNatspec.h"
-#include "MainWin.h"
+#include "AlethZero.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 OurWebThreeStubServer::OurWebThreeStubServer(
 	jsonrpc::AbstractServerConnector& _conn,
-	Main* _main
+	AlethZero* _main
 ):
 	WebThreeStubServer(_conn, *_main->web3(), make_shared<OurAccountHolder>(_main), vector<KeyPair>{}, _main->keyManager(), *static_cast<TrivialGasPricer*>(_main->ethereum()->gasPricer().get())),
 	m_main(_main)
@@ -46,7 +46,7 @@ string OurWebThreeStubServer::shh_newIdentity()
 	return toJS(kp.pub());
 }
 
-OurAccountHolder::OurAccountHolder(Main* _main):
+OurAccountHolder::OurAccountHolder(AlethZero* _main):
 	AccountHolder([=](){ return _main->ethereum(); }),
 	m_main(_main)
 {
@@ -125,7 +125,7 @@ bool OurAccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _
 			h256 contractCodeHash = m_main->ethereum()->postState().codeHash(_t.to);
 			if (contractCodeHash == EmptySHA3)
 				return make_pair(false, std::string());
-			string userNotice = m_main->natSpec()->getUserNotice(contractCodeHash, _t.data);
+			string userNotice = m_main->natSpec()->userNotice(contractCodeHash, _t.data);
 			QNatspecExpressionEvaluator evaluator;
 			userNotice = evaluator.evalExpression(userNotice);
 			return std::make_pair(true, userNotice);

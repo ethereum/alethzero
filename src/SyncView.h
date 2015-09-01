@@ -36,7 +36,7 @@ namespace dev
 
 namespace eth { class Client; }
 
-namespace az
+namespace aleth
 {
 
 class SyncView: public QWidget

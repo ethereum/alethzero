@@ -23,7 +23,7 @@
 #include <libp2p/Host.h>
 #include "ui_Connect.h"
 using namespace dev;
-using namespace az;
+using namespace aleth;
 
 Connect::Connect(QWidget *parent) :
 	QDialog(parent),

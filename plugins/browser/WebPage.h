@@ -30,7 +30,7 @@
 namespace dev
 {
 
-namespace az
+namespace aleth
 {
 
 class WebPage: public QWebEnginePage

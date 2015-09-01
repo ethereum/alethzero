@@ -14,42 +14,44 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file WhisperPeers.h
+/** @file Aleth.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
 
 #pragma once
 
-#include <QMutex>
-#include <QString>
-#include <QPair>
-#include <QList>
+#include <libdevcore/Common.h>
 #include "AlethFace.h"
-
-namespace Ui
-{
-class WhisperPeers;
-}
 
 namespace dev
 {
+
 namespace aleth
 {
 
-class WhisperPeers: public QObject, public Plugin
+class Aleth: public AlethFace
 {
 	Q_OBJECT
 
 public:
-	WhisperPeers(AlethFace* _m);
+	explicit Aleth(QWidget* _parent = nullptr);
+	virtual ~Aleth();
+
+protected:
+	void init();
+
+	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
+	unsigned installWatch(h256 const& _tf, WatchHandler const& _f) override;
+	void uninstallWatch(unsigned _w) override;
+
+private slots:
+	void checkHandlers();
 
 private:
-	void timerEvent(QTimerEvent*) override;
-	void refreshWhispers();
-
-	Ui::WhisperPeers* m_ui;
+	std::map<unsigned, WatchHandler> m_handlers;
 };
 
 }
+
 }

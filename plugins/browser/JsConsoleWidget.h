@@ -32,7 +32,7 @@ namespace Ui { class JsConsoleWidget; }
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class JsConsoleWidget: public QWidget

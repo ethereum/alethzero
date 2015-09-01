@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class NameRegNamer: public QObject, public AccountNamerPlugin
@@ -33,7 +33,7 @@ class NameRegNamer: public QObject, public AccountNamerPlugin
 	Q_OBJECT
 
 public:
-	NameRegNamer(MainFace* _m);
+	NameRegNamer(AlethFace* _m);
 	~NameRegNamer();
 
 private:

@@ -24,12 +24,12 @@
 #include "ui_Cors.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(Cors);
 
-Cors::Cors(MainFace* _m):
+Cors::Cors(AlethFace* _m):
 	Plugin(_m, "Cors")
 {
 	connect(addMenuItem("Change CORS Domain...", "menuTools", true), SIGNAL(triggered()), SLOT(showDialog()));

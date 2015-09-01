@@ -21,11 +21,11 @@
 
 #pragma once
 
-#include "MainFace.h"
+#include "AlethFace.h"
 
 namespace dev
 {
-namespace az
+namespace aleth
 {
 
 class OtherAccounts: public QObject, public AccountNamerPlugin
@@ -33,7 +33,7 @@ class OtherAccounts: public QObject, public AccountNamerPlugin
 	Q_OBJECT
 
 public:
-	OtherAccounts(MainFace* _m);
+	OtherAccounts(AlethFace* _m);
 
 protected:
 	std::string toName(Address const& _a) const override { if (m_toName.count(_a)) return m_toName.at(_a); return std::string(); }

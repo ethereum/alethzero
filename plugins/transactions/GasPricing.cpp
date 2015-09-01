@@ -25,12 +25,12 @@
 #include "ui_GasPricing.h"
 using namespace std;
 using namespace dev;
-using namespace az;
+using namespace aleth;
 using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(GasPricing);
 
-GasPricing::GasPricing(MainFace* _m):
+GasPricing::GasPricing(AlethFace* _m):
 	Plugin(_m, "GasPricing")
 {
 	connect(addMenuItem("Gas Prices...", "menuConfig", true), SIGNAL(triggered()), SLOT(gasPrices()));
