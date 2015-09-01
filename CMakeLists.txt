@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0.0)
 
 # A place where should we look for *.cmake files
-set(ETH_CMAKE_DIR   "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum-cmake"   CACHE PATH "The the path to the cmake directory")
+set(ETH_CMAKE_DIR   "${CMAKE_CURRENT_LIST_DIR}/../cmake"   CACHE PATH "The the path to the cmake directory")
 list(APPEND CMAKE_MODULE_PATH ${ETH_CMAKE_DIR})
 
 # Set cmake_policies
@@ -29,14 +29,7 @@ file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
 file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
 file(GLOB_RECURSE UI_RESOURCES "src/*.ui" "plugins/*.ui")
 
-# required for eth_add_resources, TODO: remove this
-if (DEFINED ethereum_SOURCE_DIR)
-	set(ETH_DIR ${ethereum_SOURCE_DIR})
-else()
-	set(ETH_DIR "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
-endif()
-
-eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
+eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 eth_name(EXECUTABLE AlethZero)
 
@@ -52,8 +45,7 @@ eth_add_executable(${EXECUTABLE}
 	WIN_RESOURCES src/alethzero.rc
 )
 
-eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets Eth::ethereum Web3::web3jsonrpc Eth::natspec)
-eth_use(${EXECUTABLE} OPTIONAL Solidity)
+eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets Eth::ethereum Web3::web3jsonrpc Eth::natspec Solidity)
 
 # required because AUTOUIC can't handle multiple ui includes in one cpp file
 qt5_wrap_ui(ui_Main.h src/Main.ui)
