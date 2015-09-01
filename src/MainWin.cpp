@@ -74,6 +74,60 @@ using namespace p2p;
 using namespace eth;
 namespace js = json_spirit;
 
+AlethZeroBase::AlethZeroBase(QWidget* _parent):
+	MainFace(_parent)
+{
+}
+
+AlethZeroBase::~AlethZeroBase()
+{
+}
+
+void AlethZeroBase::init()
+{
+	{
+		QTimer* t = new QTimer(this);
+		connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
+		t->start(200);
+	}
+}
+
+unsigned AlethZeroBase::installWatch(LogFilter const& _tf, WatchHandler const& _f)
+{
+	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
+	m_handlers[ret] = _f;
+	_f(LocalisedLogEntries());
+	return ret;
+}
+
+unsigned AlethZeroBase::installWatch(h256 const& _tf, WatchHandler const& _f)
+{
+	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
+	m_handlers[ret] = _f;
+	_f(LocalisedLogEntries());
+	return ret;
+}
+
+void AlethZeroBase::uninstallWatch(unsigned _w)
+{
+	cdebug << "!!! Main: uninstalling watch" << _w;
+	ethereum()->uninstallWatch(_w);
+	m_handlers.erase(_w);
+}
+
+void AlethZeroBase::checkHandlers()
+{
+	for (auto const& i: m_handlers)
+	{
+		auto ls = ethereum()->checkWatchSafe(i.first);
+		if (ls.size())
+		{
+//				cnote << "FIRING WATCH" << i.first << ls.size();
+			i.second(ls);
+		}
+	}
+}
+
 Main::Main(QWidget* _parent):
 	AlethZeroBase(_parent),
 	ui(new Ui::Main)
@@ -353,29 +407,6 @@ NetworkPreferences Main::netPrefs() const
 void Main::onKeysChanged()
 {
 	// TODO: reinstall balance watchers
-}
-
-unsigned Main::installWatch(LogFilter const& _tf, WatchHandler const& _f)
-{
-	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
-	m_handlers[ret] = _f;
-	_f(LocalisedLogEntries());
-	return ret;
-}
-
-unsigned Main::installWatch(h256 const& _tf, WatchHandler const& _f)
-{
-	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
-	m_handlers[ret] = _f;
-	_f(LocalisedLogEntries());
-	return ret;
-}
-
-void Main::uninstallWatch(unsigned _w)
-{
-	cdebug << "!!! Main: uninstalling watch" << _w;
-	ethereum()->uninstallWatch(_w);
-	m_handlers.erase(_w);
 }
 
 void Main::installWatches()
@@ -962,16 +993,6 @@ void Main::timerEvent(QTimerEvent*)
 	}
 	else
 		interval += 100;
-
-	for (auto const& i: m_handlers)
-	{
-		auto ls = ethereum()->checkWatchSafe(i.first);
-		if (ls.size())
-		{
-//			cnote << "FIRING WATCH" << i.first << ls.size();
-			i.second(ls);
-		}
-	}
 }
 
 string Main::renderDiff(StateDiff const& _d) const

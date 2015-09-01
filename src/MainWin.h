@@ -30,6 +30,7 @@
 #include <QtCore/QAbstractListModel>
 #include <QtCore/QMutex>
 #include <QtWidgets/QMainWindow>
+#include <QTimer>
 #include <libdevcore/RLP.h>
 #include <libethcore/Common.h>
 #include <libethcore/KeyManager.h>
@@ -70,17 +71,24 @@ struct Dapp;
 
 class AlethZeroBase: public MainFace
 {
+	Q_OBJECT
+
 public:
-	explicit AlethZeroBase(QWidget* _parent = nullptr): MainFace(_parent)
-	{
-	}
+	explicit AlethZeroBase(QWidget* _parent = nullptr);
+	virtual ~AlethZeroBase();
 
-	virtual ~AlethZeroBase()
-	{
-	}
+protected:
+	void init();
 
+	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
+	unsigned installWatch(h256 const& _tf, WatchHandler const& _f) override;
+	void uninstallWatch(unsigned _w) override;
 
+private slots:
+	void checkHandlers();
 
+private:
+	std::map<unsigned, WatchHandler> m_handlers;
 };
 
 class Main: public AlethZeroBase
@@ -198,10 +206,6 @@ private:
 
 	void setPrivateChain(QString const& _private, bool _forceConfigure = false);
 
-	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
-	unsigned installWatch(h256 const& _tf, WatchHandler const& _f) override;
-	void uninstallWatch(unsigned _w) override;
-
 	void keysChanged();
 
 	void onNewBlock();
@@ -221,7 +225,6 @@ private:
 
 	std::unique_ptr<Ui::Main> ui;
 	std::unique_ptr<WebThreeDirect> m_webThree;
-	std::map<unsigned, WatchHandler> m_handlers;
 
 	QByteArray m_networkConfig;
 	QStringList m_servers;
