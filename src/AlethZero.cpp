@@ -209,6 +209,9 @@ AlethZero::AlethZero(QWidget* _parent):
 		initPlugin(i.second(this));
 	}
 
+	connect(this, SIGNAL(knownAddressesChanged(AccountNamer*)), SLOT(refreshAll()));
+	connect(this, SIGNAL(addressNamesChanged(AccountNamer*)), SLOT(refreshAll()));
+
 	readSettings(false, true);
 }
 
@@ -221,65 +224,11 @@ AlethZero::~AlethZero()
 	// need to be rethought into something more like:
 	// forEach([&](shared_ptr<Plugin> const& p){ finalisePlugin(p.get()); });
 	writeSettings();
-
-	m_destructing = true;
-	killPlugins();
 }
 
-void AlethZero::install(AccountNamer* _adopt)
+bool AlethZero::shouldConfirm() const
 {
-	m_namers.insert(_adopt);
-	_adopt->m_main = this;
-	refreshAll();
-}
-
-void AlethZero::uninstall(AccountNamer* _kill)
-{
-	m_namers.erase(_kill);
-	if (!m_destructing)
-		refreshAll();
-}
-
-void AlethZero::noteKnownAddressesChanged(AccountNamer*)
-{
-	emit knownAddressesChanged();
-	refreshAll();
-}
-
-void AlethZero::noteAddressNamesChanged(AccountNamer*)
-{
-	emit addressNamesChanged();
-	refreshAll();
-}
-
-Address AlethZero::toAddress(string const& _n) const
-{
-	for (AccountNamer* n: m_namers)
-		if (n->toAddress(_n))
-			return n->toAddress(_n);
-	return Address();
-}
-
-string AlethZero::toName(Address const& _a) const
-{
-	for (AccountNamer* n: m_namers)
-		if (!n->toName(_a).empty())
-			return n->toName(_a);
-	return string();
-}
-
-Addresses AlethZero::allKnownAddresses() const
-{
-	Addresses ret;
-	for (AccountNamer* i: m_namers)
-		ret += i->knownAddresses();
-	sort(ret.begin(), ret.end());
-	return ret;
-}
-
-bool AlethZero::confirm() const
-{
-	return true; //ui->natSpec->isChecked();
+	return ui->natSpec->isChecked();
 }
 
 void AlethZero::on_sentinel_triggered()
@@ -339,11 +288,6 @@ void AlethZero::installWatches()
 	cdebug << "newBlock watch ID: " << newBlockId;
 }
 
-bool AlethZero::doConfirm()
-{
-	return ui->confirm->isChecked();
-}
-
 void AlethZero::onNewBlock()
 {
 	cwatch << "Blockchain changed!";
@@ -378,99 +322,6 @@ void AlethZero::debug(QString _s)
 void AlethZero::warn(QString _s)
 {
 	cwarn << _s.toStdString();
-}
-
-std::string AlethZero::pretty(dev::Address const& _a) const
-{
-	for (auto i: m_namers)
-	{
-		auto n = i->toName(_a);
-		if (!n.empty())
-			return n;
-	}
-	return string();
-}
-
-std::string AlethZero::render(dev::Address const& _a) const
-{
-	string p = pretty(_a);
-	string n;
-	if (p.size() == 9 && p.find_first_not_of("QWERYUOPASDFGHJKLZXCVBNM1234567890") == string::npos)
-		p = ICAP(p, "XREG").encoded();
-	else
-		DEV_IGNORE_EXCEPTIONS(n = ICAP(_a).encoded().substr(0, 8));
-	if (!n.empty())
-		n += " ";
-	n += _a.abridged();
-	return p.empty() ? n : (p + " " + n);
-}
-
-pair<Address, bytes> AlethZero::fromString(std::string const& _n) const
-{
-	if (_n == "(Create Contract)")
-		return make_pair(Address(), bytes());
-
-	std::string n = _n;
-
-	for (auto i: m_namers)
-		if (auto a = i->toAddress(_n))
-			return make_pair(a, bytes());
-
-	try {
-		return ICAP::decoded(n).address([&](Address const& a, bytes const& b) -> bytes
-		{
-			return ethereum()->call(a, b).output;
-		}, Address("a1a111bc074c9cfa781f0c38e63bd51c91b8af00"));
-	}
-	catch (...) {}
-
-	if (n.find("0x") == 0)
-		n.erase(0, 2);
-	if (n.size() == 40)
-		try
-		{
-			return make_pair(Address(fromHex(n, WhenError::Throw)), bytes());
-		}
-		catch (BadHexCharacter& _e)
-		{
-			cwarn << "invalid hex character, address rejected";
-			cwarn << boost::diagnostic_information(_e);
-			return make_pair(Address(), bytes());
-		}
-		catch (...)
-		{
-			cwarn << "address rejected";
-			return make_pair(Address(), bytes());
-		}
-	return make_pair(Address(), bytes());
-}
-
-QString AlethZero::lookup(QString const& _a) const
-{
-	if (!_a.endsWith(".eth"))
-		return _a;
-
-	string sn = _a.mid(0, _a.size() - 4).toStdString();
-	if (sn.size() > 32)
-		sn = sha3(sn, false);
-	h256 n;
-	memcpy(n.data(), sn.data(), sn.size());
-
-	h256 ret;
-	// TODO: fix with the new DNSreg contract
-//	if (h160 dnsReg = (u160)ethereum()->stateAt(c_config, 4, PendingBlock))
-//		ret = ethereum()->stateAt(dnsReg, n);
-/*	if (!ret)
-		if (h160 nameReg = (u160)ethereum()->stateAt(c_config, 0, PendingBlock))
-			ret = ethereum()->stateAt(nameReg, n2);
-*/
-	if (ret && !((u256)ret >> 32))
-		return QString("%1.%2.%3.%4").arg((int)ret[28]).arg((int)ret[29]).arg((int)ret[30]).arg((int)ret[31]);
-	// TODO: support IPv6.
-	else if (ret)
-		return QString::fromStdString(fromRaw(ret));
-	else
-		return _a;
 }
 
 void AlethZero::on_about_triggered()
@@ -659,7 +510,7 @@ void AlethZero::on_exportKey_triggered()
 		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
 		Secret s = retrieveSecret(h);
-		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(render(h) + " is:\n" + s.makeInsecure().hex()));
+		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(toReadable(h) + " is:\n" + s.makeInsecure().hex()));
 	}
 }
 
@@ -761,7 +612,7 @@ void AlethZero::refreshBalances()
 		QListWidgetItem* li = new QListWidgetItem(
 			QString("<%1> %2: %3 [%4]")
 				.arg(m_keyManager.haveKey(address) ? "KEY" : "BRAIN")
-				.arg(QString::fromStdString(render(address)))
+				.arg(QString::fromStdString(toReadable(address)))
 				.arg(formatBalance(b).c_str())
 				.arg((unsigned)ethereum()->countAt(address))
 			, ui->ourAccounts);
@@ -916,68 +767,6 @@ void AlethZero::timerEvent(QTimerEvent*)
 		interval += 100;
 }
 
-string AlethZero::renderDiff(StateDiff const& _d) const
-{
-	stringstream s;
-
-	auto indent = "<code style=\"white-space: pre\">     </code>";
-	for (auto const& i: _d.accounts)
-	{
-		s << "<hr/>";
-
-		AccountDiff ad = i.second;
-		s << "<code style=\"white-space: pre; font-weight: bold\">" << lead(ad.changeType()) << "  </code>" << " <b>" << render(i.first) << "</b>";
-		if (!ad.exist.to())
-			continue;
-
-		if (ad.balance)
-		{
-			s << "<br/>" << indent << "Balance " << dec << ad.balance.to() << " [=" << formatBalance(ad.balance.to()) << "]";
-			bigint d = (dev::bigint)ad.balance.to() - (dev::bigint)ad.balance.from();
-			s << " <b>" << showpos << dec << d << " [=" << formatBalance(d) << "]" << noshowpos << "</b>";
-		}
-		if (ad.nonce)
-		{
-			s << "<br/>" << indent << "Count #" << dec << ad.nonce.to();
-			s << " <b>" << showpos << (((dev::bigint)ad.nonce.to()) - ((dev::bigint)ad.nonce.from())) << noshowpos << "</b>";
-		}
-		if (ad.code)
-		{
-			s << "<br/>" << indent << "Code " << dec << ad.code.to().size() << " bytes";
-			if (ad.code.from().size())
-				 s << " (" << ad.code.from().size() << " bytes)";
-		}
-
-		for (pair<u256, dev::Diff<u256>> const& i: ad.storage)
-		{
-			s << "<br/><code style=\"white-space: pre\">";
-			if (!i.second.from())
-				s << " + ";
-			else if (!i.second.to())
-				s << "XXX";
-			else
-				s << " * ";
-			s << "  </code>";
-
-			s << toHTML(i.first);
-/*			if (i.first > u256(1) << 246)
-				s << (h256)i.first;
-			else if (i.first > u160(1) << 150)
-				s << (h160)(u160)i.first;
-			else
-				s << hex << i.first;
-*/
-			if (!i.second.from())
-				s << ": " << toHTML(i.second.to());
-			else if (!i.second.to())
-				s << " (" << toHTML(i.second.from()) << ")";
-			else
-				s << ": " << toHTML(i.second.to()) << " (" << toHTML(i.second.from()) << ")";
-		}
-	}
-	return s.str();
-}
-
 void AlethZero::on_injectBlock_triggered()
 {
 	QString s = QInputDialog::getText(this, "Inject Block", "Enter block dump in hex");
@@ -1114,7 +903,7 @@ void AlethZero::on_killAccount_triggered()
 		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
 		QString s = QInputDialog::getText(this, QString::fromStdString("Kill Account " + m_keyManager.accountName(h) + "?!"),
-			QString::fromStdString("Account " + m_keyManager.accountName(h) + " (" + render(h) + ") has " + formatBalance(ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
+			QString::fromStdString("Account " + m_keyManager.accountName(h) + " (" + toReadable(h) + ") has " + formatBalance(ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
 			"Are you sure you want to continue? \r\n If so, type 'YES' to confirm."),
 			QLineEdit::Normal, "NO");
 		if (s != "YES")
@@ -1169,7 +958,7 @@ void AlethZero::on_reencryptAll_triggered()
 	try {
 		for (Address const& a: m_keyManager.accounts())
 			while (!m_keyManager.recode(a, SemanticPassword::Existing, [&](){
-				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(pretty(a))).arg(QString::fromStdString(m_keyManager.passwordHint(a))), QLineEdit::Password, QString()).toStdString();
+				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(toName(a))).arg(QString::fromStdString(m_keyManager.passwordHint(a))), QLineEdit::Password, QString()).toStdString();
 				if (p.empty())
 					throw PasswordUnknown();
 				return p;

@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <unordered_set>
 #include <libdevcore/Common.h>
 #include "AlethFace.h"
 
@@ -38,18 +39,31 @@ public:
 	explicit Aleth(QWidget* _parent = nullptr);
 	virtual ~Aleth();
 
-protected:
-	void init();
-
+	// Watch API
 	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
 	unsigned installWatch(h256 const& _tf, WatchHandler const& _f) override;
 	void uninstallWatch(unsigned _w) override;
+
+	// Account naming API
+	void install(AccountNamer* _adopt) override;
+	void uninstall(AccountNamer* _kill) override;
+	void noteKnownAddressesChanged(AccountNamer*) override;
+	void noteAddressNamesChanged(AccountNamer*) override;
+	Address toAddress(std::string const&) const override;
+	std::string toName(Address const&) const override;
+	Addresses allKnownAddresses() const override;
+
+protected:
+	void init();
 
 private slots:
 	void checkHandlers();
 
 private:
 	std::map<unsigned, WatchHandler> m_handlers;
+	std::unordered_set<AccountNamer*> m_namers;
+
+	bool m_destructing = false;
 };
 
 }

@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <libethcore/Common.h>
+#include <libethereum/AccountDiff.h>
 #include "Common.h"
 using namespace std;
 using namespace dev;
@@ -47,7 +48,7 @@ std::string Context::toHTML(dev::u256 const& _n) const
 	else if ((_n >> 160) == 0)
 	{
 		Address a = right160(_n);
-		string n = pretty(a);
+		string n = toName(a);
 		if (n.empty())
 			s << "<span style=\"color: #844\">0x</span><span style=\"color: #800\">" << a << "</span>";
 		else

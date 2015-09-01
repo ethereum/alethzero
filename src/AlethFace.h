@@ -40,7 +40,7 @@ namespace dev
 
 class WebThreeDirect;
 class SafeHttpServer;
-namespace eth { class Client; class LogFilter; }
+namespace eth { class Client; class LogFilter; class KeyManager; }
 namespace shh { class WhisperHost; }
 
 namespace aleth
@@ -57,7 +57,7 @@ using WatchHandler = std::function<void(dev::eth::LocalisedLogEntries const&)>;
 
 class AccountNamer
 {
-	friend class AlethZero;
+	friend class Aleth;
 
 public:
 	virtual std::string toName(Address const&) const { return std::string(); }
@@ -90,6 +90,7 @@ public:
 	void allChange();
 
 	static Address getNameReg();
+	static Address getICAPReg();
 
 	// TODO: tidy - all should be references that throw if module unavailable.
 	// TODO: provide a set of available web3 modules.
@@ -100,6 +101,7 @@ public:
 	virtual std::shared_ptr<dev::shh::WhisperHost> whisper() const = 0;
 	virtual NatSpecFace* natSpec() = 0;
 
+	// Watch API
 	virtual unsigned installWatch(dev::eth::LogFilter const& _tf, WatchHandler const& _f) = 0;
 	virtual unsigned installWatch(dev::h256 const& _tf, WatchHandler const& _f) = 0;
 	virtual void uninstallWatch(unsigned _id) = 0;
@@ -109,14 +111,17 @@ public:
 	virtual void uninstall(AccountNamer* _kill) = 0;
 	virtual void noteKnownAddressesChanged(AccountNamer*) = 0;
 	virtual void noteAddressNamesChanged(AccountNamer*) = 0;
-	virtual Address toAddress(std::string const&) const = 0;
-	virtual std::string toName(Address const&) const = 0;
-	virtual Addresses allKnownAddresses() const = 0;
 
-	// Originally in Context
-	virtual std::pair<dev::Address, dev::bytes> fromString(std::string const& _a) const = 0;
-	virtual std::string renderDiff(dev::eth::StateDiff const& _d) const = 0;
-	virtual std::string render(dev::Address const& _a) const = 0;
+	// Additional address lookup API
+	std::string toReadable(Address const& _a) const;
+	std::pair<Address, bytes> readAddress(std::string const& _n) const;
+	std::string toHTML(eth::StateDiff const& _d) const;
+	using Context::toHTML;
+
+	// DNS lookup API
+	std::string dnsLookup(std::string const& _a) const;
+
+	// Key managing API
 	virtual dev::Secret retrieveSecret(dev::Address const& _a) const = 0;
 	virtual dev::eth::KeyManager& keyManager() = 0;
 	virtual void noteKeysChanged() = 0;
@@ -132,6 +137,7 @@ protected:
 signals:
 	void knownAddressesChanged();
 	void addressNamesChanged();
+
 	void keyManagerChanged();
 
 private:

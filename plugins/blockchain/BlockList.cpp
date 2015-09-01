@@ -147,14 +147,14 @@ void BlockList::refreshBlocks()
 				QString s = t.receiveAddress() ?
 					QString("    %2 %5> %3: %1 [%4]")
 						.arg(formatBalance(t.value()).c_str())
-						.arg(QString::fromStdString(main()->render(t.safeSender())))
-						.arg(QString::fromStdString(main()->render(t.receiveAddress())))
+						.arg(QString::fromStdString(main()->toReadable(t.safeSender())))
+						.arg(QString::fromStdString(main()->toReadable(t.receiveAddress())))
 						.arg((unsigned)t.nonce())
 						.arg(ethereum()->codeAt(t.receiveAddress()).size() ? '*' : '-') :
 					QString("    %2 +> %3: %1 [%4]")
 						.arg(formatBalance(t.value()).c_str())
-						.arg(QString::fromStdString(main()->render(t.safeSender())))
-						.arg(QString::fromStdString(main()->render(right160(sha3(rlpList(t.safeSender(), t.nonce()))))))
+						.arg(QString::fromStdString(main()->toReadable(t.safeSender())))
+						.arg(QString::fromStdString(main()->toReadable(right160(sha3(rlpList(t.safeSender(), t.nonce()))))))
 						.arg((unsigned)t.nonce());
 				QListWidgetItem* txItem = new QListWidgetItem(s, m_ui->blocks);
 				txItem->setData(Qt::UserRole, hba);
@@ -248,7 +248,7 @@ void BlockList::refreshInfo()
 			s << "<div>D/TD: <b>" << info.difficulty() << "</b>/<b>" << details.totalDifficulty << "</b> = 2^" << log2((double)info.difficulty()) << "/2^" << log2((double)details.totalDifficulty) << "</div>";
 			s << "&nbsp;&emsp;&nbsp;Children: <b>" << details.children.size() << "</b></div>";
 			s << "<div>Gas used/limit: <b>" << info.gasUsed() << "</b>/<b>" << info.gasLimit() << "</b>" << "</div>";
-			s << "<div>Beneficiary: <b>" << htmlEscaped(main()->pretty(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
+			s << "<div>Beneficiary: <b>" << htmlEscaped(main()->toName(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
 			s << "<div>Difficulty: <b>" << info.difficulty() << "</b>" << "</div>";
 			if (h != PendingBlockHash)
 			{
@@ -284,7 +284,7 @@ void BlockList::refreshInfo()
 					s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
 					s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
 					s << line << "Number: <b>" << uncle.number() << "</b>" << "</div>";
-					s << line << "Coinbase: <b>" << htmlEscaped(main()->pretty(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
+					s << line << "Coinbase: <b>" << htmlEscaped(main()->toName(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
 					s << line << "Seed hash: <b>" << uncle.seedHash() << "</b>" << "</div>";
 					s << line << "Mix hash: <b>" << uncle.mixHash() << "</b>" << "</div>";
 					s << line << "Nonce: <b>" << uncle.nonce() << "</b>" << "</div>";
@@ -323,11 +323,11 @@ void BlockList::refreshInfo()
 
 			s << "<h3>" << th << "</h3>";
 			s << "<h4>" << h << "[<b>" << txi << "</b>]</h4>";
-			s << "<div>From: <b>" << htmlEscaped(main()->pretty(ss)) << " " << ss << "</b>" << "</div>";
+			s << "<div>From: <b>" << htmlEscaped(main()->toName(ss)) << " " << ss << "</b>" << "</div>";
 			if (tx.isCreation())
-				s << "<div>Creates: <b>" << htmlEscaped(main()->pretty(right160(th))) << "</b> " << right160(th) << "</div>";
+				s << "<div>Creates: <b>" << htmlEscaped(main()->toName(right160(th))) << "</b> " << right160(th) << "</div>";
 			else
-				s << "<div>To: <b>" << htmlEscaped(main()->pretty(tx.receiveAddress())) << "</b> " << tx.receiveAddress() << "</div>";
+				s << "<div>To: <b>" << htmlEscaped(main()->toName(tx.receiveAddress())) << "</b> " << tx.receiveAddress() << "</div>";
 			s << "<div>Value: <b>" << formatBalance(tx.value()) << "</b>" << "</div>";
 			s << "&nbsp;&emsp;&nbsp;#<b>" << tx.nonce() << "</b>" << "</div>";
 			s << "<div>Gas price: <b>" << formatBalance(tx.gasPrice()) << "</b>" << "</div>";
@@ -354,7 +354,7 @@ void BlockList::refreshInfo()
 			auto r = receipt.rlp();
 			s << "<div>Receipt: " << toString(RLP(r)) << "</div>";
 			s << "<div>Receipt-Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(receipt.rlp()) << "</span></div>";
-			s << "<h4>Diff</h4>" << main()->renderDiff(h == PendingBlockHash ? ethereum()->diff(txi, PendingBlock) : ethereum()->diff(txi, h));
+			s << "<h4>Diff</h4>" << main()->toHTML(h == PendingBlockHash ? ethereum()->diff(txi, PendingBlock) : ethereum()->diff(txi, h));
 
 			m_ui->debugCurrent->setEnabled(true);
 		}

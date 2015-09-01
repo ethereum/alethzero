@@ -145,7 +145,7 @@ void ExportStateDialog::fillContracts()
 	{
 		for (auto i: m_main->ethereum()->addresses(m_block))
 		{
-			string r = m_main->render(i);
+			string r = m_main->toReadable(i);
 			(new QListWidgetItem(QString("%2: %1 [%3]").arg(formatBalance(m_main->ethereum()->balanceAt(i)).c_str()).arg(QString::fromStdString(r)).arg((unsigned)m_main->ethereum()->countAt(i)), m_main->ethereum()->codeAt(i).empty() ? m_ui->accounts : m_ui->contracts))
 				->setData(Qt::UserRole, QByteArray((char const*)i.data(), Address::size));
 		}

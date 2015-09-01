@@ -92,7 +92,7 @@ void ImportKey::import()
 		try
 		{
 			lastAddress = eth::toAddress(as);
-			u.addressOut->setText(QString::fromStdString(main()->render(lastAddress)));
+			u.addressOut->setText(QString::fromStdString(main()->toReadable(lastAddress)));
 		}
 		catch (...)
 		{

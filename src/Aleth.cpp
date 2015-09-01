@@ -22,6 +22,7 @@
 #include "Aleth.h"
 #include <QTimer>
 #include <libdevcore/Log.h>
+#include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 using namespace std;
 using namespace dev;
@@ -35,6 +36,8 @@ Aleth::Aleth(QWidget* _parent):
 
 Aleth::~Aleth()
 {
+	m_destructing = true;
+	killPlugins();
 }
 
 void Aleth::init()
@@ -80,4 +83,53 @@ void Aleth::checkHandlers()
 			i.second(ls);
 		}
 	}
+}
+
+void Aleth::install(AccountNamer* _adopt)
+{
+	m_namers.insert(_adopt);
+	_adopt->m_main = this;
+	emit knownAddressesChanged();
+}
+
+void Aleth::uninstall(AccountNamer* _kill)
+{
+	m_namers.erase(_kill);
+	if (!m_destructing)
+		emit knownAddressesChanged();
+}
+
+void Aleth::noteKnownAddressesChanged(AccountNamer*)
+{
+	emit knownAddressesChanged();
+}
+
+void Aleth::noteAddressNamesChanged(AccountNamer*)
+{
+	emit addressNamesChanged();
+}
+
+Address Aleth::toAddress(string const& _n) const
+{
+	for (AccountNamer* n: m_namers)
+		if (n->toAddress(_n))
+			return n->toAddress(_n);
+	return Address();
+}
+
+string Aleth::toName(Address const& _a) const
+{
+	for (AccountNamer* n: m_namers)
+		if (!n->toName(_a).empty())
+			return n->toName(_a);
+	return string();
+}
+
+Addresses Aleth::allKnownAddresses() const
+{
+	Addresses ret;
+	for (AccountNamer* i: m_namers)
+		ret += i->knownAddresses();
+	sort(ret.begin(), ret.end());
+	return ret;
 }

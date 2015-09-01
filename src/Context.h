@@ -28,7 +28,7 @@
 namespace dev
 {
 
-namespace eth { struct StateDiff; class KeyManager; }
+namespace eth { class StateDiff; }
 
 namespace aleth
 {
@@ -38,8 +38,11 @@ class Context
 public:
 	virtual ~Context();
 
-	std::string toHTML(dev::u256 const& _n) const;
-	virtual std::string pretty(dev::Address const& _a) const = 0;
+	std::string toHTML(u256 const& _n) const;
+
+	virtual Address toAddress(std::string const&) const = 0;
+	virtual std::string toName(Address const&) const = 0;
+	virtual Addresses allKnownAddresses() const = 0;
 };
 
 }

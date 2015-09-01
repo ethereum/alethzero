@@ -81,29 +81,12 @@ public:
 	dev::SafeHttpServer* web3ServerConnector() const override { return m_httpConnector.get(); }
 	eth::Client* ethereum() const override { return m_webThree->ethereum(); }
 	std::shared_ptr<shh::WhisperHost> whisper() const override { return m_webThree->whisper(); }
-
-	bool confirm() const;
 	NatSpecFace* natSpec() override { return &m_natSpecDB; }
 
-	std::string pretty(dev::Address const& _a) const override;
-	std::string render(dev::Address const& _a) const override;
-	std::pair<Address, bytes> fromString(std::string const& _a) const override;
-	std::string renderDiff(eth::StateDiff const& _d) const override;
-
+	Secret retrieveSecret(Address const& _address) const override;
 	eth::KeyManager& keyManager() override { return m_keyManager; }
 	void noteKeysChanged() override { refreshBalances(); }
-	bool doConfirm();
-
-	Secret retrieveSecret(Address const& _address) const override;
-
-	// Account naming API.
-	void install(AccountNamer* _adopt) override;
-	void uninstall(AccountNamer* _kill) override;
-	void noteKnownAddressesChanged(AccountNamer*) override;
-	void noteAddressNamesChanged(AccountNamer*) override;
-	Address toAddress(std::string const&) const override;
-	std::string toName(Address const&) const override;
-	Addresses allKnownAddresses() const override;
+	bool shouldConfirm() const;
 
 	void noteSettingsChanged() override { writeSettings(); }
 
@@ -163,6 +146,8 @@ private slots:
 	// Config
 	void on_sentinel_triggered();
 
+	void refreshAll();
+
 signals:
 	void poll();
 
@@ -173,8 +158,6 @@ private:
 	void unloadPlugin(std::string const& _name);
 
 	p2p::NetworkPreferences netPrefs() const;
-
-	QString lookup(QString const& _n) const;
 
 	void updateFee();
 	void readSettings(bool _skipGeometry = false, bool _onlyGeometry = false);
@@ -191,8 +174,6 @@ private:
 
 	void refreshNetwork();
 	void refreshMining();
-
-	void refreshAll();
 	void refreshBlockCount();
 	void refreshBalances();
 
@@ -216,10 +197,6 @@ private:
 	NatspecHandler m_natSpecDB;
 
 	Connect m_connect;
-
-	std::unordered_set<AccountNamer*> m_namers;
-
-	bool m_destructing = false;
 };
 
 }

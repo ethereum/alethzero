@@ -55,12 +55,6 @@ OurAccountHolder::OurAccountHolder(AlethZero* _main):
 
 bool OurAccountHolder::showAuthenticationPopup(string const& _title, string const& _text)
 {
-	if (!m_main->confirm())
-	{
-		cnote << "Skipping confirmation step for: " << _title << "\n" << _text;
-		return true;
-	}
-
 	QMessageBox userInput;
 	userInput.setText(QString::fromStdString(_title));
 	userInput.setInformativeText(QString::fromStdString(_text));
@@ -116,7 +110,7 @@ AddressHash OurAccountHolder::realAccounts() const
 
 bool OurAccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _toProxy)
 {
-	if (!m_main->doConfirm())
+	if (!m_main->shouldConfirm())
 		return true;
 
 	return showAuthenticationPopup("Transaction", _t.userReadable(_toProxy,
@@ -130,6 +124,6 @@ bool OurAccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _
 			userNotice = evaluator.evalExpression(userNotice);
 			return std::make_pair(true, userNotice);
 		},
-		[&](Address const& _a) -> string { return m_main->pretty(_a); }
+		[&](Address const& _a) -> string { return m_main->toName(_a); }
 	));
 }

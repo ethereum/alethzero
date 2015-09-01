@@ -85,7 +85,7 @@ void AllAccounts::refresh()
 		bool isContract = (ethereum()->codeHashAt(i) != EmptySHA3);
 		if (!((showContract && isContract) || (showBasic && !isContract)))
 			continue;
-		string r = main()->render(i);
+		string r = main()->toReadable(i);
 		(new QListWidgetItem(QString("%2: %1 [%3]").arg(formatBalance(ethereum()->balanceAt(i)).c_str()).arg(QString::fromStdString(r)).arg((unsigned)ethereum()->countAt(i)), m_ui->accounts))
 			->setData(Qt::UserRole, QByteArray((char const*)i.data(), Address::size));
 	}

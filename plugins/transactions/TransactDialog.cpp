@@ -82,7 +82,7 @@ void TransactDialog::setEnvironment(AddressHash const& _accounts, dev::eth::Clie
 	for (auto const& address: m_accounts)
 	{
 		u256 b = ethereum()->balanceAt(address, PendingBlock);
-		QString s = QString("%2: %1").arg(formatBalance(b).c_str()).arg(QString::fromStdString(m_main->render(address)));
+		QString s = QString("%2: %1").arg(formatBalance(b).c_str()).arg(QString::fromStdString(m_main->toReadable(address)));
 		m_ui->from->addItem(s);
 	}
 	updateDestination();
@@ -169,7 +169,7 @@ void TransactDialog::on_destination_currentTextChanged(QString)
 	{
 		auto p = toAccount();
 		if (p.first)
-			m_ui->calculatedName->setText(QString::fromStdString(m_main->render(p.first)));
+			m_ui->calculatedName->setText(QString::fromStdString(m_main->toReadable(p.first)));
 		else
 			m_ui->calculatedName->setText("Unknown Address");
 
@@ -335,7 +335,7 @@ pair<Address, bytes> TransactDialog::toAccount()
 		if (!m_ui->destination->currentData().isNull() && m_ui->destination->currentText() == m_ui->destination->itemText(m_ui->destination->currentIndex()))
 			p.first = Address(m_ui->destination->currentData().toString().trimmed().toStdString());
 		else
-			p = m_main->fromString(m_ui->destination->currentText().trimmed().toStdString());
+			p = m_main->readAddress(m_ui->destination->currentText().trimmed().toStdString());
 	}
 	return p;
 }
