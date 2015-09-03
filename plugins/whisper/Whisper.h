@@ -44,13 +44,15 @@ class Whisper: public QObject, public Plugin
 public:
 	Whisper(MainFace* _m);
 
+private slots:
+	void on_post_clicked();
+
 private:
 	void readSettings(QSettings const&) override;
 	void writeSettings(QSettings&) override;
 	void refreshWhisper();
 	void addNewId(QString _ids);
 	void on_newIdentity_triggered();
-	void on_post_clicked();
 
 	Ui::Whisper* m_ui;
 	QList<KeyPair> m_myIdentities;
