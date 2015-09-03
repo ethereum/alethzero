@@ -40,8 +40,8 @@ include_directories(src)
 
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE}
-	ICON alethzero
-	UI_RESOURCES ${UI_RESOURCES} src/alethzero.icns ${JSRES}
+	ICON "alethzero"
+	UI_RESOURCES ${UI_RESOURCES} "${CMAKE_CURRENT_LIST_DIR}/src/alethzero.icns" ${JSRES}
 	WIN_RESOURCES src/alethzero.rc
 )
 
