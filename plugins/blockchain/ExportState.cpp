@@ -19,7 +19,7 @@
  * @date 2015
  */
 
-#include "BuildInfo.h"
+#include "ConfigInfo.h"
 
 #if ETH_FATDB
 

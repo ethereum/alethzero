@@ -23,7 +23,7 @@
 #include <QSettings>
 #include <libdevcore/Log.h>
 #include <libethereum/Client.h>
-#include "BuildInfo.h"
+#include "ConfigInfo.h"
 using namespace std;
 using namespace dev;
 using namespace az;

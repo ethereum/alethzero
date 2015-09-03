@@ -119,7 +119,7 @@ void MainFace::allChange()
 PluginRegistrarBase::PluginRegistrarBase(std::string const& _name, PluginFactory const& _f):
 	m_name(_name)
 {
-	cdebug << "Noting linked plugin" << _name;
+	//cdebug << "Noting linked plugin" << _name;
 	MainFace::notePlugin(_name, _f);
 }
 

@@ -181,7 +181,7 @@ Main::Main(QWidget* _parent):
 
 	ethereum()->setDefault(LatestBlock);
 
-	m_vmSelectionGroup = new QActionGroup{ui->menuDebug};
+	m_vmSelectionGroup = new QActionGroup{ui->menuConfig};
 	m_vmSelectionGroup->addAction(ui->vmInterpreter);
 	m_vmSelectionGroup->addAction(ui->vmJIT);
 	m_vmSelectionGroup->addAction(ui->vmSmart);
@@ -197,8 +197,6 @@ Main::Main(QWidget* _parent):
 #endif
 
 	readSettings(true, false);
-
-	connect(ui->blockChainDockWidget, &QDockWidget::visibilityChanged, [=]() { refreshBlockChain(); });
 
 	installWatches();
 	startTimer(100);
@@ -391,18 +389,11 @@ void Main::installWatches()
 {
 	auto newBlockId = installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
 		onNewBlock();
-		onNewPending();
-	});
-	auto newPendingId = installWatch(PendingChangedFilter, [=](LocalisedLogEntries const&){
-		onNewPending();
 	});
 
 	cdebug << "newBlock watch ID: " << newBlockId;
-	cdebug << "newPending watch ID: " << newPendingId;
-
-//	installWatch(LogFilter().address(c_newConfig), [=](LocalisedLogEntries const&) { installNameRegWatch(); });
-//	installWatch(LogFilter().address(c_newConfig), [=](LocalisedLogEntries const&) { installCurrenciesWatch(); });
 }
+
 Address Main::getCurrencies() const
 {
 //	return abiOut<Address>(ethereum()->call(c_newConfig, abiIn("lookup(uint256)", (u256)3)).output);
@@ -473,18 +464,9 @@ void Main::onNewBlock()
 
 	// update blockchain dependent views.
 	refreshBlockCount();
-	refreshBlockChain();
 
 	// We must update balances since we can't filter updates to basic accounts.
 	refreshBalances();
-}
-
-void Main::onNewPending()
-{
-	cwatch << "Pending transactions changed!";
-
-	// update any pending-transaction dependent views.
-	refreshPending();
 }
 
 void Main::on_forceMining_triggered()
@@ -514,15 +496,6 @@ void Main::warn(QString _s)
 
 std::string Main::pretty(dev::Address const& _a) const
 {
-	auto g_newNameReg = getNameReg();
-
-	if (g_newNameReg)
-	{
-		string n = toString(abiOut<string32>(ethereum()->call(g_newNameReg, abiIn("name(address)", _a)).output));
-		if (!n.empty())
-			return n;
-	}
-
 	for (auto i: m_namers)
 	{
 		auto n = i->toName(_a);
@@ -553,14 +526,6 @@ pair<Address, bytes> Main::fromString(std::string const& _n) const
 
 	std::string n = _n;
 
-	auto g_newNameReg = getNameReg();
-	if (g_newNameReg)
-	{
-		Address a = abiOut<Address>(ethereum()->call(g_newNameReg, abiIn("addr(bytes32)", ::toString32(n))).output);
-		if (a)
-			return make_pair(a, bytes());
-	}
-
 	for (auto i: m_namers)
 		if (auto a = i->toAddress(_n))
 			return make_pair(a, bytes());
@@ -569,14 +534,13 @@ pair<Address, bytes> Main::fromString(std::string const& _n) const
 		return ICAP::decoded(n).address([&](Address const& a, bytes const& b) -> bytes
 		{
 			return ethereum()->call(a, b).output;
-		}, g_newNameReg);
+		}, Address("a1a111bc074c9cfa781f0c38e63bd51c91b8af00"));
 	}
 	catch (...) {}
 
 	if (n.find("0x") == 0)
 		n.erase(0, 2);
 	if (n.size() == 40)
-	{
 		try
 		{
 			return make_pair(Address(fromHex(n, WhenError::Throw)), bytes());
@@ -592,7 +556,6 @@ pair<Address, bytes> Main::fromString(std::string const& _n) const
 			cwarn << "address rejected";
 			return make_pair(Address(), bytes());
 		}
-	}
 	return make_pair(Address(), bytes());
 }
 
@@ -626,7 +589,7 @@ QString Main::lookup(QString const& _a) const
 
 void Main::on_about_triggered()
 {
-	QMessageBox::about(this, "About AlethZero PoC-" + QString(dev::Version).section('.', 1, 1), QString("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM) "\n" DEV_QUOTED(ETH_COMMIT_HASH) + (ETH_CLEAN_REPO ? "\nCLEAN" : "\n+ LOCAL CHANGES") + "\n\nBy Gav Wood and the Berlin ÐΞV team, 2014, 2015.\nSee the README for contributors and credits.");
+	QMessageBox::about(this, "About " + windowTitle(), QString("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM) "\n" DEV_QUOTED(ETH_COMMIT_HASH) + (ETH_CLEAN_REPO ? "\nCLEAN" : "\n+ LOCAL CHANGES") + "\n\nBy Gav Wood and the Berlin ÐΞV team, 2014, 2015.\nSee the README for contributors and credits.");
 }
 
 void Main::on_paranoia_triggered()
@@ -774,7 +737,6 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 		}
 	}
 #endif
-
 }
 
 std::string Main::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
@@ -987,33 +949,9 @@ void Main::refreshNetwork()
 
 void Main::refreshAll()
 {
-	refreshBlockChain();
 	refreshBlockCount();
-	refreshPending();
 	refreshBalances();
 	allChange();
-}
-
-void Main::refreshPending()
-{
-	cwatch << "refreshPending()";
-	ui->transactionQueue->clear();
-	for (Transaction const& t: ethereum()->pending())
-	{
-		QString s = t.receiveAddress() ?
-			QString("%2 %5> %3: %1 [%4]")
-				.arg(formatBalance(t.value()).c_str())
-				.arg(QString::fromStdString(render(t.safeSender())))
-				.arg(QString::fromStdString(render(t.receiveAddress())))
-				.arg((unsigned)t.nonce())
-				.arg(ethereum()->codeAt(t.receiveAddress()).size() ? '*' : '-') :
-			QString("%2 +> %3: %1 [%4]")
-				.arg(formatBalance(t.value()).c_str())
-				.arg(QString::fromStdString(render(t.safeSender())))
-				.arg(QString::fromStdString(render(right160(sha3(rlpList(t.safeSender(), t.nonce()))))))
-				.arg((unsigned)t.nonce());
-		ui->transactionQueue->addItem(s);
-	}
 }
 
 void Main::refreshBlockCount()
@@ -1038,117 +976,11 @@ void Main::on_turboMining_triggered()
 	ethereum()->setTurboMining(ui->turboMining->isChecked());
 }
 
-void Main::refreshBlockChain()
-{
-	if (!(ui->blockChainDockWidget->isVisible() || !tabifiedDockWidgets(ui->blockChainDockWidget).isEmpty()))
-		return;
-
-	DEV_TIMED_FUNCTION_ABOVE(500);
-	cwatch << "refreshBlockChain()";
-
-	// TODO: keep the same thing highlighted.
-	// TODO: refactor into MVC
-	// TODO: use get by hash/number
-	// TODO: transactions
-
-	auto const& bc = ethereum()->blockChain();
-	QStringList filters = ui->blockChainFilter->text().toLower().split(QRegExp("\\s+"), QString::SkipEmptyParts);
-
-	h256Hash blocks;
-	for (QString f: filters)
-		if (f.size() == 64)
-		{
-			h256 h(f.toStdString());
-			if (bc.isKnown(h))
-				blocks.insert(h);
-			for (auto const& b: bc.withBlockBloom(LogBloom().shiftBloom<3>(sha3(h)), 0, -1))
-				blocks.insert(bc.numberHash(b));
-		}
-		else if (f.toLongLong() <= bc.number())
-			blocks.insert(bc.numberHash((unsigned)f.toLongLong()));
-		else if (f.size() == 40)
-		{
-			Address h(f.toStdString());
-			for (auto const& b: bc.withBlockBloom(LogBloom().shiftBloom<3>(sha3(h)), 0, -1))
-				blocks.insert(bc.numberHash(b));
-		}
-
-	QByteArray oldSelected = ui->blocks->count() ? ui->blocks->currentItem()->data(Qt::UserRole).toByteArray() : QByteArray();
-	ui->blocks->clear();
-	auto showBlock = [&](h256 const& h) {
-		auto d = bc.details(h);
-		QListWidgetItem* blockItem = new QListWidgetItem(QString("#%1 %2").arg(d.number).arg(h.abridged().c_str()), ui->blocks);
-		auto hba = QByteArray((char const*)h.data(), h.size);
-		blockItem->setData(Qt::UserRole, hba);
-		if (oldSelected == hba)
-			blockItem->setSelected(true);
-
-		int n = 0;
-		try {
-			auto b = bc.block(h);
-			for (auto const& i: RLP(b)[1])
-			{
-				Transaction t(i.data(), CheckTransaction::Everything);
-				QString s = t.receiveAddress() ?
-					QString("    %2 %5> %3: %1 [%4]")
-						.arg(formatBalance(t.value()).c_str())
-						.arg(QString::fromStdString(render(t.safeSender())))
-						.arg(QString::fromStdString(render(t.receiveAddress())))
-						.arg((unsigned)t.nonce())
-						.arg(ethereum()->codeAt(t.receiveAddress()).size() ? '*' : '-') :
-					QString("    %2 +> %3: %1 [%4]")
-						.arg(formatBalance(t.value()).c_str())
-						.arg(QString::fromStdString(render(t.safeSender())))
-						.arg(QString::fromStdString(render(right160(sha3(rlpList(t.safeSender(), t.nonce()))))))
-						.arg((unsigned)t.nonce());
-				QListWidgetItem* txItem = new QListWidgetItem(s, ui->blocks);
-				auto hba = QByteArray((char const*)h.data(), h.size);
-				txItem->setData(Qt::UserRole, hba);
-				txItem->setData(Qt::UserRole + 1, n);
-				if (oldSelected == hba)
-					txItem->setSelected(true);
-				n++;
-			}
-		}
-		catch (...) {}
-	};
-
-	if (filters.empty())
-	{
-		unsigned i = ui->showAll->isChecked() ? (unsigned)-1 : 10;
-		for (auto h = bc.currentHash(); bc.details(h) && i; h = bc.details(h).parent, --i)
-		{
-			showBlock(h);
-			if (h == bc.genesisHash())
-				break;
-		}
-	}
-	else
-		for (auto const& h: blocks)
-			showBlock(h);
-
-	if (!ui->blocks->currentItem())
-		ui->blocks->setCurrentRow(0);
-}
-
-void Main::on_blockChainFilter_textChanged()
-{
-	static QTimer* s_delayed = nullptr;
-	if (!s_delayed)
-	{
-		s_delayed = new QTimer(this);
-		s_delayed->setSingleShot(true);
-		connect(s_delayed, SIGNAL(timeout()), SLOT(refreshBlockChain()));
-	}
-	s_delayed->stop();
-	s_delayed->start(200);
-}
-
 void Main::on_refresh_triggered()
 {
 	refreshAll();
 }
-
+/*
 static std::string niceUsed(unsigned _n)
 {
 	static const vector<std::string> c_units = { "bytes", "KB", "MB", "GB", "TB", "PB" };
@@ -1186,7 +1018,7 @@ void Main::refreshCache()
 	t += ")";
 	ui->cacheUsage->setText(t);
 }
-
+*/
 void Main::timerEvent(QTimerEvent*)
 {
 	// 7/18, Alex: aggregating timers, prelude to better threading?
@@ -1205,7 +1037,6 @@ void Main::timerEvent(QTimerEvent*)
 	{
 		interval = 0;
 		refreshNetwork();
-		refreshCache();
 		refreshBlockCount();
 		poll();
 	}
@@ -1285,61 +1116,6 @@ string Main::renderDiff(StateDiff const& _d) const
 	return s.str();
 }
 
-void Main::on_transactionQueue_currentItemChanged()
-{
-	ui->pendingInfo->clear();
-
-	stringstream s;
-	int i = ui->transactionQueue->currentRow();
-	if (i >= 0 && i < (int)ethereum()->pending().size())
-	{
-		ui->debugPending->setEnabled(true);
-		Transaction tx(ethereum()->pending()[i]);
-		TransactionReceipt receipt(ethereum()->postState().receipt(i));
-		auto ss = tx.safeSender();
-		h256 th = sha3(rlpList(ss, tx.nonce()));
-		s << "<h3>" << th << "</h3>";
-		s << "From: <b>" << pretty(ss) << "</b> " << ss;
-		if (tx.isCreation())
-			s << "<br/>Creates: <b>" << pretty(right160(th)) << "</b> " << right160(th);
-		else
-			s << "<br/>To: <b>" << pretty(tx.receiveAddress()) << "</b> " << tx.receiveAddress();
-		s << "<br/>Value: <b>" << formatBalance(tx.value()) << "</b>";
-		s << "&nbsp;&emsp;&nbsp;#<b>" << tx.nonce() << "</b>";
-		s << "<br/>Gas price: <b>" << formatBalance(tx.gasPrice()) << "</b>";
-		s << "<br/>Gas: <b>" << tx.gas() << "</b>";
-		if (tx.isCreation())
-		{
-			if (tx.data().size())
-				s << "<h4>Code</h4>" << disassemble(tx.data());
-		}
-		else
-		{
-			if (tx.data().size())
-				s << dev::memDump(tx.data(), 16, true);
-		}
-		s << "<div>Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(tx.rlp()) << "</span></div>";
-		s << "<hr/>";
-		if (!!receipt.bloom())
-			s << "<div>Log Bloom: " << receipt.bloom() << "</div>";
-		else
-			s << "<div>Log Bloom: <b><i>Uneventful</i></b></div>";
-		s << "<div>Gas Used: <b>" << receipt.gasUsed() << "</b></div>";
-		s << "<div>End State: <b>" << receipt.stateRoot().abridged() << "</b></div>";
-		auto r = receipt.rlp();
-		s << "<div>Receipt: " << toString(RLP(r)) << "</div>";
-		s << "<div>Receipt-Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(receipt.rlp()) << "</span></div>";
-		s << renderDiff(ethereum()->diff(i, PendingBlock));
-//		s << "Pre: " << fs.rootHash() << "<br/>";
-//		s << "Post: <b>" << ts.rootHash() << "</b>";
-	}
-	else
-		ui->debugPending->setEnabled(false);
-
-	ui->pendingInfo->setHtml(QString::fromStdString(s.str()));
-	ui->pendingInfo->moveCursor(QTextCursor::Start);
-}
-
 void Main::on_injectBlock_triggered()
 {
 	QString s = QInputDialog::getText(this, "Inject Block", "Enter block dump in hex");
@@ -1356,263 +1132,6 @@ void Main::on_injectBlock_triggered()
 	catch (...)
 	{
 		cwarn << "block rejected";
-	}
-}
-
-static string htmlEscaped(string const& _s)
-{
-	return QString::fromStdString(_s).toHtmlEscaped().toStdString();
-}
-
-void Main::on_blocks_currentItemChanged()
-{
-	ui->info->clear();
-	ui->debugCurrent->setEnabled(false);
-	ui->debugDumpState->setEnabled(false);
-	ui->debugDumpStatePre->setEnabled(false);
-	if (auto item = ui->blocks->currentItem())
-	{
-		auto hba = item->data(Qt::UserRole).toByteArray();
-		assert(hba.size() == 32);
-		auto h = h256((byte const*)hba.data(), h256::ConstructFromPointer);
-		auto details = ethereum()->blockChain().details(h);
-		auto blockData = ethereum()->blockChain().block(h);
-		auto block = RLP(blockData);
-		Ethash::BlockHeader info(blockData);
-
-		stringstream s;
-
-		if (item->data(Qt::UserRole + 1).isNull())
-		{
-			char timestamp[64];
-			time_t rawTime = (time_t)(uint64_t)info.timestamp();
-			strftime(timestamp, 64, "%c", localtime(&rawTime));
-			s << "<h3>" << h << "</h3>";
-			s << "<h4>#" << info.number();
-			s << "&nbsp;&emsp;&nbsp;<b>" << timestamp << "</b></h4>";
-			try
-			{
-				RLP r(info.extraData());
-				if (r[0].toInt<int>() == 0)
-					s << "<div>Sealing client: <b>" << htmlEscaped(r[1].toString()) << "</b>" << "</div>";
-			}
-			catch (...) {}
-			s << "<div>D/TD: <b>" << info.difficulty() << "</b>/<b>" << details.totalDifficulty << "</b> = 2^" << log2((double)info.difficulty()) << "/2^" << log2((double)details.totalDifficulty) << "</div>";
-			s << "&nbsp;&emsp;&nbsp;Children: <b>" << details.children.size() << "</b></div>";
-			s << "<div>Gas used/limit: <b>" << info.gasUsed() << "</b>/<b>" << info.gasLimit() << "</b>" << "</div>";
-			s << "<div>Beneficiary: <b>" << htmlEscaped(pretty(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
-			s << "<div>Seed hash: <b>" << info.seedHash() << "</b>" << "</div>";
-			s << "<div>Mix hash: <b>" << info.mixHash() << "</b>" << "</div>";
-			s << "<div>Nonce: <b>" << info.nonce() << "</b>" << "</div>";
-			s << "<div>Hash w/o nonce: <b>" << info.hashWithout() << "</b>" << "</div>";
-			s << "<div>Difficulty: <b>" << info.difficulty() << "</b>" << "</div>";
-			if (info.number())
-			{
-				auto e = EthashAux::eval(info.seedHash(), info.hashWithout(), info.nonce());
-				s << "<div>Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / info.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
-				s << "<div>Parent: <b>" << info.parentHash() << "</b>" << "</div>";
-			}
-			else
-			{
-				s << "<div>Proof-of-Work: <b><i>Phil has nothing to prove</i></b></div>";
-				s << "<div>Parent: <b><i>It was a virgin birth</i></b></div>";
-			}
-//			s << "<div>Bloom: <b>" << details.bloom << "</b>";
-			s << "<div>State root: " << ETH_HTML_SPAN(ETH_HTML_MONO) << info.stateRoot().hex() << "</span></div>";
-			s << "<div>Extra data: " << ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(info.extraData()) << "</span></div>";
-			if (!!info.logBloom())
-				s << "<div>Log Bloom: " << info.logBloom() << "</div>";
-			else
-				s << "<div>Log Bloom: <b><i>Uneventful</i></b></div>";
-			s << "<div>Transactions: <b>" << block[1].itemCount() << "</b> @<b>" << info.transactionsRoot() << "</b>" << "</div>";
-			s << "<div>Uncles: <b>" << block[2].itemCount() << "</b> @<b>" << info.sha3Uncles() << "</b>" << "</div>";
-			for (auto u: block[2])
-			{
-				Ethash::BlockHeader uncle(u.data(), CheckNothing, h256(), HeaderData);
-				char const* line = "<div><span style=\"margin-left: 2em\">&nbsp;</span>";
-				s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
-				s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
-				s << line << "Number: <b>" << uncle.number() << "</b>" << "</div>";
-				s << line << "Coinbase: <b>" << htmlEscaped(pretty(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
-				s << line << "Seed hash: <b>" << uncle.seedHash() << "</b>" << "</div>";
-				s << line << "Mix hash: <b>" << uncle.mixHash() << "</b>" << "</div>";
-				s << line << "Nonce: <b>" << uncle.nonce() << "</b>" << "</div>";
-				s << line << "Hash w/o nonce: <b>" << uncle.headerHash(WithoutProof) << "</b>" << "</div>";
-				s << line << "Difficulty: <b>" << uncle.difficulty() << "</b>" << "</div>";
-				auto e = EthashAux::eval(uncle.seedHash(), uncle.hashWithout(), uncle.nonce());
-				s << line << "Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / uncle.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
-			}
-			if (info.parentHash())
-				s << "<div>Pre: <b>" << BlockInfo(ethereum()->blockChain().block(info.parentHash())).stateRoot() << "</b>" << "</div>";
-			else
-				s << "<div>Pre: <b><i>Nothing is before Phil</i></b>" << "</div>";
-
-			s << "<div>Receipts: @<b>" << info.receiptsRoot() << "</b>:" << "</div>";
-			BlockReceipts receipts = ethereum()->blockChain().receipts(h);
-			unsigned ii = 0;
-			for (auto const& i: block[1])
-			{
-				s << "<div>" << sha3(i.data()).abridged() << ": <b>" << receipts.receipts[ii].stateRoot() << "</b> [<b>" << receipts.receipts[ii].gasUsed() << "</b> used]" << "</div>";
-				++ii;
-			}
-			s << "<div>Post: <b>" << info.stateRoot() << "</b>" << "</div>";
-			s << "<div>Dump: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(block[0].data()) << "</span>" << "</div>";
-			s << "<div>Receipts-Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(receipts.rlp()) << "</span></div>";
-		}
-		else
-		{
-			unsigned txi = item->data(Qt::UserRole + 1).toInt();
-			Transaction tx(block[1][txi].data(), CheckTransaction::Everything);
-			auto ss = tx.safeSender();
-			h256 th = sha3(rlpList(ss, tx.nonce()));
-			TransactionReceipt receipt = ethereum()->blockChain().receipts(h).receipts[txi];
-			s << "<h3>" << th << "</h3>";
-			s << "<h4>" << h << "[<b>" << txi << "</b>]</h4>";
-			s << "<div>From: <b>" << htmlEscaped(pretty(ss)) << " " << ss << "</b>" << "</div>";
-			if (tx.isCreation())
-				s << "<div>Creates: <b>" << htmlEscaped(pretty(right160(th))) << "</b> " << right160(th) << "</div>";
-			else
-				s << "<div>To: <b>" << htmlEscaped(pretty(tx.receiveAddress())) << "</b> " << tx.receiveAddress() << "</div>";
-			s << "<div>Value: <b>" << formatBalance(tx.value()) << "</b>" << "</div>";
-			s << "&nbsp;&emsp;&nbsp;#<b>" << tx.nonce() << "</b>" << "</div>";
-			s << "<div>Gas price: <b>" << formatBalance(tx.gasPrice()) << "</b>" << "</div>";
-			s << "<div>Gas: <b>" << tx.gas() << "</b>" << "</div>";
-			s << "<div>V: <b>" << hex << nouppercase << (int)tx.signature().v << " + 27</b>" << "</div>";
-			s << "<div>R: <b>" << hex << nouppercase << tx.signature().r << "</b>" << "</div>";
-			s << "<div>S: <b>" << hex << nouppercase << tx.signature().s << "</b>" << "</div>";
-			s << "<div>Msg: <b>" << tx.sha3(eth::WithoutSignature) << "</b>" << "</div>";
-			if (!tx.data().empty())
-			{
-				if (tx.isCreation())
-					s << "<h4>Code</h4>" << disassemble(tx.data());
-				else
-					s << "<h4>Data</h4>" << dev::memDump(tx.data(), 16, true);
-			}
-			s << "<div>Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(block[1][txi].data()) << "</span></div>";
-			s << "<hr/>";
-			if (!!receipt.bloom())
-				s << "<div>Log Bloom: " << receipt.bloom() << "</div>";
-			else
-				s << "<div>Log Bloom: <b><i>Uneventful</i></b></div>";
-			s << "<div>Gas Used: <b>" << receipt.gasUsed() << "</b></div>";
-			s << "<div>End State: <b>" << receipt.stateRoot().abridged() << "</b></div>";
-			auto r = receipt.rlp();
-			s << "<div>Receipt: " << toString(RLP(r)) << "</div>";
-			s << "<div>Receipt-Hex: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(receipt.rlp()) << "</span></div>";
-			s << "<h4>Diff</h4>" << renderDiff(ethereum()->diff(txi, h));
-			ui->debugCurrent->setEnabled(true);
-			ui->debugDumpState->setEnabled(true);
-			ui->debugDumpStatePre->setEnabled(true);
-		}
-
-		ui->info->appendHtml(QString::fromStdString(s.str()));
-		ui->info->moveCursor(QTextCursor::Start);
-	}
-}
-
-void Main::on_debugCurrent_triggered()
-{
-	if (auto item = ui->blocks->currentItem())
-	{
-		auto hba = item->data(Qt::UserRole).toByteArray();
-		assert(hba.size() == 32);
-		auto h = h256((byte const*)hba.data(), h256::ConstructFromPointer);
-
-		if (!item->data(Qt::UserRole + 1).isNull())
-		{
-			unsigned txi = item->data(Qt::UserRole + 1).toInt();
-			bytes t = ethereum()->blockChain().transaction(h, txi);
-			State s(ethereum()->state(txi, h));
-			BlockInfo bi(ethereum()->blockChain().info(h));
-			Executive e(s, ethereum()->blockChain(), EnvInfo(bi));
-			Debugger dw(this, this);
-			dw.populate(e, Transaction(t, CheckTransaction::Everything));
-			dw.exec();
-		}
-	}
-}
-
-void Main::on_debugPending_triggered()
-{
-	int txi = ui->transactionQueue->currentRow();
-	if (txi == -1)
-		return;
-
-	Block b = ethereum()->postState();
-	bytes t = b.pending()[txi].rlp();
-	State s(ethereum()->state(txi));
-	BlockInfo bi(b.info());
-	Executive e(s, ethereum()->blockChain(), EnvInfo(bi));
-	Debugger dw(this, this);
-	dw.populate(e, Transaction(t, CheckTransaction::Everything));
-	dw.exec();
-}
-
-std::string minHex(h256 const& _h)
-{
-	unsigned i = 0;
-	for (; i < 31 && !_h[i]; ++i) {}
-	return toHex(_h.ref().cropped(i));
-}
-
-void Main::on_dumpBlockState_triggered()
-{
-#if ETH_FATDB || !ETH_TRUE
-	if (auto item = ui->blocks->currentItem())
-	{
-		auto hba = item->data(Qt::UserRole).toByteArray();
-		assert(hba.size() == 32);
-		auto h = h256((byte const*)hba.data(), h256::ConstructFromPointer);
-		QString fn = QFileDialog::getSaveFileName(this, "Select file to output state dump");
-		ofstream f(fn.toStdString());
-		if (f.is_open())
-		{
-			f << "{" << endl;
-//			js::mObject s;
-			State state = ethereum()->block(h).state();
-			int fi = 0;
-			for (pair<Address, u256> const& i: state.addresses())
-			{
-				f << (fi++ ? "," : "") << "\"" << i.first.hex() << "\": { ";
-				f << "\"balance\": \"" << toString(i.second) << "\", ";
-				if (state.codeHash(i.first) != EmptySHA3)
-				{
-					f << "\"codeHash\": \"" << state.codeHash(i.first).hex() << "\", ";
-					f << "\"storage\": {";
-					int fj = 0;
-					for (pair<u256, u256> const& j: state.storage(i.first))
-						f << (fj++ ? "," : "") << "\"" << minHex(j.first) << "\":\"" << minHex(j.second) << "\"";
-					f << "}, ";
-				}
-				f << "\"nonce\": \"" << toString(state.transactionsFrom(i.first)) << "\"";
-				f << "}" << endl;	// end account
-				if (!(fi % 100))
-					f << flush;
-			}
-			f << "}";
-		}
-	}
-#endif
-}
-
-void Main::debugDumpState(int _add)
-{
-	if (auto item = ui->blocks->currentItem())
-	{
-		auto hba = item->data(Qt::UserRole).toByteArray();
-		assert(hba.size() == 32);
-		auto h = h256((byte const*)hba.data(), h256::ConstructFromPointer);
-
-		if (!item->data(Qt::UserRole + 1).isNull())
-		{
-			QString fn = QFileDialog::getSaveFileName(this, "Select file to output state dump");
-			ofstream f(fn.toStdString());
-			if (f.is_open())
-			{
-				unsigned txi = item->data(Qt::UserRole + 1).toInt();
-				f << ethereum()->state(txi + _add, h) << endl;
-			}
-		}
 	}
 }
 
