@@ -35,7 +35,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(AllAccounts);
 
-AllAccounts::AllAccounts(AlethFace* _m):
+AllAccounts::AllAccounts(ZeroFace* _m):
 	Plugin(_m, "AllAccounts"),
 	m_ui(new Ui::AllAccounts)
 {
@@ -59,8 +59,8 @@ AllAccounts::~AllAccounts()
 
 void AllAccounts::installWatches()
 {
-	main()->installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){ onAllChange(); });
-	main()->installWatch(PendingChangedFilter, [=](LocalisedLogEntries const&){ onAllChange(); });
+	aleth()->installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){ onAllChange(); });
+	aleth()->installWatch(PendingChangedFilter, [=](LocalisedLogEntries const&){ onAllChange(); });
 }
 
 void AllAccounts::refresh()
@@ -74,7 +74,7 @@ void AllAccounts::refresh()
 
 	Addresses as;
 	if (onlyKnown)
-		as = main()->allKnownAddresses();
+		as = aleth()->allKnownAddresses();
 #if ETH_FATDB || !ETH_TRUE
 	else
 		as = ethereum()->addresses();
@@ -85,7 +85,7 @@ void AllAccounts::refresh()
 		bool isContract = (ethereum()->codeHashAt(i) != EmptySHA3);
 		if (!((showContract && isContract) || (showBasic && !isContract)))
 			continue;
-		string r = main()->toReadable(i);
+		string r = aleth()->toReadable(i);
 		(new QListWidgetItem(QString("%2: %1 [%3]").arg(formatBalance(ethereum()->balanceAt(i)).c_str()).arg(QString::fromStdString(r)).arg((unsigned)ethereum()->countAt(i)), m_ui->accounts))
 			->setData(Qt::UserRole, QByteArray((char const*)i.data(), Address::size));
 	}
@@ -114,7 +114,7 @@ void AllAccounts::on_accounts_currentItemChanged()
 			u256s keys = keysOf(storage);
 			sort(keys.begin(), keys.end());
 			for (auto const& i: keys)
-				s << "@" << showbase << hex << main()->toHTML(i) << "&nbsp;&nbsp;&nbsp;&nbsp;" << showbase << hex << main()->toHTML(storage[i]) << "<br/>";
+				s << "@" << showbase << hex << aleth()->toHTML(i) << "&nbsp;&nbsp;&nbsp;&nbsp;" << showbase << hex << aleth()->toHTML(storage[i]) << "<br/>";
 			s << "<h4>Body Code (" << sha3(ethereum()->codeAt(address)).abridged() << ")</h4>" << disassemble(ethereum()->codeAt(address));
 			s << ETH_HTML_DIV(ETH_HTML_MONO) << toHex(ethereum()->codeAt(address)) << "</div>";
 			s << "<h4>Creation Addresses (" << ethereum()->countAt(address) << "+)</h4>";

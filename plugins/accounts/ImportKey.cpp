@@ -35,7 +35,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(ImportKey);
 
-ImportKey::ImportKey(AlethFace* _m):
+ImportKey::ImportKey(ZeroFace* _m):
 	Plugin(_m, "ImportKey")
 {
 	connect(addMenuItem("Import Key...", "menuTools", true), SIGNAL(triggered()), SLOT(import()));
@@ -92,7 +92,7 @@ void ImportKey::import()
 		try
 		{
 			lastAddress = eth::toAddress(as);
-			u.addressOut->setText(QString::fromStdString(main()->toReadable(lastAddress)));
+			u.addressOut->setText(QString::fromStdString(aleth()->toReadable(lastAddress)));
 		}
 		catch (...)
 		{
@@ -184,7 +184,7 @@ void ImportKey::import()
 	connect(u.name, &QLineEdit::textEdited, [&](){ updateImport(); });
 	connect(u.showPassword, &QCheckBox::toggled, [&](bool show){ u.password->setEchoMode(show ? QLineEdit::Normal : QLineEdit::Password); });
 	connect(u.openKey, &QToolButton::clicked, [&](){
-		QString fn = QFileDialog::getOpenFileName(main(), "Open Key File", QDir::homePath(), "JSON Files (*.json);;All Files (*)");
+		QString fn = QFileDialog::getOpenFileName(zero(), "Open Key File", QDir::homePath(), "JSON Files (*.json);;All Files (*)");
 		if (!fn.isEmpty())
 		{
 			u.key->setText(fn);
@@ -200,23 +200,23 @@ void ImportKey::import()
 
 		// check for a brain wallet import
 		if (lastKey.empty() && !lastSecret)
-			main()->keyManager().importExistingBrain(a, n, h);
+			aleth()->keyManager().importExistingBrain(a, n, h);
 		else if (!lastKey.empty() && !lastSecret)
 		{
 			h256 ph;
 			DEV_IGNORE_EXCEPTIONS(ph = h256(u.passwordHash->text().toStdString()));
-			main()->keyManager().importExisting(main()->keyManager().store().importKey(lastKey), n, a, ph, h);
+			aleth()->keyManager().importExisting(aleth()->keyManager().store().importKey(lastKey), n, a, ph, h);
 		}
 		else
 		{
 			bool mp = u.noPassword->isChecked();
 			string p = mp ? string() : u.oldPassword ? lastPassword : u.password->text().toStdString();
 			if (mp)
-				main()->keyManager().import(lastSecret, n);
+				aleth()->keyManager().import(lastSecret, n);
 			else
-				main()->keyManager().import(lastSecret, n, p, h);
+				aleth()->keyManager().import(lastSecret, n, p, h);
 		}
 
-		main()->noteKeysChanged();
+		aleth()->noteKeysChanged();
 	}
 }

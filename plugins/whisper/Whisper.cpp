@@ -100,14 +100,14 @@ static shh::Topics topicFromText(QString _s)
 }
 
 
-Whisper::Whisper(AlethFace* _m):
+Whisper::Whisper(ZeroFace* _m):
 	Plugin(_m, "Whisper"),
 	m_ui(new Ui::Whisper)
 {
 	dock(Qt::RightDockWidgetArea, "Whisper")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
 	connect(addMenuItem("New Whisper Identity", "menuTools", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
-	connect(_m->web3Server(), &OurWebThreeStubServer::onNewId, this, &Whisper::addNewId);
+	connect(_m->aleth()->web3Server(), &OurWebThreeStubServer::onNewId, this, &Whisper::addNewId);
 }
 
 void Whisper::readSettings(QSettings const& _s)
@@ -124,7 +124,7 @@ void Whisper::readSettings(QSettings const& _s)
 				m_myIdentities.append(KeyPair(k));
 		}
 	}
-	main()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	aleth()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 
@@ -145,14 +145,14 @@ void Whisper::addNewId(QString _ids)
 {
 	KeyPair kp(jsToSecret(_ids.toStdString()));
 	m_myIdentities.push_back(kp);
-	main()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	aleth()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 
 void Whisper::refreshWhisper()
 {
 	m_ui->shhFrom->clear();
-	for (auto i: main()->web3Server()->ids())
+	for (auto i: aleth()->web3Server()->ids())
 		m_ui->shhFrom->addItem(QString::fromStdString(toHex(i.first.ref())));
 }
 
@@ -160,7 +160,7 @@ void Whisper::on_newIdentity_triggered()
 {
 	KeyPair kp = KeyPair::create();
 	m_myIdentities.append(kp);
-	main()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	aleth()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 
@@ -172,7 +172,7 @@ void Whisper::on_post_clicked()
 	m.setPayload(parseData(m_ui->shhData->toPlainText().toStdString()));
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
 	Secret from;
-	if (main()->web3Server()->ids().count(f))
-		from = main()->web3Server()->ids().at(f);
+	if (aleth()->web3Server()->ids().count(f))
+		from = aleth()->web3Server()->ids().at(f);
 	whisper()->inject(m.seal(from, topicFromText(m_ui->shhTopic->toPlainText()), m_ui->shhTtl->value(), m_ui->shhWork->value()));
 }

@@ -42,7 +42,7 @@ class WhisperPeers: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	WhisperPeers(AlethFace* _m);
+	WhisperPeers(ZeroFace* _m);
 
 private:
 	void timerEvent(QTimerEvent*) override;

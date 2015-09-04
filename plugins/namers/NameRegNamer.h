@@ -33,7 +33,7 @@ class NameRegNamer: public QObject, public AccountNamerPlugin
 	Q_OBJECT
 
 public:
-	NameRegNamer(AlethFace* _m);
+	NameRegNamer(ZeroFace* _m);
 	~NameRegNamer();
 
 private:

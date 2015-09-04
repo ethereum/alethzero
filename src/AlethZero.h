@@ -68,27 +68,31 @@ class DappLoader;
 class DappHost;
 struct Dapp;
 
-class AlethZero: public Aleth
+class AlethZero: public ZeroFace
 {
 	Q_OBJECT
 
 public:
-	explicit AlethZero(QWidget *parent = 0);
+	explicit AlethZero(QWidget* _parent = nullptr);
 	~AlethZero();
 
-	WebThreeDirect* web3() const override { return m_webThree.get(); }
-	OurWebThreeStubServer* web3Server() const override { return m_server.get(); }
-	dev::SafeHttpServer* web3ServerConnector() const override { return m_httpConnector.get(); }
-	eth::Client* ethereum() const override { return m_webThree->ethereum(); }
-	std::shared_ptr<shh::WhisperHost> whisper() const override { return m_webThree->whisper(); }
-	NatSpecFace* natSpec() override { return &m_natSpecDB; }
+	// TODO: remove and just use aleth()...
+	WebThreeDirect* web3() const { return m_webThree.get(); }
+	OurWebThreeStubServer* web3Server() const { return m_server.get(); }
+	dev::SafeHttpServer* web3ServerConnector() const { return m_httpConnector.get(); }
+	eth::Client* ethereum() const { return m_webThree->ethereum(); }
+	std::shared_ptr<shh::WhisperHost> whisper() const { return m_webThree->whisper(); }
+	NatSpecFace* natSpec() { return &m_natSpecDB; }
 
-	Secret retrieveSecret(Address const& _address) const override;
-	eth::KeyManager& keyManager() override { return m_keyManager; }
-	void noteKeysChanged() override { refreshBalances(); }
+	Secret retrieveSecret(Address const& _address) const;
+	eth::KeyManager& keyManager() { return m_keyManager; }
+	void noteKeysChanged() { refreshBalances(); }
 	bool shouldConfirm() const;
 
-	void noteSettingsChanged() override { writeSettings(); }
+	void noteSettingsChanged() { writeSettings(); }
+
+	AlethFace const* aleth() const { return &m_aleth; }
+	AlethFace* aleth() { return &m_aleth; }
 
 public slots:
 	void note(QString _entry);
@@ -167,7 +171,6 @@ private:
 
 	void keysChanged();
 
-	void onNewBlock();
 	void installWatches();
 
 	virtual void timerEvent(QTimerEvent*) override;
@@ -181,20 +184,44 @@ private:
 	std::string getPassword(std::string const& _title, std::string const& _for, std::string* _hint = nullptr, bool* _ok = nullptr);
 
 	std::unique_ptr<Ui::Main> ui;
-	std::unique_ptr<WebThreeDirect> m_webThree;
+	std::unique_ptr<WebThreeDirect> m_webThree;	// TODO: move into Aleth.
 
-	QByteArray m_networkConfig;
-	QStringList m_servers;
-	eth::KeyManager m_keyManager;
-	QString m_privateChain;
-	dev::Address m_beneficiary;
+	QByteArray m_networkConfig;	// TODO: move into Aleth.
+	QStringList m_servers;	// TODO: move into Aleth.
+	eth::KeyManager m_keyManager;	// TODO: move into Aleth.
+	QString m_privateChain;	// TODO: move into Aleth.
+	dev::Address m_beneficiary;	// TODO: move into Aleth.
 
 	QActionGroup* m_vmSelectionGroup = nullptr;
 
-	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;
-	std::unique_ptr<OurWebThreeStubServer> m_server;
+	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;	// TODO: move into Aleth.
+	std::unique_ptr<OurWebThreeStubServer> m_server;	// TODO: move into Aleth.
 
-	NatspecHandler m_natSpecDB;
+	NatspecHandler m_natSpecDB;	// TODO: move into Aleth.
+
+	class FullAleth: public Aleth
+	{
+	public:
+		FullAleth(AlethZero* _az): m_az(_az) { init(); }
+
+		WebThreeDirect* web3() const override { return m_az->m_webThree.get(); }
+		OurWebThreeStubServer* web3Server() const override { return m_az->m_server.get(); }
+		dev::SafeHttpServer* web3ServerConnector() const override { return m_az->m_httpConnector.get(); }
+		eth::Client* ethereum() const override { return m_az->m_webThree->ethereum(); }
+		std::shared_ptr<shh::WhisperHost> whisper() const override { return m_az->m_webThree->whisper(); }
+		NatSpecFace* natSpec() override { return &m_az->m_natSpecDB; }
+
+		Secret retrieveSecret(Address const& _address) const override { return m_az->retrieveSecret(_address); }
+		eth::KeyManager& keyManager() override { return m_az->m_keyManager; }
+		void noteKeysChanged() override { m_az->refreshBalances(); }
+
+		void noteSettingsChanged() override { m_az->writeSettings(); }
+
+	private:
+		AlethZero* m_az;
+	};
+
+	FullAleth m_aleth;
 
 	Connect m_connect;
 };

@@ -54,7 +54,7 @@ class TransactDialog: public QDialog
 	Q_OBJECT
 
 public:
-	explicit TransactDialog(AlethFace* _main);
+	explicit TransactDialog(ZeroFace* _main);
 	~TransactDialog();
 
 	void resetGasPrice();
@@ -76,7 +76,6 @@ private slots:
 	void on_cancel_clicked() { close(); }
 
 private:
-	dev::eth::Client* ethereum() const { return m_ethereum; }
 	void rejigData();
 	void updateNonce();
 	void updateBounds();
@@ -100,14 +99,16 @@ private:
 
 	void timerEvent(QTimerEvent*) override;
 
+	AlethFace* aleth() const { return m_main->aleth(); }
+	dev::eth::Client* ethereum() const { return aleth()->ethereum(); }
+
 	Ui::TransactDialog* m_ui = nullptr;
 
 	unsigned m_backupGas = 0;
 	dev::bytes m_data;
 
 	dev::AddressHash m_accounts;
-	dev::eth::Client* m_ethereum = nullptr;
-	AlethFace* m_main = nullptr;
+	ZeroFace* m_main = nullptr;
 	NatSpecFace* m_natSpecDB = nullptr;
 
 	QString m_dataInfo;

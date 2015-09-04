@@ -40,7 +40,7 @@ static QString filterOutTerminal(QString _s)
 
 DEV_AZ_NOTE_PLUGIN(LogPanel);
 
-LogPanel::LogPanel(AlethFace* _m):
+LogPanel::LogPanel(ZeroFace* _m):
 	Plugin(_m, "LogPanel"),
 	m_ui(new Ui::LogPanel)
 {

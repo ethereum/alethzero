@@ -32,7 +32,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(InjectTransactions);
 
-InjectTransactions::InjectTransactions(AlethFace* _m):
+InjectTransactions::InjectTransactions(ZeroFace* _m):
 	Plugin(_m, "InjectTransactions")
 {
 	connect(addMenuItem("Inject Transaction...", "menuSpecial", true), SIGNAL(triggered()), SLOT(injectOne()));
@@ -46,7 +46,7 @@ InjectTransactions::~InjectTransactions()
 void InjectTransactions::injectOne()
 {
 	bool ok;
-	QString s = QInputDialog::getText(main(), "Inject Transaction", "Enter transaction dump in hex", QLineEdit::Normal, QString(), &ok);
+	QString s = QInputDialog::getText(zero(), "Inject Transaction", "Enter transaction dump in hex", QLineEdit::Normal, QString(), &ok);
 	if (ok)
 		doInject(s);
 }
@@ -67,16 +67,16 @@ void InjectTransactions::doInject(QString _txHex)
 	try
 	{
 		bytes b = fromHex(_txHex.toStdString(), WhenError::Throw);
-		main()->ethereum()->injectTransaction(b);
+		aleth()->ethereum()->injectTransaction(b);
 	}
 	catch (BadHexCharacter& _e)
 	{
-		if (QMessageBox::warning(main(), "Invalid Transaction Hex", "Invalid hex character in:\n" + _txHex + "\nTransaction rejected.", QMessageBox::Ignore, QMessageBox::Abort) == QMessageBox::Abort)
+		if (QMessageBox::warning(zero(), "Invalid Transaction Hex", "Invalid hex character in:\n" + _txHex + "\nTransaction rejected.", QMessageBox::Ignore, QMessageBox::Abort) == QMessageBox::Abort)
 			return;
 	}
 	catch (Exception& _e)
 	{
-		if (QMessageBox::warning(main(), "Transaction Rejected", "Invalid transaction; due to" + QString::fromStdString(_e.what()) + "\n" + _txHex + "\nTransaction rejected.", QMessageBox::Ignore, QMessageBox::Abort) == QMessageBox::Abort)
+		if (QMessageBox::warning(zero(), "Transaction Rejected", "Invalid transaction; due to" + QString::fromStdString(_e.what()) + "\n" + _txHex + "\nTransaction rejected.", QMessageBox::Ignore, QMessageBox::Abort) == QMessageBox::Abort)
 			return;
 	}
 	catch (...)

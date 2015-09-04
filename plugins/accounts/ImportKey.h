@@ -33,7 +33,7 @@ class ImportKey: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	ImportKey(AlethFace* _m);
+	ImportKey(ZeroFace* _m);
 	~ImportKey();
 
 private slots:

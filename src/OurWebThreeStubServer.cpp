@@ -124,6 +124,6 @@ bool OurAccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _
 			userNotice = evaluator.evalExpression(userNotice);
 			return std::make_pair(true, userNotice);
 		},
-		[&](Address const& _a) -> string { return m_main->toName(_a); }
+		[&](Address const& _a) -> string { return m_main->aleth()->toName(_a); }
 	));
 }

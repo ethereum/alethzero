@@ -33,7 +33,7 @@ class GasPricing: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	GasPricing(AlethFace* _m);
+	GasPricing(ZeroFace* _m);
 
 private slots:
 	void gasPrices();

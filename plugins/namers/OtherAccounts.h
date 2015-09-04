@@ -33,7 +33,7 @@ class OtherAccounts: public QObject, public AccountNamerPlugin
 	Q_OBJECT
 
 public:
-	OtherAccounts(AlethFace* _m);
+	OtherAccounts(ZeroFace* _m);
 
 protected:
 	std::string toName(Address const& _a) const override { if (m_toName.count(_a)) return m_toName.at(_a); return std::string(); }

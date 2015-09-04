@@ -32,7 +32,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(OtherAccounts);
 
-OtherAccounts::OtherAccounts(AlethFace* _m):
+OtherAccounts::OtherAccounts(ZeroFace* _m):
 	AccountNamerPlugin(_m, "OtherAccounts")
 {
 	connect(addMenuItem("Register Third-party Address Names...", "menuTools", true), SIGNAL(triggered()), SLOT(import()));
@@ -64,7 +64,7 @@ void OtherAccounts::import()
 			}
 			line++;
 		}
-		main()->noteSettingsChanged();
+		aleth()->noteSettingsChanged();
 		noteKnownChanged();
 	}
 }

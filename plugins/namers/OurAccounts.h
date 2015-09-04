@@ -33,7 +33,7 @@ class OurAccounts: public QObject, public AccountNamerPlugin
 	Q_OBJECT
 
 public:
-	OurAccounts(AlethFace* _m);
+	OurAccounts(ZeroFace* _m);
 	~OurAccounts();
 
 protected:

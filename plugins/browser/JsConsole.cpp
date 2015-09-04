@@ -35,7 +35,7 @@ DEV_AZ_NOTE_PLUGIN(JsConsole);
 
 namespace dev { namespace aleth { QString contentsOfQResource(std::string const& res); } }
 
-JsConsole::JsConsole(AlethFace* _m):
+JsConsole::JsConsole(ZeroFace* _m):
 	Plugin(_m, "JavaScript Console")
 {
 	JsConsoleWidget* jsConsole = new JsConsoleWidget(_m);
@@ -43,7 +43,7 @@ JsConsole::JsConsole(AlethFace* _m):
 	webView->setVisible(false);
 	jsConsole->setWebView(webView);
 	dock(Qt::BottomDockWidgetArea, "JavaScript Console")->setWidget(jsConsole);
-	std::string adminSessionKey = _m->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
+	std::string adminSessionKey = _m->aleth()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
 
 	AlethZeroResources resources;
 

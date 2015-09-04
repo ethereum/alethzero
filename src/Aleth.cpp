@@ -37,7 +37,6 @@ Aleth::Aleth(QWidget* _parent):
 Aleth::~Aleth()
 {
 	m_destructing = true;
-	killPlugins();
 }
 
 void Aleth::init()
@@ -88,7 +87,7 @@ void Aleth::checkHandlers()
 void Aleth::install(AccountNamer* _adopt)
 {
 	m_namers.insert(_adopt);
-	_adopt->m_main = this;
+	_adopt->m_aleth = this;
 	emit knownAddressesChanged();
 }
 

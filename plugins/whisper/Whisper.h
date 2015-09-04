@@ -42,7 +42,7 @@ class Whisper: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Whisper(AlethFace* _m);
+	Whisper(ZeroFace* _m);
 
 private:
 	void readSettings(QSettings const&) override;

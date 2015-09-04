@@ -43,7 +43,7 @@ bool beginsWith(Address _a, bytes const& _b)
 
 DEV_AZ_NOTE_PLUGIN(NewAccount);
 
-NewAccount::NewAccount(AlethFace* _m):
+NewAccount::NewAccount(ZeroFace* _m):
 	Plugin(_m, "NewAccount")
 {
 	connect(addMenuItem("New Account...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
@@ -91,15 +91,15 @@ void NewAccount::create()
 		KeyPair p = newKeyPair(v);
 		QString s = u.keyName->text();
 		if (u.useMaster->isChecked())
-			main()->keyManager().import(p.secret(), s.toStdString());
+			aleth()->keyManager().import(p.secret(), s.toStdString());
 		else
 		{
 			std::string hint = u.hint->toPlainText().toStdString();
 			std::string password = u.password->text().toStdString();
-			main()->keyManager().import(p.secret(), s.toStdString(), password, hint);
+			aleth()->keyManager().import(p.secret(), s.toStdString(), password, hint);
 		}
 
-		main()->noteKeysChanged();
+		aleth()->noteKeysChanged();
 	}
 }
 

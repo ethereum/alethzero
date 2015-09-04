@@ -75,8 +75,9 @@ using namespace eth;
 namespace js = json_spirit;
 
 AlethZero::AlethZero(QWidget* _parent):
-	Aleth(_parent),
-	ui(new Ui::Main)
+	ZeroFace(_parent),
+	ui(new Ui::Main),
+	m_aleth(this)
 {
 	setWindowFlags(Qt::Window);
 	ui->setupUi(this);
@@ -224,6 +225,8 @@ AlethZero::~AlethZero()
 	// need to be rethought into something more like:
 	// forEach([&](shared_ptr<Plugin> const& p){ finalisePlugin(p.get()); });
 	writeSettings();
+
+	killPlugins();
 }
 
 bool AlethZero::shouldConfirm() const
@@ -281,22 +284,17 @@ void AlethZero::onKeysChanged()
 
 void AlethZero::installWatches()
 {
-	auto newBlockId = installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
-		onNewBlock();
+	auto newBlockId = aleth()->installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
+		cwatch << "Blockchain changed!";
+
+		// update blockchain dependent views.
+		refreshBlockCount();
+
+		// We must update balances since we can't filter updates to basic accounts.
+		refreshBalances();
 	});
 
 	cdebug << "newBlock watch ID: " << newBlockId;
-}
-
-void AlethZero::onNewBlock()
-{
-	cwatch << "Blockchain changed!";
-
-	// update blockchain dependent views.
-	refreshBlockCount();
-
-	// We must update balances since we can't filter updates to basic accounts.
-	refreshBalances();
 }
 
 void AlethZero::on_forceMining_triggered()
@@ -510,7 +508,7 @@ void AlethZero::on_exportKey_triggered()
 		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
 		Secret s = retrieveSecret(h);
-		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(toReadable(h) + " is:\n" + s.makeInsecure().hex()));
+		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(aleth()->toReadable(h) + " is:\n" + s.makeInsecure().hex()));
 	}
 }
 
@@ -612,7 +610,7 @@ void AlethZero::refreshBalances()
 		QListWidgetItem* li = new QListWidgetItem(
 			QString("<%1> %2: %3 [%4]")
 				.arg(m_keyManager.haveKey(address) ? "KEY" : "BRAIN")
-				.arg(QString::fromStdString(toReadable(address)))
+				.arg(QString::fromStdString(aleth()->toReadable(address)))
 				.arg(formatBalance(b).c_str())
 				.arg((unsigned)ethereum()->countAt(address))
 			, ui->ourAccounts);
@@ -674,7 +672,7 @@ void AlethZero::refreshAll()
 {
 	refreshBlockCount();
 	refreshBalances();
-	allChange();
+	noteAllChange();
 }
 
 void AlethZero::refreshBlockCount()
@@ -892,7 +890,7 @@ void AlethZero::on_mine_triggered()
 
 void AlethZero::keysChanged()
 {
-	emit keyManagerChanged();
+	emit aleth()->keyManagerChanged();	// eek...
 	refreshBalances();
 }
 
@@ -903,7 +901,7 @@ void AlethZero::on_killAccount_triggered()
 		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
 		QString s = QInputDialog::getText(this, QString::fromStdString("Kill Account " + m_keyManager.accountName(h) + "?!"),
-			QString::fromStdString("Account " + m_keyManager.accountName(h) + " (" + toReadable(h) + ") has " + formatBalance(ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
+			QString::fromStdString("Account " + m_keyManager.accountName(h) + " (" + aleth()->toReadable(h) + ") has " + formatBalance(ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
 			"Are you sure you want to continue? \r\n If so, type 'YES' to confirm."),
 			QLineEdit::Normal, "NO");
 		if (s != "YES")
@@ -958,7 +956,7 @@ void AlethZero::on_reencryptAll_triggered()
 	try {
 		for (Address const& a: m_keyManager.accounts())
 			while (!m_keyManager.recode(a, SemanticPassword::Existing, [&](){
-				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(toName(a))).arg(QString::fromStdString(m_keyManager.passwordHint(a))), QLineEdit::Password, QString()).toStdString();
+				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(aleth()->toName(a))).arg(QString::fromStdString(m_keyManager.passwordHint(a))), QLineEdit::Password, QString()).toStdString();
 				if (p.empty())
 					throw PasswordUnknown();
 				return p;

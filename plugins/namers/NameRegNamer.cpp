@@ -31,7 +31,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(NameRegNamer);
 
-NameRegNamer::NameRegNamer(AlethFace* _m):
+NameRegNamer::NameRegNamer(ZeroFace* _m):
 	AccountNamerPlugin(_m, "NameRegNamer")
 {
 }
@@ -44,7 +44,7 @@ string NameRegNamer::toName(Address const& _a) const
 {
 	for (auto const& r: m_registrars)
 	{
-		string n = abiOut<string>(main()->ethereum()->call(Address(1), 0, r, abiIn("name(address)", _a), 1000000, DefaultGasPrice, PendingBlock, FudgeFactor::Lenient).output);
+		string n = abiOut<string>(aleth()->ethereum()->call(Address(1), 0, r, abiIn("name(address)", _a), 1000000, DefaultGasPrice, PendingBlock, FudgeFactor::Lenient).output);
 		if (!n.empty())
 			return n;
 	}
@@ -54,7 +54,7 @@ string NameRegNamer::toName(Address const& _a) const
 Address NameRegNamer::toAddress(std::string const& _n) const
 {
 	for (auto const& r: m_registrars)
-		if (Address a = abiOut<Address>(main()->ethereum()->call(r, abiIn("addr(string)", _n)).output))
+		if (Address a = abiOut<Address>(aleth()->ethereum()->call(r, abiIn("addr(string)", _n)).output))
 			return a;
 	return Address();
 }
@@ -68,7 +68,7 @@ void NameRegNamer::killRegistrar(Address const& _r)
 {
 	if (m_filters.count(_r))
 	{
-		main()->uninstallWatch(m_filters.at(_r));
+		aleth()->uninstallWatch(m_filters.at(_r));
 		m_filters.erase(_r);
 	}
 	for (auto i = m_registrars.begin(); i != m_registrars.end();)
@@ -99,7 +99,7 @@ void NameRegNamer::readSettings(QSettings const& _s)
 
 	Address a("047cdba9627a8686bb24b3a65d87dab7efa53d31");
 	m_registrars.push_back(a);
-	m_filters[a] = main()->installWatch(LogFilter().address(a), [=](LocalisedLogEntries const&){ updateCache(); });
+	m_filters[a] = aleth()->installWatch(LogFilter().address(a), [=](LocalisedLogEntries const&){ updateCache(); });
 
 	noteKnownChanged();
 }

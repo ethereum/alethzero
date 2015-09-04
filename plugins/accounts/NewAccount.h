@@ -39,7 +39,7 @@ class NewAccount: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	NewAccount(AlethFace* _m);
+	NewAccount(ZeroFace* _m);
 	~NewAccount();
 
 private slots:

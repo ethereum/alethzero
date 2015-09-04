@@ -30,7 +30,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(GasPricing);
 
-GasPricing::GasPricing(AlethFace* _m):
+GasPricing::GasPricing(ZeroFace* _m):
 	Plugin(_m, "GasPricing")
 {
 	connect(addMenuItem("Gas Prices...", "menuConfig", true), SIGNAL(triggered()), SLOT(gasPrices()));
@@ -42,13 +42,13 @@ void GasPricing::gasPrices()
 	Ui_GasPricing gp;
 	gp.setupUi(&d);
 	d.setWindowTitle("Gas Pricing");
-	setValueUnits(gp.bidUnits, gp.bidValue, static_cast<TrivialGasPricer*>(main()->ethereum()->gasPricer().get())->bid());
-	setValueUnits(gp.askUnits, gp.askValue, static_cast<TrivialGasPricer*>(main()->ethereum()->gasPricer().get())->ask());
+	setValueUnits(gp.bidUnits, gp.bidValue, static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->bid());
+	setValueUnits(gp.askUnits, gp.askValue, static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->ask());
 
 	if (d.exec() == QDialog::Accepted)
 	{
-		static_cast<TrivialGasPricer*>(main()->ethereum()->gasPricer().get())->setBid(fromValueUnits(gp.bidUnits, gp.bidValue));
-		static_cast<TrivialGasPricer*>(main()->ethereum()->gasPricer().get())->setAsk(fromValueUnits(gp.askUnits, gp.askValue));
+		static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setBid(fromValueUnits(gp.bidUnits, gp.bidValue));
+		static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setAsk(fromValueUnits(gp.askUnits, gp.askValue));
 		// TODO: cooperation with Transact plugin/dialog.
 //		m_transact->resetGasPrice();
 	}

@@ -36,7 +36,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(BrainWallet);
 
-BrainWallet::BrainWallet(AlethFace* _m):
+BrainWallet::BrainWallet(ZeroFace* _m):
 	Plugin(_m, "BrainWallet")
 {
 	connect(addMenuItem("New Brain Wallet...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
@@ -63,7 +63,7 @@ void BrainWallet::create()
 
 	if (d.exec() == QDialog::Accepted)
 	{
-		main()->keyManager().importBrain(u.seed->toPlainText().trimmed().toStdString(), u.name->text().toStdString(), u.hint->toPlainText().toStdString());
-		main()->noteKeysChanged();
+		aleth()->keyManager().importBrain(u.seed->toPlainText().trimmed().toStdString(), u.name->text().toStdString(), u.hint->toPlainText().toStdString());
+		aleth()->noteKeysChanged();
 	}
 }

@@ -30,10 +30,10 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(OurAccounts);
 
-OurAccounts::OurAccounts(AlethFace* _m):
+OurAccounts::OurAccounts(ZeroFace* _m):
 	AccountNamerPlugin(_m, "OurAccounts")
 {
-	connect(main(), SIGNAL(keyManagerChanged()), SLOT(updateNames()));
+	connect(aleth(), SIGNAL(keyManagerChanged()), SLOT(updateNames()));
 	updateNames();
 }
 
@@ -43,7 +43,7 @@ OurAccounts::~OurAccounts()
 
 std::string OurAccounts::toName(Address const& _a) const
 {
-	return main()->keyManager().accountName(_a);
+	return aleth()->keyManager().accountName(_a);
 }
 
 Address OurAccounts::toAddress(std::string const& _n) const
@@ -55,13 +55,13 @@ Address OurAccounts::toAddress(std::string const& _n) const
 
 Addresses OurAccounts::knownAddresses() const
 {
-	return main()->keyManager().accounts();
+	return aleth()->keyManager().accounts();
 }
 
 void OurAccounts::updateNames()
 {
 	m_names.clear();
-	for (Address const& i: main()->keyManager().accounts())
-		m_names[main()->keyManager().accountName(i)] = i;
+	for (Address const& i: aleth()->keyManager().accounts())
+		m_names[aleth()->keyManager().accountName(i)] = i;
 	noteKnownChanged();
 }

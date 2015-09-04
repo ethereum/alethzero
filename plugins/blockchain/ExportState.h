@@ -44,7 +44,7 @@ class ExportState: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	ExportState(AlethFace* _m);
+	ExportState(ZeroFace* _m);
 
 private slots:
 	void create();
@@ -55,7 +55,7 @@ class ExportStateDialog: public QDialog
 	Q_OBJECT
 
 public:
-	ExportStateDialog(AlethFace* _m);
+	ExportStateDialog(ZeroFace* _m);
 	virtual ~ExportStateDialog();
 
 private slots:
@@ -69,7 +69,9 @@ private:
 	void generateJSON();
 
 private:
-	AlethFace* m_main;
+	AlethFace* aleth() const { return m_main->aleth(); }
+
+	ZeroFace* m_main;
 	std::unique_ptr<Ui::ExportState> m_ui;
 	int m_recentBlocks = 0;
 	eth::BlockNumber m_block = eth::LatestBlock;

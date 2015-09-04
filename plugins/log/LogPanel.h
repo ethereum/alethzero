@@ -42,7 +42,7 @@ class LogPanel: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	LogPanel(AlethFace* _m);
+	LogPanel(ZeroFace* _m);
 	~LogPanel();
 
 private slots:

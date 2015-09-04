@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file AlethFace.cpp
+/** @file ZeroFace.cpp
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
@@ -31,18 +31,18 @@ using namespace aleth;
 
 void AccountNamer::noteKnownChanged()
 {
-	if (m_main)
-		m_main->noteKnownAddressesChanged(this);
+	if (m_aleth)
+		m_aleth->noteKnownAddressesChanged(this);
 }
 
 void AccountNamer::noteNamesChanged()
 {
-	if (m_main)
-		m_main->noteAddressNamesChanged(this);
+	if (m_aleth)
+		m_aleth->noteAddressNamesChanged(this);
 }
 
-Plugin::Plugin(AlethFace* _f, std::string const& _name):
-	m_main(_f),
+Plugin::Plugin(ZeroFace* _f, std::string const& _name):
+	m_zero(_f),
 	m_name(_name)
 {
 	_f->adoptPlugin(this);
@@ -54,9 +54,9 @@ QDockWidget* Plugin::dock(Qt::DockWidgetArea _area, QString _title)
 		_title = QString::fromStdString(m_name);
 	if (!m_dock)
 	{
-		m_dock = new QDockWidget(_title, m_main);
+		m_dock = new QDockWidget(_title, zero());
 		m_dock->setObjectName(_title);
-		m_main->addDockWidget(_area, m_dock);
+		zero()->addDockWidget(_area, m_dock);
 		m_dock->setFeatures(QDockWidget::AllDockWidgetFeatures | QDockWidget::DockWidgetVerticalTitleBar);
 	}
 	return m_dock;
@@ -64,25 +64,71 @@ QDockWidget* Plugin::dock(Qt::DockWidgetArea _area, QString _title)
 
 void Plugin::addToDock(Qt::DockWidgetArea _area, QDockWidget* _dockwidget, Qt::Orientation _orientation)
 {
-	m_main->addDockWidget(_area, _dockwidget, _orientation);
+	zero()->addDockWidget(_area, _dockwidget, _orientation);
 }
 
 void Plugin::addAction(QAction* _a)
 {
-	m_main->addAction(_a);
+	zero()->addAction(_a);
 }
 
 QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep)
 {
-	QAction* a = new QAction(_n, main());
-	QMenu* m = main()->findChild<QMenu*>(_menuName);
+	QAction* a = new QAction(_n, aleth());
+	QMenu* m = zero()->findChild<QMenu*>(_menuName);
 	if (_sep)
 		m->addSeparator();
 	m->addAction(a);
 	return a;
 }
 
-unordered_map<string, function<Plugin*(AlethFace*)>>* AlethFace::s_linkedPlugins = nullptr;
+unordered_map<string, PluginFactory>* ZeroFace::s_linkedPlugins = nullptr;
+
+void ZeroFace::notePlugin(string const& _name, PluginFactory const& _new)
+{
+	if (!s_linkedPlugins)
+		s_linkedPlugins = new std::unordered_map<string, PluginFactory>();
+	s_linkedPlugins->insert(make_pair(_name, _new));
+}
+
+void ZeroFace::unnotePlugin(string const& _name)
+{
+	if (s_linkedPlugins)
+		s_linkedPlugins->erase(_name);
+}
+
+void ZeroFace::adoptPlugin(Plugin* _p)
+{
+	m_plugins[_p->name()] = shared_ptr<Plugin>(_p);
+}
+
+void ZeroFace::killPlugins()
+{
+	m_plugins.clear();
+}
+
+void ZeroFace::noteAllChange()
+{
+	for (auto const& p: m_plugins)
+		p.second->onAllChange();
+}
+
+PluginRegistrarBase::PluginRegistrarBase(std::string const& _name, PluginFactory const& _f):
+	m_name(_name)
+{
+	cdebug << "Noting linked plugin" << _name;
+	ZeroFace::notePlugin(_name, _f);
+}
+
+PluginRegistrarBase::~PluginRegistrarBase()
+{
+	cdebug << "Noting unlinked plugin" << m_name;
+	ZeroFace::unnotePlugin(m_name);
+}
+
+///////////////////////////////////////////
+/// AlethFace
+///////////////////////////////////////////
 
 Address AlethFace::getNameReg()
 {
@@ -94,33 +140,18 @@ Address AlethFace::getICAPReg()
 	return Address("a1a111bc074c9cfa781f0c38e63bd51c91b8af00");
 }
 
-void AlethFace::notePlugin(string const& _name, PluginFactory const& _new)
+string AlethFace::toReadable(Address const& _a) const
 {
-	if (!s_linkedPlugins)
-		s_linkedPlugins = new std::unordered_map<string, PluginFactory>();
-	s_linkedPlugins->insert(make_pair(_name, _new));
-}
-
-void AlethFace::unnotePlugin(string const& _name)
-{
-	if (s_linkedPlugins)
-		s_linkedPlugins->erase(_name);
-}
-
-void AlethFace::adoptPlugin(Plugin* _p)
-{
-	m_plugins[_p->name()] = shared_ptr<Plugin>(_p);
-}
-
-void AlethFace::killPlugins()
-{
-	m_plugins.clear();
-}
-
-void AlethFace::allChange()
-{
-	for (auto const& p: m_plugins)
-		p.second->onAllChange();
+	string p = toName(_a);
+	string n;
+/*	if (p.size() == 9 && p.find_first_not_of("QWERYUOPASDFGHJKLZXCVBNM1234567890") == string::npos)
+		p = ICAP(p, "XREG").encoded();
+	else*/
+		DEV_IGNORE_EXCEPTIONS(n = ICAP(_a).encoded().substr(0, 8));
+	if (!n.empty())
+		n += " ";
+	n += _a.abridged();
+	return p.empty() ? n : (p + " " + n);
 }
 
 pair<Address, bytes> AlethFace::readAddress(std::string const& _n) const
@@ -159,20 +190,6 @@ pair<Address, bytes> AlethFace::readAddress(std::string const& _n) const
 			return make_pair(Address(), bytes());
 		}
 	return make_pair(Address(), bytes());
-}
-
-string AlethFace::toReadable(Address const& _a) const
-{
-	string p = toName(_a);
-	string n;
-/*	if (p.size() == 9 && p.find_first_not_of("QWERYUOPASDFGHJKLZXCVBNM1234567890") == string::npos)
-		p = ICAP(p, "XREG").encoded();
-	else*/
-		DEV_IGNORE_EXCEPTIONS(n = ICAP(_a).encoded().substr(0, 8));
-	if (!n.empty())
-		n += " ";
-	n += _a.abridged();
-	return p.empty() ? n : (p + " " + n);
 }
 
 string AlethFace::toHTML(StateDiff const& _d) const
@@ -241,17 +258,4 @@ string AlethFace::dnsLookup(string const& _a) const
 {
 	// TODO: make it actually look up via the GlobalRegistrar.
 	return _a;
-}
-
-PluginRegistrarBase::PluginRegistrarBase(std::string const& _name, PluginFactory const& _f):
-	m_name(_name)
-{
-	cdebug << "Noting linked plugin" << _name;
-	AlethFace::notePlugin(_name, _f);
-}
-
-PluginRegistrarBase::~PluginRegistrarBase()
-{
-	cdebug << "Noting unlinked plugin" << m_name;
-	AlethFace::unnotePlugin(m_name);
 }

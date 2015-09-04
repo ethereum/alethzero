@@ -41,7 +41,7 @@ class Browser: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Browser(AlethFace* _m);
+	Browser(ZeroFace* _m);
 	~Browser();
 
 private slots:

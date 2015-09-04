@@ -33,7 +33,7 @@ class JsConsole: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	JsConsole(AlethFace* _m);
+	JsConsole(ZeroFace* _m);
 	~JsConsole();
 };
 

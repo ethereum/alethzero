@@ -32,7 +32,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(Transact);
 
-Transact::Transact(AlethFace* _m):
+Transact::Transact(ZeroFace* _m):
 	Plugin(_m, "Transact")
 {
 	m_dialog = new TransactDialog(_m);
@@ -41,7 +41,7 @@ Transact::Transact(AlethFace* _m):
 
 	QAction* a = addMenuItem("New Transaction...", "menuTools", true);
 	connect(a, SIGNAL(triggered()), SLOT(newTransaction()));
-	main()->findChild<QToolBar*>()->addAction(a);
+	zero()->findChild<QToolBar*>()->addAction(a);
 }
 
 Transact::~Transact()
@@ -51,7 +51,7 @@ Transact::~Transact()
 
 void Transact::newTransaction()
 {
-	m_dialog->setEnvironment(main()->keyManager().accountsHash(), ethereum(), main()->natSpec());
+	m_dialog->setEnvironment(aleth()->keyManager().accountsHash(), ethereum(), aleth()->natSpec());
 	m_dialog->show();
 }
 

@@ -33,7 +33,7 @@ class InjectTransactions: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	InjectTransactions(AlethFace* _m);
+	InjectTransactions(ZeroFace* _m);
 	~InjectTransactions();
 
 private slots:

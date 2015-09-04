@@ -39,7 +39,7 @@ class Cors: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Cors(AlethFace* _m);
+	Cors(ZeroFace* _m);
 	~Cors();
 
 private slots:

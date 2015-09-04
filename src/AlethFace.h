@@ -50,7 +50,7 @@ namespace aleth
 
 class Plugin;
 class AlethFace;
-class AlethZero;
+class ZeroFace;
 class OurWebThreeStubServer;
 
 using WatchHandler = std::function<void(dev::eth::LocalisedLogEntries const&)>;
@@ -69,25 +69,50 @@ protected:
 	void noteNamesChanged();
 
 private:
-	AlethFace* m_main = nullptr;
+	AlethFace* m_aleth = nullptr;
 };
 
-using PluginFactory = std::function<Plugin*(AlethFace*)>;
+using PluginFactory = std::function<Plugin*(ZeroFace*)>;
 
-class AlethFace: public QMainWindow, public Context
+class AlethFace;
+
+class ZeroFace: public QMainWindow
 {
 	Q_OBJECT
 
 public:
-	explicit AlethFace(QWidget* _parent = nullptr): QMainWindow(_parent) {}
+	explicit ZeroFace(QWidget* _parent = nullptr): QMainWindow(_parent) {}
+	virtual ~ZeroFace()
+	{
+		killPlugins();
+	}
 
+	// Plugin API
 	static void notePlugin(std::string const& _name, PluginFactory const& _new);
 	static void unnotePlugin(std::string const& _name);
-
 	void adoptPlugin(Plugin* _p);
 	void killPlugins();
+	void noteAllChange();
 
-	void allChange();
+	virtual AlethFace const* aleth() const = 0;
+	virtual AlethFace* aleth() = 0;
+
+protected:
+	template <class F> void forEach(F const& _f) { for (auto const& p: m_plugins) _f(p.second); }
+	std::shared_ptr<Plugin> takePlugin(std::string const& _name) { auto it = m_plugins.find(_name); std::shared_ptr<Plugin> ret; if (it != m_plugins.end()) { ret = it->second; m_plugins.erase(it); } return ret; }
+
+	static std::unordered_map<std::string, PluginFactory>* s_linkedPlugins;
+
+private:
+	std::unordered_map<std::string, std::shared_ptr<Plugin>> m_plugins;
+};
+
+class AlethFace: public QObject, public Context
+{
+	Q_OBJECT
+
+public:
+	AlethFace(QObject* _parent = nullptr): QObject(_parent) {}
 
 	static Address getNameReg();
 	static Address getICAPReg();
@@ -128,45 +153,38 @@ public:
 
 	virtual void noteSettingsChanged() = 0;
 
-protected:
-	template <class F> void forEach(F const& _f) { for (auto const& p: m_plugins) _f(p.second); }
-	std::shared_ptr<Plugin> takePlugin(std::string const& _name) { auto it = m_plugins.find(_name); std::shared_ptr<Plugin> ret; if (it != m_plugins.end()) { ret = it->second; m_plugins.erase(it); } return ret; }
-
-	static std::unordered_map<std::string, PluginFactory>* s_linkedPlugins;
-
 signals:
 	void knownAddressesChanged();
 	void addressNamesChanged();
 
 	void keyManagerChanged();
-
-private:
-	std::unordered_map<std::string, std::shared_ptr<Plugin>> m_plugins;
 };
 
 class Plugin
 {
 public:
-	Plugin(AlethFace* _f, std::string const& _name);
+	Plugin(ZeroFace* _f, std::string const& _name);
 	virtual ~Plugin() {}
 
 	std::string const& name() const { return m_name; }
 
-	dev::WebThreeDirect* web3() const { return m_main->web3(); }
-	dev::eth::Client* ethereum() const { return m_main->ethereum(); }
-	std::shared_ptr<dev::shh::WhisperHost> whisper() const { return m_main->whisper(); }
-	AlethFace* main() const { return m_main; }
+	ZeroFace* zero() const { return m_zero; }
 	QDockWidget* dock(Qt::DockWidgetArea _area = Qt::RightDockWidgetArea, QString _title = QString());
 	void addToDock(Qt::DockWidgetArea _area, QDockWidget* _dockwidget, Qt::Orientation _orientation);
 	void addAction(QAction* _a);
 	QAction* addMenuItem(QString _name, QString _menuName, bool _separate = false);
+
+	AlethFace* aleth() const { return m_zero->aleth(); }
+	dev::WebThreeDirect* web3() const { return aleth()->web3(); }
+	dev::eth::Client* ethereum() const { return aleth()->ethereum(); }
+	std::shared_ptr<dev::shh::WhisperHost> whisper() const { return aleth()->whisper(); }
 
 	virtual void onAllChange() {}
 	virtual void readSettings(QSettings const&) {}
 	virtual void writeSettings(QSettings&) {}
 
 private:
-	AlethFace* m_main = nullptr;
+	ZeroFace* m_zero = nullptr;
 	std::string m_name;
 	QDockWidget* m_dock = nullptr;
 };
@@ -174,8 +192,8 @@ private:
 class AccountNamerPlugin: public Plugin, public AccountNamer
 {
 protected:
-	AccountNamerPlugin(AlethFace* _m, std::string const& _name): Plugin(_m, _name) { main()->install(this); }
-	~AccountNamerPlugin() { main()->uninstall(this); }
+	AccountNamerPlugin(ZeroFace* _z, std::string const& _name): Plugin(_z, _name) { aleth()->install(this); }
+	~AccountNamerPlugin() { aleth()->uninstall(this); }
 };
 
 class PluginRegistrarBase
@@ -192,7 +210,7 @@ template<class ClassName>
 class PluginRegistrar: public PluginRegistrarBase
 {
 public:
-	PluginRegistrar(std::string const& _name): PluginRegistrarBase(_name, [](AlethFace* m){ return new ClassName(m); }) {}
+	PluginRegistrar(std::string const& _name): PluginRegistrarBase(_name, [](ZeroFace* m){ return new ClassName(m); }) {}
 };
 
 }

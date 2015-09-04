@@ -53,10 +53,10 @@ using namespace dev;
 using namespace aleth;
 using namespace eth;
 
-TransactDialog::TransactDialog(AlethFace* _main):
-	QDialog(_main),
+TransactDialog::TransactDialog(ZeroFace* _m):
+	QDialog(_m),
 	m_ui(new Ui::TransactDialog),
-	m_main(_main)
+	m_main(_m)
 {
 	m_ui->setupUi(this);
 
@@ -71,10 +71,9 @@ TransactDialog::~TransactDialog()
 	delete m_ui;
 }
 
-void TransactDialog::setEnvironment(AddressHash const& _accounts, dev::eth::Client* _eth, NatSpecFace* _natSpecDB)
+void TransactDialog::setEnvironment(AddressHash const& _accounts, dev::eth::Client*, NatSpecFace* _natSpecDB)
 {
 	m_accounts = _accounts;
-	m_ethereum = _eth;
 	m_natSpecDB = _natSpecDB;
 
 	auto old = m_ui->from->currentIndex();
@@ -82,7 +81,7 @@ void TransactDialog::setEnvironment(AddressHash const& _accounts, dev::eth::Clie
 	for (auto const& address: m_accounts)
 	{
 		u256 b = ethereum()->balanceAt(address, PendingBlock);
-		QString s = QString("%2: %1").arg(formatBalance(b).c_str()).arg(QString::fromStdString(m_main->toReadable(address)));
+		QString s = QString("%2: %1").arg(formatBalance(b).c_str()).arg(QString::fromStdString(aleth()->toReadable(address)));
 		m_ui->from->addItem(s);
 	}
 	updateDestination();
@@ -94,7 +93,7 @@ void TransactDialog::setEnvironment(AddressHash const& _accounts, dev::eth::Clie
 
 void TransactDialog::resetGasPrice()
 {
-	setValueUnits(m_ui->gasPriceUnits, m_ui->gasPrice, m_main->ethereum()->gasPricer()->bid());
+	setValueUnits(m_ui->gasPriceUnits, m_ui->gasPrice, aleth()->ethereum()->gasPricer()->bid());
 }
 
 bool TransactDialog::isCreation() const
@@ -137,8 +136,8 @@ void TransactDialog::updateDestination()
 	m_ui->destination->clear();
 	m_ui->destination->addItem("(Create Contract)");
 	QMultiMap<QString, QString> in;
-	for (Address const& a: m_main->allKnownAddresses())
-		in.insert(QString::fromStdString(m_main->toName(a) + " (" + ICAP(a).encoded() + ")"), QString::fromStdString(a.hex()));
+	for (Address const& a: aleth()->allKnownAddresses())
+		in.insert(QString::fromStdString(aleth()->toName(a) + " (" + ICAP(a).encoded() + ")"), QString::fromStdString(a.hex()));
 	for (auto i = in.begin(); i != in.end(); ++i)
 		m_ui->destination->addItem(i.key(), i.value());
 
@@ -169,7 +168,7 @@ void TransactDialog::on_destination_currentTextChanged(QString)
 	{
 		auto p = toAccount();
 		if (p.first)
-			m_ui->calculatedName->setText(QString::fromStdString(m_main->toReadable(p.first)));
+			m_ui->calculatedName->setText(QString::fromStdString(aleth()->toReadable(p.first)));
 		else
 			m_ui->calculatedName->setText("Unknown Address");
 
@@ -335,7 +334,7 @@ pair<Address, bytes> TransactDialog::toAccount()
 		if (!m_ui->destination->currentData().isNull() && m_ui->destination->currentText() == m_ui->destination->itemText(m_ui->destination->currentIndex()))
 			p.first = Address(m_ui->destination->currentData().toString().trimmed().toStdString());
 		else
-			p = m_main->readAddress(m_ui->destination->currentText().trimmed().toStdString());
+			p = aleth()->readAddress(m_ui->destination->currentText().trimmed().toStdString());
 	}
 	return p;
 }
@@ -403,7 +402,7 @@ void TransactDialog::finaliseBounds()
 		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Account doesn't contain enough for paying even the basic amount of gas required.</div>");
 		return;
 	}
-	if (m_upperBound > m_ethereum->gasLimitRemaining())
+	if (m_upperBound > ethereum()->gasLimitRemaining())
 	{
 		// Not enough - bail.
 		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Gas remaining in block isn't enough to allow the gas required.</div>");
@@ -536,7 +535,7 @@ Secret TransactDialog::findSecret(u256 _totalReq) const
 		if (b > bestBalance)
 			bestBalance = b, best = i;
 	}
-	return m_main->retrieveSecret(best);
+	return aleth()->retrieveSecret(best);
 }
 
 Address TransactDialog::fromAccount()
@@ -569,7 +568,7 @@ void TransactDialog::on_send_clicked()
 		return;
 	}
 
-	Secret s = m_main->retrieveSecret(a);
+	Secret s = aleth()->retrieveSecret(a);
 	if (!s)
 		return;
 
@@ -618,7 +617,7 @@ void TransactDialog::on_debug_clicked()
 			Transaction(value(), gasPrice(), gas(), m_data, postState.transactionsFrom(from)) :
 			Transaction(value(), gasPrice(), gas(), toAccount().first, m_data, postState.transactionsFrom(from));
 		t.forceSender(from);
-		Debugger dw(m_main, this);
+		Debugger dw(aleth(), this);
 		Executive e(postState, ethereum()->blockChain(), 0);
 		dw.populate(e, t);
 		dw.exec();

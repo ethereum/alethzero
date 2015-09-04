@@ -35,7 +35,7 @@ class Transact: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	Transact(AlethFace* _m);
+	Transact(ZeroFace* _m);
 	~Transact();
 
 private slots:

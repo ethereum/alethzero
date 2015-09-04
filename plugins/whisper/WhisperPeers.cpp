@@ -33,7 +33,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(WhisperPeers);
 
-WhisperPeers::WhisperPeers(AlethFace* _m):
+WhisperPeers::WhisperPeers(ZeroFace* _m):
 	Plugin(_m, "WhisperPeers"),
 	m_ui(new Ui::WhisperPeers)
 {
@@ -55,7 +55,7 @@ void WhisperPeers::refreshWhispers()
 	{
 		shh::Envelope const& e = w.second;
 		shh::Message m;
-		for (pair<Public, Secret> const& i: main()->web3Server()->ids())
+		for (pair<Public, Secret> const& i: aleth()->web3Server()->ids())
 			if (!!(m = e.open(shh::Topics(), i.second)))
 				break;
 		if (!m)

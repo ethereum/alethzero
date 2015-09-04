@@ -33,7 +33,7 @@ class BrainWallet: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	BrainWallet(AlethFace* _m);
+	BrainWallet(ZeroFace* _m);
 	~BrainWallet();
 
 private slots:

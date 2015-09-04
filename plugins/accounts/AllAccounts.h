@@ -40,7 +40,7 @@ class AllAccounts: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	AllAccounts(AlethFace* _m);
+	AllAccounts(ZeroFace* _m);
 	~AllAccounts();
 
 private slots:

@@ -29,7 +29,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(Cors);
 
-Cors::Cors(AlethFace* _m):
+Cors::Cors(ZeroFace* _m):
 	Plugin(_m, "Cors")
 {
 	connect(addMenuItem("Change CORS Domain...", "menuTools", true), SIGNAL(triggered()), SLOT(showDialog()));
@@ -45,7 +45,7 @@ void Cors::showDialog()
 	Ui::Cors u;
 	u.setupUi(&d);
 
-	string domain = main()->web3ServerConnector()->allowedOrigin();
+	string domain = aleth()->web3ServerConnector()->allowedOrigin();
 	if (domain == "")
 		u.disallow->setChecked(true);
 	else if (domain == "*")
@@ -64,7 +64,7 @@ void Cors::showDialog()
 			domain = "";
 		else
 			domain = u.domain->text().toStdString();
-		main()->web3ServerConnector()->setAllowedOrigin(domain);
+		aleth()->web3ServerConnector()->setAllowedOrigin(domain);
 	}
 }
 

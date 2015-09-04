@@ -36,7 +36,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(ExportState);
 
-ExportState::ExportState(AlethFace* _m):
+ExportState::ExportState(ZeroFace* _m):
 	Plugin(_m, "Export State")
 {
 	connect(addMenuItem("Export State...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
@@ -44,11 +44,11 @@ ExportState::ExportState(AlethFace* _m):
 
 void ExportState::create()
 {
-	ExportStateDialog dialog(main());
+	ExportStateDialog dialog(zero());
 	dialog.exec();
 }
 
-ExportStateDialog::ExportStateDialog(AlethFace* _m):
+ExportStateDialog::ExportStateDialog(ZeroFace* _m):
 	QDialog(_m),
 	m_main(_m),
 	m_ui(new Ui::ExportState)
@@ -83,7 +83,7 @@ void ExportStateDialog::on_block_currentIndexChanged(int _index)
 
 void ExportStateDialog::fillBlocks()
 {
-	BlockChain const& bc = m_main->ethereum()->blockChain();
+	BlockChain const& bc = aleth()->ethereum()->blockChain();
 	QStringList filters = m_ui->block->currentText().toLower().split(QRegExp("\\s+"), QString::SkipEmptyParts);
 	const unsigned numLastBlocks = 10;
 	if (m_ui->block->count() == 0)
@@ -143,10 +143,10 @@ void ExportStateDialog::fillContracts()
 	m_ui->contracts->setEnabled(true);
 	try
 	{
-		for (auto i: m_main->ethereum()->addresses(m_block))
+		for (auto i: aleth()->ethereum()->addresses(m_block))
 		{
-			string r = m_main->toReadable(i);
-			(new QListWidgetItem(QString("%2: %1 [%3]").arg(formatBalance(m_main->ethereum()->balanceAt(i)).c_str()).arg(QString::fromStdString(r)).arg((unsigned)m_main->ethereum()->countAt(i)), m_main->ethereum()->codeAt(i).empty() ? m_ui->accounts : m_ui->contracts))
+			string r = aleth()->toReadable(i);
+			(new QListWidgetItem(QString("%2: %1 [%3]").arg(formatBalance(aleth()->ethereum()->balanceAt(i)).c_str()).arg(QString::fromStdString(r)).arg((unsigned)aleth()->ethereum()->countAt(i)), aleth()->ethereum()->codeAt(i).empty() ? m_ui->accounts : m_ui->contracts))
 				->setData(Qt::UserRole, QByteArray((char const*)i.data(), Address::size));
 		}
 	}
@@ -168,16 +168,16 @@ void ExportStateDialog::generateJSON()
 	{
 		auto hba = item->data(Qt::UserRole).toByteArray();
 		auto address = Address((byte const*)hba.data(), Address::ConstructFromPointer);
-		json << prefix << "\t\"" << toHex(address.ref()) << "\": {  \"wei\": \"" << m_main->ethereum()->balanceAt(address, m_block) << "\" }";
+		json << prefix << "\t\"" << toHex(address.ref()) << "\": {  \"wei\": \"" << aleth()->ethereum()->balanceAt(address, m_block) << "\" }";
 		prefix = ",\n";
 	}
 	for(QListWidgetItem* item: m_ui->contracts->selectedItems())
 	{
 		auto hba = item->data(Qt::UserRole).toByteArray();
 		auto address = Address((byte const*)hba.data(), Address::ConstructFromPointer);
-		json << prefix << "\t\"" << toHex(address.ref()) << "\":\n\t{\n\t\t\"wei\": \"" << m_main->ethereum()->balanceAt(address, m_block) << "\",\n";
-		json << "\t\t\"code\": \"" << toHex(m_main->ethereum()->codeAt(address, m_block)) << "\",\n";
-		std::unordered_map<u256, u256> storage = m_main->ethereum()->storageAt(address, m_block);
+		json << prefix << "\t\"" << toHex(address.ref()) << "\":\n\t{\n\t\t\"wei\": \"" << aleth()->ethereum()->balanceAt(address, m_block) << "\",\n";
+		json << "\t\t\"code\": \"" << toHex(aleth()->ethereum()->codeAt(address, m_block)) << "\",\n";
+		std::unordered_map<u256, u256> storage = aleth()->ethereum()->storageAt(address, m_block);
 		if (!storage.empty())
 		{
 			json << "\t\t\"storage\":\n\t\t{\n";

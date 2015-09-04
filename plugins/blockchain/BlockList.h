@@ -40,7 +40,7 @@ class BlockList: public QObject, public Plugin
 	Q_OBJECT
 
 public:
-	BlockList(AlethFace* _m);
+	BlockList(ZeroFace* _m);
 	~BlockList();
 
 private slots:
@@ -59,6 +59,7 @@ private:
 	Ui::BlockList* m_ui;
 
 	unsigned m_newBlockWatch;
+	unsigned m_pendingWatch;
 	bool m_inhibitInfoRefresh;
 };
 

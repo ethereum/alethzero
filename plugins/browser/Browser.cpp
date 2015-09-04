@@ -37,7 +37,7 @@ using namespace eth;
 
 DEV_AZ_NOTE_PLUGIN(Browser);
 
-Browser::Browser(AlethFace* _m):
+Browser::Browser(ZeroFace* _m):
 	Plugin(_m, "Web view"),
 	m_ui(new Ui::Browser)
 {
@@ -45,7 +45,7 @@ Browser::Browser(AlethFace* _m):
 	dock(Qt::TopDockWidgetArea, "Browser")->setWidget(new QWidget());
 	m_ui->setupUi(dock()->widget());
 	m_ui->jsConsole->setWebView(m_ui->webView);
-	std::string adminSessionKey = _m->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
+	std::string adminSessionKey = _m->aleth()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
 	m_dappHost.reset(new DappHost(8081));
 	m_dappLoader = new DappLoader(this, web3(), AlethFace::getNameReg());
 	m_dappLoader->setSessionKey(adminSessionKey);
@@ -118,7 +118,7 @@ void Browser::reloadUrl()
 
 void Browser::loadJs()
 {
-	QString f = QFileDialog::getOpenFileName(main(), "Load Javascript", QString(), "Javascript (*.js);;All files (*)");
+	QString f = QFileDialog::getOpenFileName(zero(), "Load Javascript", QString(), "Javascript (*.js);;All files (*)");
 	if (f.size())
 	{
 		QString contents = QString::fromStdString(dev::asString(dev::contents(f.toStdString())));
