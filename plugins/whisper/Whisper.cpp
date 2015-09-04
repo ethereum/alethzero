@@ -111,7 +111,7 @@ Whisper::Whisper(ZeroFace* _m):
 	dock(Qt::RightDockWidgetArea, "Whisper")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
 	connect(addMenuItem("New Whisper Identity", "menuTools", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
-	connect(zero()->web3Server(), &OurWebThreeStubServer::onNewId, this, &Whisper::addNewId);
+	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
 }
 
 void Whisper::readSettings(QSettings const& _s)

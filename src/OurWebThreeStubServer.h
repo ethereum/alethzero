@@ -25,52 +25,26 @@
 #include <libethcore/CommonJS.h>
 #include <libdevcrypto/Common.h>
 #include <libweb3jsonrpc/WebThreeStubServer.h>
-#include <libweb3jsonrpc/AccountHolder.h>
+#include "AccountHolder.h"
 
 namespace dev
 {
-
 namespace aleth
 {
-
 namespace zero
 {
 
-class AlethZero;
+class ZeroFace;
+class AccountHolder;
 
-class OurAccountHolder: public QObject, public eth::AccountHolder
+class WebThreeServer: public QObject, public WebThreeStubServer
 {
 	Q_OBJECT
 
 public:
-	OurAccountHolder(AlethZero* _main);
+	WebThreeServer(jsonrpc::AbstractServerConnector& _conn, ZeroFace* _zero);
 
-public slots:
-	void doValidations();
-
-protected:
-	// easiest to return keyManager.addresses();
-	virtual dev::AddressHash realAccounts() const override;
-	// use web3 to submit a signed transaction to accept
-	virtual dev::h256 authenticate(dev::eth::TransactionSkeleton const& _t) override;
-
-private:
-	std::pair<bool, std::string> getUserNotice(eth::TransactionSkeleton const& _t);
-	bool showAuthenticationPopup(std::string const& _title, std::string const& _text);
-	bool validateTransaction(eth::TransactionSkeleton const& _t, bool _toProxy);
-
-	std::queue<eth::TransactionSkeleton> m_queued;
-	Mutex x_queued;
-
-	AlethZero* m_main;
-};
-
-class OurWebThreeStubServer: public QObject, public WebThreeStubServer
-{
-	Q_OBJECT
-
-public:
-	OurWebThreeStubServer(jsonrpc::AbstractServerConnector& _conn, AlethZero* main);
+	std::shared_ptr<dev::aleth::zero::AccountHolder> ethAccounts() const;
 
 	virtual std::string shh_newIdentity() override;
 
@@ -78,7 +52,7 @@ signals:
 	void onNewId(QString _s);
 
 private:
-	AlethZero* m_main;
+	ZeroFace* m_zero;
 };
 
 }

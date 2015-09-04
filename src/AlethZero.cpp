@@ -168,7 +168,7 @@ AlethZero::AlethZero(QWidget* _parent):
 	ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(ethereum()->sealEngine()->name())).arg(ethereum()->sealEngine()->revision()).arg(dev::Version));
 
 	m_httpConnector.reset(new dev::SafeHttpServer(SensibleHttpPort, "", "", dev::SensibleHttpThreads));
-	auto w3ss = new OurWebThreeStubServer(*m_httpConnector, this);
+	auto w3ss = new WebThreeServer(*m_httpConnector, this);
 	m_server.reset(w3ss);
 	m_server->StartListening();
 
@@ -544,6 +544,13 @@ void AlethZero::on_rewindChain_triggered()
 	}
 }
 
+#include "AccountHolder.h"
+
+void AlethZero::on_confirm_triggered()
+{
+	web3Server()->ethAccounts()->setEnabled(ui->confirm->isChecked());
+}
+
 void AlethZero::on_preview_triggered()
 {
 	ethereum()->setDefault(ui->preview->isChecked() ? PendingBlock : LatestBlock);
@@ -760,7 +767,6 @@ void AlethZero::timerEvent(QTimerEvent*)
 		interval = 0;
 		refreshNetwork();
 		refreshBlockCount();
-		poll();
 	}
 	else
 		interval += 100;

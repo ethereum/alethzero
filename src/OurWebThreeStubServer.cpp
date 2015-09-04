@@ -31,100 +31,23 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-OurWebThreeStubServer::OurWebThreeStubServer(
+WebThreeServer::WebThreeServer(
 	jsonrpc::AbstractServerConnector& _conn,
-	AlethZero* _main
+	ZeroFace* _zero
 ):
-	WebThreeStubServer(_conn, *_main->web3(), make_shared<OurAccountHolder>(_main), vector<KeyPair>{}, _main->keyManager(), *static_cast<TrivialGasPricer*>(_main->ethereum()->gasPricer().get())),
-	m_main(_main)
+	WebThreeStubServer(_conn, *_zero->aleth()->web3(), make_shared<zero::AccountHolder>(_zero), vector<KeyPair>{}, _zero->aleth()->keyManager(), *static_cast<TrivialGasPricer*>(_zero->aleth()->ethereum()->gasPricer().get())),
+	m_zero(_zero)
 {
 }
 
-string OurWebThreeStubServer::shh_newIdentity()
+string WebThreeServer::shh_newIdentity()
 {
 	KeyPair kp = dev::KeyPair::create();
 	emit onNewId(QString::fromStdString(toJS(kp.sec())));
 	return toJS(kp.pub());
 }
 
-OurAccountHolder::OurAccountHolder(AlethZero* _main):
-	AccountHolder([=](){ return _main->ethereum(); }),
-	m_main(_main)
+std::shared_ptr<dev::aleth::zero::AccountHolder> WebThreeServer::ethAccounts() const
 {
-	connect(_main, SIGNAL(poll()), this, SLOT(doValidations()));
-}
-
-bool OurAccountHolder::showAuthenticationPopup(string const& _title, string const& _text)
-{
-	QMessageBox userInput;
-	userInput.setText(QString::fromStdString(_title));
-	userInput.setInformativeText(QString::fromStdString(_text));
-	userInput.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-	userInput.button(QMessageBox::Ok)->setText("Allow");
-	userInput.button(QMessageBox::Cancel)->setText("Reject");
-	userInput.setDefaultButton(QMessageBox::Cancel);
-	return userInput.exec() == QMessageBox::Ok;
-	//QMetaObject::invokeMethod(m_main, "authenticate", Qt::BlockingQueuedConnection, Q_RETURN_ARG(int, button), Q_ARG(QString, QString::fromStdString(_title)), Q_ARG(QString, QString::fromStdString(_text)));
-	//return button == QMessageBox::Ok;
-}
-
-h256 OurAccountHolder::authenticate(TransactionSkeleton const& _t)
-{
-	Guard l(x_queued);
-	m_queued.push(_t);
-	return h256();
-}
-
-void OurAccountHolder::doValidations()
-{
-	Guard l(x_queued);
-	while (!m_queued.empty())
-	{
-		auto t = m_queued.front();
-		m_queued.pop();
-
-		bool proxy = isProxyAccount(t.from);
-		if (!proxy && !isRealAccount(t.from))
-		{
-			cwarn << "Trying to send from non-existant account" << t.from;
-			return;
-		}
-
-		// TODO: determine gas price.
-
-		if (!validateTransaction(t, proxy))
-			return;
-
-		if (proxy)
-			queueTransaction(t);
-		else
-			// sign and submit.
-			if (Secret s = m_main->retrieveSecret(t.from))
-				m_main->ethereum()->submitTransaction(t, s);
-	}
-}
-
-AddressHash OurAccountHolder::realAccounts() const
-{
-	return m_main->keyManager().accountsHash();
-}
-
-bool OurAccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _toProxy)
-{
-	if (!m_main->shouldConfirm())
-		return true;
-
-	return showAuthenticationPopup("Transaction", _t.userReadable(_toProxy,
-		[&](TransactionSkeleton const& _t) -> pair<bool, string>
-		{
-			h256 contractCodeHash = m_main->ethereum()->postState().codeHash(_t.to);
-			if (contractCodeHash == EmptySHA3)
-				return make_pair(false, std::string());
-			string userNotice = m_main->natSpec()->userNotice(contractCodeHash, _t.data);
-			QNatspecExpressionEvaluator evaluator;
-			userNotice = evaluator.evalExpression(userNotice);
-			return std::make_pair(true, userNotice);
-		},
-		[&](Address const& _a) -> string { return m_main->aleth()->toName(_a); }
-	));
+	return static_pointer_cast<dev::aleth::zero::AccountHolder>(WebThreeStubServerBase::ethAccounts());
 }

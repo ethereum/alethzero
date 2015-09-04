@@ -49,7 +49,7 @@ class ZeroFace;
 
 using PluginFactory = std::function<Plugin*(ZeroFace*)>;
 
-class OurWebThreeStubServer;
+class WebThreeServer;
 
 class ZeroFace: public QMainWindow
 {
@@ -72,7 +72,7 @@ public:
 	virtual AlethFace const* aleth() const = 0;
 	virtual AlethFace* aleth() = 0;
 
-	virtual OurWebThreeStubServer* web3Server() const = 0;
+	virtual WebThreeServer* web3Server() const = 0;
 	virtual dev::SafeHttpServer* web3ServerConnector() const = 0;
 
 protected:

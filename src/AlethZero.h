@@ -68,7 +68,7 @@ namespace aleth
 namespace zero
 {
 
-class OurWebThreeStubServer;
+class WebThreeServer;
 
 class AlethZero: public ZeroFace
 {
@@ -78,7 +78,7 @@ public:
 	explicit AlethZero(QWidget* _parent = nullptr);
 	~AlethZero();
 
-	OurWebThreeStubServer* web3Server() const override { return m_server.get(); }
+	WebThreeServer* web3Server() const override { return m_server.get(); }
 	dev::SafeHttpServer* web3ServerConnector() const override { return m_httpConnector.get(); }
 
 	// TODO: remove and just use aleth()...
@@ -149,6 +149,7 @@ private slots:
 	void on_vmJIT_triggered();
 	void on_vmSmart_triggered();
 	void on_rewindChain_triggered();
+	void on_confirm_triggered();
 
 	// Config
 	void on_sentinel_triggered();
@@ -198,7 +199,7 @@ private:
 	QActionGroup* m_vmSelectionGroup = nullptr;
 
 	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;	// TODO: move into Aleth.
-	std::unique_ptr<OurWebThreeStubServer> m_server;	// TODO: move into Aleth.
+	std::unique_ptr<WebThreeServer> m_server;	// TODO: move into Aleth.
 
 	NatspecHandler m_natSpecDB;	// TODO: move into Aleth.
 
