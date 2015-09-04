@@ -75,24 +75,11 @@ class AlethZero: public ZeroFace
 	Q_OBJECT
 
 public:
-	explicit AlethZero(QWidget* _parent = nullptr);
+	AlethZero();
 	~AlethZero();
 
 	WebThreeServer* web3Server() const override { return m_server.get(); }
 	dev::SafeHttpServer* web3ServerConnector() const override { return m_httpConnector.get(); }
-
-	// TODO: remove and just use aleth()...
-	WebThreeDirect* web3() const { return m_webThree.get(); }
-	eth::Client* ethereum() const { return m_webThree->ethereum(); }
-	std::shared_ptr<shh::WhisperHost> whisper() const { return m_webThree->whisper(); }
-	NatSpecFace* natSpec() { return &m_natSpecDB; }
-
-	Secret retrieveSecret(Address const& _address) const;
-	eth::KeyManager& keyManager() { return m_keyManager; }
-	void noteKeysChanged() { refreshBalances(); }
-	bool shouldConfirm() const;
-
-	void noteSettingsChanged() { writeSettings(); }
 
 	AlethFace const* aleth() const { return &m_aleth; }
 	AlethFace* aleth() { return &m_aleth; }
@@ -102,8 +89,6 @@ public slots:
 	void debug(QString _entry);
 	void warn(QString _entry);
 	QString contents(QString _file);
-
-	int authenticate(QString _title, QString _text);
 
 	void onKeysChanged();
 
@@ -194,7 +179,8 @@ private:
 	QStringList m_servers;	// TODO: move into Aleth.
 	eth::KeyManager m_keyManager;	// TODO: move into Aleth.
 	QString m_privateChain;	// TODO: move into Aleth.
-	dev::Address m_beneficiary;	// TODO: move into Aleth.
+
+	dev::Address m_beneficiary;	// TODO: move into Aleth?
 
 	QActionGroup* m_vmSelectionGroup = nullptr;
 
@@ -213,7 +199,7 @@ private:
 		std::shared_ptr<shh::WhisperHost> whisper() const override { return m_az->m_webThree->whisper(); }
 		NatSpecFace* natSpec() override { return &m_az->m_natSpecDB; }
 
-		Secret retrieveSecret(Address const& _address) const override { return m_az->retrieveSecret(_address); }
+		Secret retrieveSecret(Address const& _address) const override;
 		eth::KeyManager& keyManager() override { return m_az->m_keyManager; }
 		void noteKeysChanged() override { m_az->refreshBalances(); }
 

@@ -25,7 +25,7 @@
 #include <libwhisper/WhisperHost.h>
 #include <libwebthree/WebThree.h>
 #include <libweb3jsonrpc/WebThreeStubServerBase.h>
-#include "OurWebThreeStubServer.h"
+#include "WebThreeServer.h"
 #include "AlethFace.h"
 #include "ZeroFace.h"
 #include "ui_WhisperPeers.h"

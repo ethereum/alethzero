@@ -28,7 +28,7 @@
 #include <QFileDialog>
 #include "DappHost.h"
 #include "DappLoader.h"
-#include "OurWebThreeStubServer.h"
+#include "WebThreeServer.h"
 #include "AlethFace.h"
 #include "ZeroFace.h"
 #include "ui_Browser.h"

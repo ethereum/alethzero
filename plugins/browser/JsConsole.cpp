@@ -23,7 +23,7 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <QWebEngineView>
 #include "JsConsoleWidget.h"
-#include "OurWebThreeStubServer.h"
+#include "WebThreeServer.h"
 #include "AlethFace.h"
 #include "ZeroFace.h"
 #include "AlethZeroResources.hpp"

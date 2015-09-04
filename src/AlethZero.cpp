@@ -24,6 +24,8 @@
 // Make sure boost/asio.hpp is included before windows.h.
 #include <boost/asio.hpp>
 
+#include "AlethZero.h"
+
 #pragma GCC diagnostic ignored "-Wpedantic"
 //pragma GCC diagnostic ignored "-Werror=pedantic"
 #include <QtNetwork/QNetworkReply>
@@ -60,10 +62,10 @@
 #include <libethereum/DownloadMan.h>
 #include <libweb3jsonrpc/WebThreeStubServer.h>
 #include <libweb3jsonrpc/SafeHttpServer.h>
-#include "AlethZero.h"
+#include "AccountHolder.h"
 #include "SyncView.h"
 #include "BuildInfo.h"
-#include "OurWebThreeStubServer.h"
+#include "WebThreeServer.h"
 #include "Debugger.h"
 #include "ui_AlethZero.h"
 #include "ui_GetPassword.h"
@@ -75,8 +77,7 @@ using namespace p2p;
 using namespace eth;
 namespace js = json_spirit;
 
-AlethZero::AlethZero(QWidget* _parent):
-	ZeroFace(_parent),
+AlethZero::AlethZero():
 	ui(new Ui::Main),
 	m_aleth(this)
 {
@@ -104,11 +105,11 @@ AlethZero::AlethZero(QWidget* _parent):
 
 	// Open Key Store
 	bool opened = false;
-	if (m_keyManager.exists())
+	if (aleth()->keyManager().exists())
 		while (!opened)
 		{
 			QString s = QInputDialog::getText(nullptr, "Master password", "Enter your MASTER account password.", QLineEdit::Password, QString());
-			if (m_keyManager.load(s.toStdString()))
+			if (aleth()->keyManager().load(s.toStdString()))
 				opened = true;
 			else if (QMessageBox::question(
 					nullptr,
@@ -130,8 +131,8 @@ AlethZero::AlethZero(QWidget* _parent):
 				break;
 			QMessageBox::warning(nullptr, "Try again", "You entered two different passwords - please enter the same password twice.", QMessageBox::Ok);
 		}
-		m_keyManager.create(password.toStdString());
-		m_keyManager.import(ICAP::createDirect(), "Default identity");
+		aleth()->keyManager().create(password.toStdString());
+		aleth()->keyManager().import(ICAP::createDirect(), "Default identity");
 	}
 
 #if ETH_DEBUG
@@ -165,16 +166,16 @@ AlethZero::AlethZero(QWidget* _parent):
 	bytesConstRef network((byte*)m_networkConfig.data(), m_networkConfig.size());
 	m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
 
-	ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(ethereum()->sealEngine()->name())).arg(ethereum()->sealEngine()->revision()).arg(dev::Version));
+	ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(aleth()->ethereum()->sealEngine()->name())).arg(aleth()->ethereum()->sealEngine()->revision()).arg(dev::Version));
 
 	m_httpConnector.reset(new dev::SafeHttpServer(SensibleHttpPort, "", "", dev::SensibleHttpThreads));
 	auto w3ss = new WebThreeServer(*m_httpConnector, this);
 	m_server.reset(w3ss);
 	m_server->StartListening();
 
-	setBeneficiary(m_keyManager.accounts().front());
+	setBeneficiary(aleth()->keyManager().accounts().front());
 
-	ethereum()->setDefault(LatestBlock);
+	aleth()->ethereum()->setDefault(LatestBlock);
 
 	m_vmSelectionGroup = new QActionGroup{ui->menuConfig};
 	m_vmSelectionGroup->addAction(ui->vmInterpreter);
@@ -230,17 +231,12 @@ AlethZero::~AlethZero()
 	killPlugins();
 }
 
-bool AlethZero::shouldConfirm() const
-{
-	return ui->natSpec->isChecked();
-}
-
 void AlethZero::on_sentinel_triggered()
 {
 	bool ok;
-	QString sentinel = QInputDialog::getText(nullptr, "Enter sentinel address", "Enter the sentinel address for bad block reporting (e.g. http://badblockserver.com:8080). Enter nothing to disable.", QLineEdit::Normal, QString::fromStdString(ethereum()->sentinel()), &ok);
+	QString sentinel = QInputDialog::getText(nullptr, "Enter sentinel address", "Enter the sentinel address for bad block reporting (e.g. http://badblockserver.com:8080). Enter nothing to disable.", QLineEdit::Normal, QString::fromStdString(aleth()->ethereum()->sentinel()), &ok);
 	if (ok)
-		ethereum()->setSentinel(sentinel.toStdString());
+		aleth()->ethereum()->setSentinel(sentinel.toStdString());
 }
 
 NetworkPreferences AlethZero::netPrefs() const
@@ -300,7 +296,7 @@ void AlethZero::installWatches()
 
 void AlethZero::on_forceMining_triggered()
 {
-	ethereum()->setForceMining(ui->forceMining->isChecked());
+	aleth()->ethereum()->setForceMining(ui->forceMining->isChecked());
 }
 
 QString AlethZero::contents(QString _s)
@@ -330,7 +326,7 @@ void AlethZero::on_about_triggered()
 
 void AlethZero::on_paranoia_triggered()
 {
-	ethereum()->setParanoia(ui->paranoia->isChecked());
+	aleth()->ethereum()->setParanoia(ui->paranoia->isChecked());
 }
 
 void AlethZero::writeSettings()
@@ -343,8 +339,8 @@ void AlethZero::writeSettings()
 		p->writeSettings(s);
 	});
 
-	s.setValue("askPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->ask())));
-	s.setValue("bidPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->bid())));
+	s.setValue("askPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->ask())));
+	s.setValue("bidPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->bid())));
 	s.setValue("upnp", ui->upnp->isChecked());
 	s.setValue("hermitMode", ui->hermitMode->isChecked());
 	s.setValue("forceAddress", ui->forcePublicIP->text());
@@ -386,10 +382,10 @@ void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
 	writeSettings();
 	ui->mine->setChecked(false);
 	ui->net->setChecked(false);
-	web3()->stopNetwork();
+	aleth()->web3()->stopNetwork();
 
-	web3()->setNetworkPreferences(netPrefs());
-	ethereum()->reopenChain();
+	aleth()->web3()->setNetworkPreferences(netPrefs());
+	aleth()->ethereum()->reopenChain();
 
 	readSettings(true);
 	installWatches();
@@ -410,8 +406,8 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	{
 		p->readSettings(s);
 	});
-	static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->setAsk(u256(s.value("askPrice", QString::fromStdString(toString(DefaultGasPrice))).toString().toStdString()));
-	static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->setBid(u256(s.value("bidPrice", QString::fromStdString(toString(DefaultGasPrice))).toString().toStdString()));
+	static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setAsk(u256(s.value("askPrice", QString::fromStdString(toString(DefaultGasPrice))).toString().toStdString()));
+	static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setBid(u256(s.value("bidPrice", QString::fromStdString(toString(DefaultGasPrice))).toString().toStdString()));
 
 	ui->upnp->setChecked(s.value("upnp", true).toBool());
 	ui->forcePublicIP->setText(s.value("forceAddress", "").toString());
@@ -455,17 +451,17 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 #endif
 }
 
-Secret AlethZero::retrieveSecret(Address const& _address) const
+Secret AlethZero::FullAleth::retrieveSecret(Address const& _address) const
 {
 	while (true)
 	{
-		Secret s = m_keyManager.secret(_address, [&](){
+		Secret s = m_az->aleth()->keyManager().secret(_address, [&](){
 			QDialog d;
 			Ui_GetPassword gp;
 			gp.setupUi(&d);
 			d.setWindowTitle("Unlock Account");
-			gp.label->setText(QString("Enter the password for the account %2 (%1).").arg(QString::fromStdString(_address.abridged())).arg(QString::fromStdString(m_keyManager.accountName(_address))));
-			gp.entry->setPlaceholderText("Hint: " + QString::fromStdString(m_keyManager.passwordHint(_address)));
+			gp.label->setText(QString("Enter the password for the account %2 (%1).").arg(QString::fromStdString(_address.abridged())).arg(QString::fromStdString(keyManager().accountName(_address))));
+			gp.entry->setPlaceholderText("Hint: " + QString::fromStdString(m_az->aleth()->keyManager().passwordHint(_address)));
 			return d.exec() == QDialog::Accepted ? gp.entry->text().toStdString() : string();
 		});
 		if (s || QMessageBox::warning(nullptr, "Unlock Account", "The password you gave is incorrect for this key.", QMessageBox::Retry, QMessageBox::Cancel) == QMessageBox::Cancel)
@@ -494,7 +490,7 @@ std::string AlethZero::getPassword(std::string const& _title, std::string const&
 		QMessageBox::warning(nullptr, QString::fromStdString(_title), "You entered two different passwords - please enter the same password twice.", QMessageBox::Ok);
 	}
 
-	if (!password.isEmpty() && _hint && !m_keyManager.haveHint(password.toStdString()))
+	if (!password.isEmpty() && _hint && !aleth()->keyManager().haveHint(password.toStdString()))
 		*_hint = QInputDialog::getText(this, "Create Account", "Enter a hint to help you remember this password.").toStdString();
 
 	if (_ok)
@@ -508,7 +504,7 @@ void AlethZero::on_exportKey_triggered()
 	{
 		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
-		Secret s = retrieveSecret(h);
+		Secret s = aleth()->retrieveSecret(h);
 		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(aleth()->toReadable(h) + " is:\n" + s.makeInsecure().hex()));
 	}
 }
@@ -536,15 +532,13 @@ void AlethZero::on_vmSmart_triggered() { VMFactory::setKind(VMKind::Smart); }
 void AlethZero::on_rewindChain_triggered()
 {
 	bool ok;
-	int n = QInputDialog::getInt(this, "Rewind Chain", "Enter the number of the new chain head.", ethereum()->number() * 9 / 10, 1, ethereum()->number(), 1, &ok);
+	int n = QInputDialog::getInt(this, "Rewind Chain", "Enter the number of the new chain head.", aleth()->ethereum()->number() * 9 / 10, 1, aleth()->ethereum()->number(), 1, &ok);
 	if (ok)
 	{
-		ethereum()->rewind(n);
+		aleth()->ethereum()->rewind(n);
 		refreshAll();
 	}
 }
-
-#include "AccountHolder.h"
 
 void AlethZero::on_confirm_triggered()
 {
@@ -553,7 +547,7 @@ void AlethZero::on_confirm_triggered()
 
 void AlethZero::on_preview_triggered()
 {
-	ethereum()->setDefault(ui->preview->isChecked() ? PendingBlock : LatestBlock);
+	aleth()->ethereum()->setDefault(ui->preview->isChecked() ? PendingBlock : LatestBlock);
 	refreshAll();
 }
 
@@ -561,7 +555,7 @@ void AlethZero::on_prepNextDAG_triggered()
 {
 	EthashAux::computeFull(
 		EthashAux::seedHash(
-			ethereum()->blockChain().number() + ETHASH_EPOCH_LENGTH
+			aleth()->ethereum()->blockChain().number() + ETHASH_EPOCH_LENGTH
 		)
 	);
 }
@@ -572,8 +566,8 @@ void AlethZero::refreshMining()
 	QString t;
 	if (gp.first != EthashAux::NotGenerating)
 		t = QString("DAG for #%1-#%2: %3% complete; ").arg(gp.first).arg(gp.first + ETHASH_EPOCH_LENGTH - 1).arg(gp.second);
-	WorkingProgress p = ethereum()->miningProgress();
-	ui->mineStatus->setText(t + (ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
+	WorkingProgress p = aleth()->ethereum()->miningProgress();
+	ui->mineStatus->setText(t + (aleth()->ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
 }
 
 void AlethZero::setBeneficiary(Address const& _b)
@@ -585,7 +579,7 @@ void AlethZero::setBeneficiary(Address const& _b)
 		ui->ourAccounts->item(i)->setCheckState(h == _b ? Qt::Checked : Qt::Unchecked);
 	}
 	m_beneficiary = _b;
-	ethereum()->setBeneficiary(_b);
+	aleth()->ethereum()->setBeneficiary(_b);
 }
 
 void AlethZero::on_ourAccounts_itemClicked(QListWidgetItem* _i)
@@ -612,15 +606,15 @@ void AlethZero::refreshBalances()
 //		cdebug << n << addr << denom << sha3(h256(n).asBytes());
 		altCoins[addr] = make_tuple(fromRaw(n), 0, denom);
 	}*/
-	for (auto const& address: m_keyManager.accounts())
+	for (auto const& address: aleth()->keyManager().accounts())
 	{
-		u256 b = ethereum()->balanceAt(address);
+		u256 b = aleth()->ethereum()->balanceAt(address);
 		QListWidgetItem* li = new QListWidgetItem(
 			QString("<%1> %2: %3 [%4]")
-				.arg(m_keyManager.haveKey(address) ? "KEY" : "BRAIN")
+				.arg(aleth()->keyManager().haveKey(address) ? "KEY" : "BRAIN")
 				.arg(QString::fromStdString(aleth()->toReadable(address)))
 				.arg(formatBalance(b).c_str())
-				.arg((unsigned)ethereum()->countAt(address))
+				.arg((unsigned)aleth()->ethereum()->countAt(address))
 			, ui->ourAccounts);
 		li->setData(Qt::UserRole, QByteArray((char const*)address.data(), Address::size));
 		li->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
@@ -644,13 +638,13 @@ void AlethZero::refreshBalances()
 
 void AlethZero::refreshNetwork()
 {
-	auto ps = web3()->peers();
+	auto ps = aleth()->web3()->peers();
 
 	ui->peerCount->setText(QString::fromStdString(toString(ps.size())) + " peer(s)");
 	ui->peers->clear();
 	ui->nodes->clear();
 
-	if (web3()->haveNetwork())
+	if (aleth()->web3()->haveNetwork())
 	{
 		map<h512, QString> sessions;
 		for (PeerSessionInfo const& i: ps)
@@ -664,12 +658,12 @@ void AlethZero::refreshNetwork()
 				.arg(i.socketId)
 				.arg(QString::fromStdString(i.id.abridged())));
 
-		auto ns = web3()->nodes();
+		auto ns = aleth()->web3()->nodes();
 		for (p2p::Peer const& i: ns)
 			ui->nodes->insertItem(sessions.count(i.id) ? 0 : ui->nodes->count(), QString("[%1 %3] %2 - ( %4 ) - *%5")
 				.arg(QString::fromStdString(i.id.abridged()))
 				.arg(QString::fromStdString(i.endpoint.address.to_string()))
-				.arg(i.id == web3()->id() ? "self" : sessions.count(i.id) ? sessions[i.id] : "disconnected")
+				.arg(i.id == aleth()->web3()->id() ? "self" : sessions.count(i.id) ? sessions[i.id] : "disconnected")
 				.arg(i.isOffline() ? " | " + QString::fromStdString(reasonOf(i.lastDisconnect())) + " | " + QString::number(i.failedAttempts()) + "x" : "")
 				.arg(i.rating())
 				);
@@ -685,8 +679,8 @@ void AlethZero::refreshAll()
 
 void AlethZero::refreshBlockCount()
 {
-	auto d = ethereum()->blockChain().details();
-	SyncStatus sync = ethereum()->syncStatus();
+	auto d = aleth()->ethereum()->blockChain().details();
+	SyncStatus sync = aleth()->ethereum()->syncStatus();
 	QString syncStatus = QString("PV%1 %2").arg(sync.protocolVersion).arg(EthereumHost::stateName(sync.state));
 	if (sync.state == SyncState::Hashes)
 		syncStatus += QString(": %1/%2%3").arg(sync.hashesReceived).arg(sync.hashesEstimated ? "~" : "").arg(sync.hashesTotal);
@@ -702,7 +696,7 @@ void AlethZero::refreshBlockCount()
 
 void AlethZero::on_turboMining_triggered()
 {
-	ethereum()->setTurboMining(ui->turboMining->isChecked());
+	aleth()->ethereum()->setTurboMining(ui->turboMining->isChecked());
 }
 
 void AlethZero::on_refresh_triggered()
@@ -758,7 +752,7 @@ void AlethZero::timerEvent(QTimerEvent*)
 	if (interval / 100 % 2 == 0)
 		refreshMining();
 
-	if ((interval / 100 % 2 == 0 && m_webThree->ethereum()->isSyncing()) || interval == 1000)
+	if ((interval / 100 % 2 == 0 && aleth()->ethereum()->isSyncing()) || interval == 1000)
 		ui->downloadView->update();
 
 	// refresh peer list every 1000ms, reset counter
@@ -778,7 +772,7 @@ void AlethZero::on_injectBlock_triggered()
 	try
 	{
 		bytes b = fromHex(s.toStdString(), WhenError::Throw);
-		ethereum()->injectBlock(b);
+		aleth()->ethereum()->injectBlock(b);
 	}
 	catch (BadHexCharacter& _e)
 	{
@@ -793,7 +787,7 @@ void AlethZero::on_injectBlock_triggered()
 
 void AlethZero::on_idealPeers_valueChanged(int)
 {
-	m_webThree->setIdealPeerCount(ui->idealPeers->value());
+	aleth()->web3()->setIdealPeerCount(ui->idealPeers->value());
 }
 
 void AlethZero::on_ourAccounts_doubleClicked()
@@ -814,8 +808,8 @@ void AlethZero::on_clearPending_triggered()
 	writeSettings();
 	ui->mine->setChecked(false);
 	ui->net->setChecked(false);
-	web3()->stopNetwork();
-	ethereum()->clearPending();
+	aleth()->web3()->stopNetwork();
+	aleth()->ethereum()->clearPending();
 	readSettings(true);
 	installWatches();
 	refreshAll();
@@ -823,7 +817,7 @@ void AlethZero::on_clearPending_triggered()
 
 void AlethZero::on_retryUnknown_triggered()
 {
-	ethereum()->retryUnknown();
+	aleth()->ethereum()->retryUnknown();
 }
 
 void AlethZero::on_killBlockchain_triggered()
@@ -831,8 +825,8 @@ void AlethZero::on_killBlockchain_triggered()
 	writeSettings();
 	ui->mine->setChecked(false);
 	ui->net->setChecked(false);
-	web3()->stopNetwork();
-	ethereum()->killChain();
+	aleth()->web3()->stopNetwork();
+	aleth()->ethereum()->killChain();
 	readSettings(true);
 	installWatches();
 	refreshAll();
@@ -842,21 +836,21 @@ void AlethZero::on_net_triggered()
 {
 	ui->port->setEnabled(!ui->net->isChecked());
 	ui->clientName->setEnabled(!ui->net->isChecked());
-	web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", ui->clientName->text().toStdString()));
+	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", ui->clientName->text().toStdString()));
 	if (ui->net->isChecked())
 	{
-		web3()->setIdealPeerCount(ui->idealPeers->value());
-		web3()->setNetworkPreferences(netPrefs(), ui->dropPeers->isChecked());
-		ethereum()->setNetworkId((h256)(u256)(int)c_network);
-		web3()->startNetwork();
-		ui->downloadView->setEthereum(ethereum());
-		ui->enode->setText(QString::fromStdString(web3()->enode()));
+		aleth()->web3()->setIdealPeerCount(ui->idealPeers->value());
+		aleth()->web3()->setNetworkPreferences(netPrefs(), ui->dropPeers->isChecked());
+		aleth()->ethereum()->setNetworkId((h256)(u256)(int)c_network);
+		aleth()->web3()->startNetwork();
+		ui->downloadView->setEthereum(aleth()->ethereum());
+		ui->enode->setText(QString::fromStdString(aleth()->web3()->enode()));
 	}
 	else
 	{
 		ui->downloadView->setEthereum(nullptr);
 		writeSettings();
-		web3()->stopNetwork();
+		aleth()->web3()->stopNetwork();
 	}
 }
 
@@ -874,7 +868,7 @@ void AlethZero::on_connect_triggered()
 		m_connect.reset();
 		try
 		{
-			web3()->addPeer(NodeSpec(m_connect.host().toStdString()), m_connect.required() ? PeerType::Required : PeerType::Optional);
+			aleth()->web3()->addPeer(NodeSpec(m_connect.host().toStdString()), m_connect.required() ? PeerType::Required : PeerType::Optional);
 		}
 		catch (...)
 		{
@@ -888,11 +882,11 @@ void AlethZero::on_mine_triggered()
 	if (ui->mine->isChecked())
 	{
 //		EthashAux::computeFull(ethereum()->blockChain().number());
-		ethereum()->setBeneficiary(m_beneficiary);
-		ethereum()->startMining();
+		aleth()->ethereum()->setBeneficiary(m_beneficiary);
+		aleth()->ethereum()->startMining();
 	}
 	else
-		ethereum()->stopMining();
+		aleth()->ethereum()->stopMining();
 }
 
 void AlethZero::keysChanged()
@@ -907,19 +901,19 @@ void AlethZero::on_killAccount_triggered()
 	{
 		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
-		QString s = QInputDialog::getText(this, QString::fromStdString("Kill Account " + m_keyManager.accountName(h) + "?!"),
-			QString::fromStdString("Account " + m_keyManager.accountName(h) + " (" + aleth()->toReadable(h) + ") has " + formatBalance(ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
+		QString s = QInputDialog::getText(this, QString::fromStdString("Kill Account " + aleth()->keyManager().accountName(h) + "?!"),
+			QString::fromStdString("Account " + aleth()->keyManager().accountName(h) + " (" + aleth()->toReadable(h) + ") has " + formatBalance(aleth()->ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
 			"Are you sure you want to continue? \r\n If so, type 'YES' to confirm."),
 			QLineEdit::Normal, "NO");
 		if (s != "YES")
 			return;
-		m_keyManager.kill(h);
-		if (m_keyManager.accounts().empty())
-			m_keyManager.import(Secret::random(), "Default account");
-		m_beneficiary = m_keyManager.accounts().front();
+		aleth()->keyManager().kill(h);
+		if (aleth()->keyManager().accounts().empty())
+			aleth()->keyManager().import(Secret::random(), "Default account");
+		m_beneficiary = aleth()->keyManager().accounts().front();
 		keysChanged();
 		if (m_beneficiary == h)
-			setBeneficiary(m_keyManager.accounts().front());
+			setBeneficiary(aleth()->keyManager().accounts().front());
 	}
 }
 
@@ -940,12 +934,12 @@ void AlethZero::on_reencryptKey_triggered()
 			return;
 		try {
 			auto pw = [&](){
-				auto p = QInputDialog::getText(this, "Re-Encrypt Key", "Enter the original password for this key.\nHint: " + QString::fromStdString(m_keyManager.passwordHint(a)), QLineEdit::Password, QString()).toStdString();
+				auto p = QInputDialog::getText(this, "Re-Encrypt Key", "Enter the original password for this key.\nHint: " + QString::fromStdString(aleth()->keyManager().passwordHint(a)), QLineEdit::Password, QString()).toStdString();
 				if (p.empty())
 					throw PasswordUnknown();
 				return p;
 			};
-			while (!(password.empty() ? m_keyManager.recode(a, SemanticPassword::Master, pw, kdf) : m_keyManager.recode(a, password, hint, pw, kdf)))
+			while (!(password.empty() ? aleth()->keyManager().recode(a, SemanticPassword::Master, pw, kdf) : aleth()->keyManager().recode(a, password, hint, pw, kdf)))
 				if (QMessageBox::question(this, "Re-Encrypt Key", "Password given is incorrect. Would you like to try again?", QMessageBox::Retry, QMessageBox::Cancel) == QMessageBox::Cancel)
 					return;
 		}
@@ -961,9 +955,9 @@ void AlethZero::on_reencryptAll_triggered()
 	if (!ok)
 		return;
 	try {
-		for (Address const& a: m_keyManager.accounts())
-			while (!m_keyManager.recode(a, SemanticPassword::Existing, [&](){
-				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(aleth()->toName(a))).arg(QString::fromStdString(m_keyManager.passwordHint(a))), QLineEdit::Password, QString()).toStdString();
+		for (Address const& a: aleth()->keyManager().accounts())
+			while (!aleth()->keyManager().recode(a, SemanticPassword::Existing, [&](){
+				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(aleth()->toName(a))).arg(QString::fromStdString(aleth()->keyManager().passwordHint(a))), QLineEdit::Password, QString()).toStdString();
 				if (p.empty())
 					throw PasswordUnknown();
 				return p;
@@ -982,19 +976,7 @@ void AlethZero::on_go_triggered()
 		on_net_triggered();
 	}
 	for (auto const& i: Host::pocHosts())
-		web3()->requirePeer(i.first, i.second);
-}
-
-int AlethZero::authenticate(QString _title, QString _text)
-{
-	QMessageBox userInput(this);
-	userInput.setText(_title);
-	userInput.setInformativeText(_text);
-	userInput.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-	userInput.button(QMessageBox::Ok)->setText("Allow");
-	userInput.button(QMessageBox::Cancel)->setText("Reject");
-	userInput.setDefaultButton(QMessageBox::Cancel);
-	return userInput.exec();
+		aleth()->web3()->requirePeer(i.first, i.second);
 }
 
 void AlethZero::initPlugin(Plugin* _p)

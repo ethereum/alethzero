@@ -51,8 +51,6 @@ bool zero::AccountHolder::showAuthenticationPopup(string const& _title, string c
 	userInput.button(QMessageBox::Cancel)->setText("Reject");
 	userInput.setDefaultButton(QMessageBox::Cancel);
 	return userInput.exec() == QMessageBox::Ok;
-	//QMetaObject::invokeMethod(m_zero, "authenticate", Qt::BlockingQueuedConnection, Q_RETURN_ARG(int, button), Q_ARG(QString, QString::fromStdString(_title)), Q_ARG(QString, QString::fromStdString(_text)));
-	//return button == QMessageBox::Ok;
 }
 
 h256 zero::AccountHolder::authenticate(TransactionSkeleton const& _t)

@@ -19,7 +19,7 @@
  * @date 2014
  */
 
-#include "OurWebThreeStubServer.h"
+#include "WebThreeServer.h"
 #include <QMessageBox>
 #include <QAbstractButton>
 #include <libwebthree/WebThree.h>
