@@ -52,10 +52,3 @@ qt5_wrap_ui(ui_Main.h src/Main.ui)
 qt5_wrap_ui(ui_GetPassword.h src/GetPassword.ui)
 
 eth_install_executable(${EXECUTABLE})
-
-eth_package(${EXECUTABLE}
-	NAME "Ethereum"
-	DESCRIPTION "The Ethereum Toolset"
-	WIN_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.ico"
-	OSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.icns"
-)
