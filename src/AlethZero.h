@@ -39,8 +39,11 @@
 #include <libwebthree/WebThree.h>
 #include <libsolidity/CompilerStack.h>
 #include "NatspecHandler.h"
+#include "Common.h"
 #include "Connect.h"
 #include "Aleth.h"
+#include "ZeroFace.h"
+#include "Plugin.h"
 
 class QListWidgetItem;
 class QActionGroup;
@@ -62,11 +65,10 @@ class State;
 
 namespace aleth
 {
+namespace zero
+{
 
 class OurWebThreeStubServer;
-class DappLoader;
-class DappHost;
-struct Dapp;
 
 class AlethZero: public ZeroFace
 {
@@ -76,10 +78,11 @@ public:
 	explicit AlethZero(QWidget* _parent = nullptr);
 	~AlethZero();
 
+	OurWebThreeStubServer* web3Server() const override { return m_server.get(); }
+	dev::SafeHttpServer* web3ServerConnector() const override { return m_httpConnector.get(); }
+
 	// TODO: remove and just use aleth()...
 	WebThreeDirect* web3() const { return m_webThree.get(); }
-	OurWebThreeStubServer* web3Server() const { return m_server.get(); }
-	dev::SafeHttpServer* web3ServerConnector() const { return m_httpConnector.get(); }
 	eth::Client* ethereum() const { return m_webThree->ethereum(); }
 	std::shared_ptr<shh::WhisperHost> whisper() const { return m_webThree->whisper(); }
 	NatSpecFace* natSpec() { return &m_natSpecDB; }
@@ -205,8 +208,6 @@ private:
 		FullAleth(AlethZero* _az): m_az(_az) { init(); }
 
 		WebThreeDirect* web3() const override { return m_az->m_webThree.get(); }
-		OurWebThreeStubServer* web3Server() const override { return m_az->m_server.get(); }
-		dev::SafeHttpServer* web3ServerConnector() const override { return m_az->m_httpConnector.get(); }
 		eth::Client* ethereum() const override { return m_az->m_webThree->ethereum(); }
 		std::shared_ptr<shh::WhisperHost> whisper() const override { return m_az->m_webThree->whisper(); }
 		NatSpecFace* natSpec() override { return &m_az->m_natSpecDB; }
@@ -226,5 +227,6 @@ private:
 	Connect m_connect;
 };
 
+}
 }
 }

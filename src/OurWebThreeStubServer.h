@@ -33,6 +33,9 @@ namespace dev
 namespace aleth
 {
 
+namespace zero
+{
+
 class AlethZero;
 
 class OurAccountHolder: public QObject, public eth::AccountHolder
@@ -78,6 +81,7 @@ private:
 	AlethZero* m_main;
 };
 
+}
 }
 }
 

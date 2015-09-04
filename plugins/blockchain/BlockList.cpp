@@ -28,11 +28,14 @@
 #include <libethcore/EthashAux.h>
 #include "Debugger.h"
 #include "ConfigInfo.h"
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_BlockList.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(BlockList);
 

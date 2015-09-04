@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "AlethFace.h"
+#include "Plugin.h"
 
 class QWebEnginePage;
 
@@ -35,6 +35,9 @@ namespace aleth
 class DappLoader;
 class DappHost;
 struct Dapp;
+
+namespace zero
+{
 
 class Browser: public QObject, public Plugin
 {
@@ -58,5 +61,6 @@ private:
 	DappLoader* m_dappLoader = nullptr;
 };
 
+}
 }
 }

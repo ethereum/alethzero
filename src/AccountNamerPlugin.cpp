@@ -14,31 +14,26 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file JsConsole.h
+/** @file AccountNamerPlugin.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
 
-#pragma once
+#include "AccountNamerPlugin.h"
+#include <libdevcore/Log.h>
+#include "AlethFace.h"
+using namespace std;
+using namespace dev;
+using namespace aleth;
+using namespace zero;
 
-#include "Plugin.h"
-
-namespace dev
+AccountNamerPlugin::AccountNamerPlugin(ZeroFace* _z, std::string const& _name):
+	Plugin(_z, _name)
 {
-namespace aleth
-{
-namespace zero
-{
-
-class JsConsole: public QObject, public Plugin
-{
-	Q_OBJECT
-
-public:
-	JsConsole(ZeroFace* _m);
-	~JsConsole();
-};
-
+	aleth()->install(this);
 }
-}
+
+AccountNamerPlugin::~AccountNamerPlugin()
+{
+	aleth()->uninstall(this);
 }

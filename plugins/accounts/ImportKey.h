@@ -21,11 +21,13 @@
 
 #pragma once
 
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class ImportKey: public QObject, public Plugin
@@ -40,5 +42,6 @@ private slots:
 	void import();
 };
 
+}
 }
 }

@@ -23,13 +23,17 @@
 #include <QSettings>
 #include <libethereum/Client.h>
 #include <libwhisper/WhisperHost.h>
+#include <libwebthree/WebThree.h>
 #include <libweb3jsonrpc/WebThreeStubServerBase.h>
 #include "OurWebThreeStubServer.h"
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_WhisperPeers.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(WhisperPeers);
 
@@ -51,11 +55,11 @@ void WhisperPeers::refreshWhispers()
 {
 	return;
 	m_ui->whispers->clear();
-	for (auto const& w: whisper()->all())
+	for (auto const& w: web3()->whisper()->all())
 	{
 		shh::Envelope const& e = w.second;
 		shh::Message m;
-		for (pair<Public, Secret> const& i: aleth()->web3Server()->ids())
+		for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
 			if (!!(m = e.open(shh::Topics(), i.second)))
 				break;
 		if (!m)

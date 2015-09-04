@@ -14,31 +14,38 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file JsConsole.h
+/** @file AccountNamer.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
 
 #pragma once
 
-#include "Plugin.h"
+#include <libethcore/Common.h>
 
 namespace dev
 {
 namespace aleth
 {
-namespace zero
-{
 
-class JsConsole: public QObject, public Plugin
+class AlethFace;
+
+class AccountNamer
 {
-	Q_OBJECT
+	friend class Aleth;
 
 public:
-	JsConsole(ZeroFace* _m);
-	~JsConsole();
+	virtual std::string toName(Address const&) const { return std::string(); }
+	virtual Address toAddress(std::string const&) const { return Address(); }
+	virtual Addresses knownAddresses() const { return Addresses(); }
+
+protected:
+	void noteKnownChanged();
+	void noteNamesChanged();
+
+private:
+	AlethFace* m_aleth = nullptr;
 };
 
-}
 }
 }

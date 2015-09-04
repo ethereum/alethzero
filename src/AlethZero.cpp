@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file MainWin.cpp
+/** @file AlethZero.cpp
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
@@ -70,6 +70,7 @@
 using namespace std;
 using namespace dev;
 using namespace aleth;
+using namespace zero;
 using namespace p2p;
 using namespace eth;
 namespace js = json_spirit;

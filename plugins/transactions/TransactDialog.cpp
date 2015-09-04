@@ -50,8 +50,9 @@
 #include "ui_TransactDialog.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 TransactDialog::TransactDialog(ZeroFace* _m):
 	QDialog(_m),

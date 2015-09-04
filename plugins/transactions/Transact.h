@@ -21,11 +21,13 @@
 
 #pragma once
 
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class TransactDialog;
@@ -49,5 +51,6 @@ private:
 	TransactDialog* m_dialog = nullptr;
 };
 
+}
 }
 }

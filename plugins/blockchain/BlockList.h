@@ -23,7 +23,7 @@
 
 #include <QListWidget>
 #include <QPlainTextEdit>
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace Ui
 {
@@ -33,6 +33,8 @@ class BlockList;
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class BlockList: public QObject, public Plugin
@@ -63,5 +65,6 @@ private:
 	bool m_inhibitInfoRefresh;
 };
 
+}
 }
 }

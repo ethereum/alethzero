@@ -14,13 +14,15 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file JsConsole.h
+/** @file AccountNamerPlugin.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
 
 #pragma once
 
+#include <libdevcore/Common.h>
+#include "AccountNamer.h"
 #include "Plugin.h"
 
 namespace dev
@@ -30,13 +32,11 @@ namespace aleth
 namespace zero
 {
 
-class JsConsole: public QObject, public Plugin
+class AccountNamerPlugin: public Plugin, public AccountNamer
 {
-	Q_OBJECT
-
-public:
-	JsConsole(ZeroFace* _m);
-	~JsConsole();
+protected:
+	AccountNamerPlugin(ZeroFace* _z, std::string const& _name);
+	~AccountNamerPlugin();
 };
 
 }

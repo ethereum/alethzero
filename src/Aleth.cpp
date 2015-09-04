@@ -29,7 +29,7 @@ using namespace dev;
 using namespace eth;
 using namespace aleth;
 
-Aleth::Aleth(QWidget* _parent):
+Aleth::Aleth(QObject* _parent):
 	AlethFace(_parent)
 {
 }

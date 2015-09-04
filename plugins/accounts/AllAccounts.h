@@ -23,7 +23,7 @@
 
 #include <QListWidget>
 #include <QPlainTextEdit>
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace Ui
 {
@@ -33,6 +33,8 @@ class AllAccounts;
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class AllAccounts: public QObject, public Plugin
@@ -56,5 +58,6 @@ private:
 	Ui::AllAccounts* m_ui;
 };
 
+}
 }
 }

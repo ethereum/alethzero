@@ -21,11 +21,13 @@
 
 #pragma once
 
-#include "AlethFace.h"
+#include "AccountNamerPlugin.h"
 
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class OurAccounts: public QObject, public AccountNamerPlugin
@@ -48,5 +50,6 @@ private:
 	std::unordered_map<std::string, Address> m_names;
 };
 
+}
 }
 }

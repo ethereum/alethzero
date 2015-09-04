@@ -36,7 +36,7 @@ class Aleth: public AlethFace
 	Q_OBJECT
 
 public:
-	explicit Aleth(QWidget* _parent = nullptr);
+	explicit Aleth(QObject* _parent = nullptr);
 	virtual ~Aleth();
 
 	// Watch API

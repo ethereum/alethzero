@@ -28,11 +28,14 @@
 #include <QFileDialog>
 #include <QTextStream>
 #include <libethereum/Client.h>
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_ExportState.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(ExportState);
 
@@ -62,7 +65,11 @@ ExportStateDialog::ExportStateDialog(ZeroFace* _m):
 
 ExportStateDialog::~ExportStateDialog()
 {
+}
 
+AlethFace* ExportStateDialog::aleth() const
+{
+	return m_main->aleth();
 }
 
 void ExportStateDialog::on_block_editTextChanged()

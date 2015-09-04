@@ -14,57 +14,52 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file OurAccounts.h
+/** @file ZeroFace.cpp
  * @author Gav Wood <i@gavwood.com>
- * @date 2015
+ * @date 2014
  */
 
-#include "OurAccounts.h"
-#include <libdevcore/Log.h>
-#include <libethereum/Client.h>
-#include <libethcore/KeyManager.h>
-#include "AlethFace.h"
 #include "ZeroFace.h"
+#include <QMenu>
+#include <libdevcore/Log.h>
+#include <libethcore/ICAP.h>
+#include <libethereum/Client.h>
+#include "AlethFace.h"
+#include "Plugin.h"
 using namespace std;
 using namespace dev;
+using namespace shh;
 using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(OurAccounts);
+unordered_map<string, PluginFactory>* ZeroFace::s_linkedPlugins = nullptr;
 
-OurAccounts::OurAccounts(ZeroFace* _m):
-	AccountNamerPlugin(_m, "OurAccounts")
+void ZeroFace::notePlugin(string const& _name, PluginFactory const& _new)
 {
-	connect(aleth(), SIGNAL(keyManagerChanged()), SLOT(updateNames()));
-	updateNames();
+	if (!s_linkedPlugins)
+		s_linkedPlugins = new std::unordered_map<string, PluginFactory>();
+	s_linkedPlugins->insert(make_pair(_name, _new));
 }
 
-OurAccounts::~OurAccounts()
+void ZeroFace::unnotePlugin(string const& _name)
 {
+	if (s_linkedPlugins)
+		s_linkedPlugins->erase(_name);
 }
 
-std::string OurAccounts::toName(Address const& _a) const
+void ZeroFace::adoptPlugin(Plugin* _p)
 {
-	return aleth()->keyManager().accountName(_a);
+	m_plugins[_p->name()] = shared_ptr<Plugin>(_p);
 }
 
-Address OurAccounts::toAddress(std::string const& _n) const
+void ZeroFace::killPlugins()
 {
-	if (m_names.count(_n))
-		return m_names.at(_n);
-	return Address();
+	m_plugins.clear();
 }
 
-Addresses OurAccounts::knownAddresses() const
+void ZeroFace::noteAllChange()
 {
-	return aleth()->keyManager().accounts();
-}
-
-void OurAccounts::updateNames()
-{
-	m_names.clear();
-	for (Address const& i: aleth()->keyManager().accounts())
-		m_names[aleth()->keyManager().accountName(i)] = i;
-	noteKnownChanged();
+	for (auto const& p: m_plugins)
+		p.second->onAllChange();
 }

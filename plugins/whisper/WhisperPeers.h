@@ -25,7 +25,7 @@
 #include <QString>
 #include <QPair>
 #include <QList>
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace Ui
 {
@@ -35,6 +35,8 @@ class WhisperPeers;
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class WhisperPeers: public QObject, public Plugin
@@ -51,5 +53,6 @@ private:
 	Ui::WhisperPeers* m_ui;
 };
 
+}
 }
 }

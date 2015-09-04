@@ -28,6 +28,7 @@
 #include <QMap>
 #include <QList>
 #include "AlethFace.h"
+#include "ZeroFace.h"
 
 namespace Ui { class TransactDialog; }
 
@@ -38,6 +39,9 @@ namespace eth { class Client; }
 namespace solidity { class CompilerStack; }
 
 namespace aleth
+{
+
+namespace zero
 {
 
 struct GasRequirements
@@ -54,7 +58,7 @@ class TransactDialog: public QDialog
 	Q_OBJECT
 
 public:
-	explicit TransactDialog(ZeroFace* _main);
+	explicit TransactDialog(zero::ZeroFace* _main);
 	~TransactDialog();
 
 	void resetGasPrice();
@@ -108,7 +112,7 @@ private:
 	dev::bytes m_data;
 
 	dev::AddressHash m_accounts;
-	ZeroFace* m_main = nullptr;
+	zero::ZeroFace* m_main = nullptr;
 	NatSpecFace* m_natSpecDB = nullptr;
 
 	QString m_dataInfo;
@@ -120,6 +124,7 @@ private:
 	int m_gasCalcTimer = 0;
 };
 
+}
 }
 }
 

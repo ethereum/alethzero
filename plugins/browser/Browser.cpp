@@ -29,11 +29,14 @@
 #include "DappHost.h"
 #include "DappLoader.h"
 #include "OurWebThreeStubServer.h"
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_Browser.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(Browser);
 
@@ -45,7 +48,7 @@ Browser::Browser(ZeroFace* _m):
 	dock(Qt::TopDockWidgetArea, "Browser")->setWidget(new QWidget());
 	m_ui->setupUi(dock()->widget());
 	m_ui->jsConsole->setWebView(m_ui->webView);
-	std::string adminSessionKey = _m->aleth()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
+	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
 	m_dappHost.reset(new DappHost(8081));
 	m_dappLoader = new DappLoader(this, web3(), AlethFace::getNameReg());
 	m_dappLoader->setSessionKey(adminSessionKey);

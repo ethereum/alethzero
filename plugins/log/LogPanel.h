@@ -25,7 +25,7 @@
 #include <QString>
 #include <QPair>
 #include <QList>
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace Ui
 {
@@ -35,6 +35,8 @@ class LogPanel;
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class LogPanel: public QObject, public Plugin
@@ -60,5 +62,6 @@ private:
 	bool m_logChanged = true;
 };
 
+}
 }
 }

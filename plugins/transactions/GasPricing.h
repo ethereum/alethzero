@@ -21,11 +21,13 @@
 
 #pragma once
 
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class GasPricing: public QObject, public Plugin
@@ -39,5 +41,6 @@ private slots:
 	void gasPrices();
 };
 
+}
 }
 }

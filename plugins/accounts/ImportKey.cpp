@@ -27,11 +27,14 @@
 #include <libethcore/KeyManager.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_ImportKey.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(ImportKey);
 

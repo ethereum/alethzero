@@ -21,8 +21,7 @@
 
 #pragma once
 
-#include "AlethFace.h"
-
+#include "Plugin.h"
 
 namespace Ui
 {
@@ -32,6 +31,8 @@ class Cors;
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class Cors: public QObject, public Plugin
@@ -46,5 +47,6 @@ private slots:
 	void showDialog();
 };
 
+}
 }
 }

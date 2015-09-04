@@ -21,11 +21,14 @@
 
 #include "Cors.h"
 #include <libweb3jsonrpc/SafeHttpServer.h>
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_Cors.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(Cors);
 
@@ -45,7 +48,7 @@ void Cors::showDialog()
 	Ui::Cors u;
 	u.setupUi(&d);
 
-	string domain = aleth()->web3ServerConnector()->allowedOrigin();
+	string domain = zero()->web3ServerConnector()->allowedOrigin();
 	if (domain == "")
 		u.disallow->setChecked(true);
 	else if (domain == "*")
@@ -64,7 +67,7 @@ void Cors::showDialog()
 			domain = "";
 		else
 			domain = u.domain->text().toStdString();
-		aleth()->web3ServerConnector()->setAllowedOrigin(domain);
+		zero()->web3ServerConnector()->setAllowedOrigin(domain);
 	}
 }
 

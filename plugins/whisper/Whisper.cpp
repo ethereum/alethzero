@@ -25,12 +25,16 @@
 #include <libethereum/Utility.h>
 #include <libwhisper/WhisperHost.h>
 #include <libweb3jsonrpc/WebThreeStubServerBase.h>
+#include <libwebthree/WebThree.h>
 #include "OurWebThreeStubServer.h"
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_Whisper.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(Whisper);
 
@@ -107,7 +111,7 @@ Whisper::Whisper(ZeroFace* _m):
 	dock(Qt::RightDockWidgetArea, "Whisper")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
 	connect(addMenuItem("New Whisper Identity", "menuTools", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
-	connect(_m->aleth()->web3Server(), &OurWebThreeStubServer::onNewId, this, &Whisper::addNewId);
+	connect(zero()->web3Server(), &OurWebThreeStubServer::onNewId, this, &Whisper::addNewId);
 }
 
 void Whisper::readSettings(QSettings const& _s)
@@ -124,7 +128,7 @@ void Whisper::readSettings(QSettings const& _s)
 				m_myIdentities.append(KeyPair(k));
 		}
 	}
-	aleth()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 
@@ -145,14 +149,14 @@ void Whisper::addNewId(QString _ids)
 {
 	KeyPair kp(jsToSecret(_ids.toStdString()));
 	m_myIdentities.push_back(kp);
-	aleth()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 
 void Whisper::refreshWhisper()
 {
 	m_ui->shhFrom->clear();
-	for (auto i: aleth()->web3Server()->ids())
+	for (auto i: zero()->web3Server()->ids())
 		m_ui->shhFrom->addItem(QString::fromStdString(toHex(i.first.ref())));
 }
 
@@ -160,7 +164,7 @@ void Whisper::on_newIdentity_triggered()
 {
 	KeyPair kp = KeyPair::create();
 	m_myIdentities.append(kp);
-	aleth()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 
@@ -172,7 +176,7 @@ void Whisper::on_post_clicked()
 	m.setPayload(parseData(m_ui->shhData->toPlainText().toStdString()));
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
 	Secret from;
-	if (aleth()->web3Server()->ids().count(f))
-		from = aleth()->web3Server()->ids().at(f);
-	whisper()->inject(m.seal(from, topicFromText(m_ui->shhTopic->toPlainText()), m_ui->shhTtl->value(), m_ui->shhWork->value()));
+	if (zero()->web3Server()->ids().count(f))
+		from = zero()->web3Server()->ids().at(f);
+	web3()->whisper()->inject(m.seal(from, topicFromText(m_ui->shhTopic->toPlainText()), m_ui->shhTtl->value(), m_ui->shhWork->value()));
 }

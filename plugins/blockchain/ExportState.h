@@ -27,7 +27,7 @@
 #include <memory>
 #include <QDialog>
 #include <libethcore/Common.h>
-#include "AlethFace.h"
+#include "Plugin.h"
 
 namespace Ui { class ExportState; }
 
@@ -37,6 +37,8 @@ namespace dev
 namespace eth { class Client; }
 
 namespace aleth
+{
+namespace zero
 {
 
 class ExportState: public QObject, public Plugin
@@ -69,7 +71,7 @@ private:
 	void generateJSON();
 
 private:
-	AlethFace* aleth() const { return m_main->aleth(); }
+	AlethFace* aleth() const;
 
 	ZeroFace* m_main;
 	std::unique_ptr<Ui::ExportState> m_ui;
@@ -77,6 +79,7 @@ private:
 	eth::BlockNumber m_block = eth::LatestBlock;
 };
 
+}
 }
 }
 

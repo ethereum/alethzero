@@ -35,11 +35,10 @@
 #include <libwebthree/WebThree.h>
 #include "DappLoader.h"
 #include "AlethZeroResources.hpp"
-
 using namespace dev;
-using namespace aleth;
-using namespace eth;
 using namespace crypto;
+using namespace eth;
+using namespace aleth;
 
 namespace dev { namespace aleth { QString contentsOfQResource(std::string const& res); } }
 

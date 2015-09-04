@@ -27,11 +27,14 @@
 #include <libdevcore/SHA3.h>
 #include <libevmcore/Instruction.h>
 #include <libethereum/Client.h>
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_LogPanel.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 static QString filterOutTerminal(QString _s)
 {

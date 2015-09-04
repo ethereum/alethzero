@@ -27,8 +27,9 @@
 #include "AlethZero.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 OurWebThreeStubServer::OurWebThreeStubServer(
 	jsonrpc::AbstractServerConnector& _conn,

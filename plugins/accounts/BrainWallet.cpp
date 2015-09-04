@@ -28,11 +28,14 @@
 #include <libdevcrypto/WordList.h>
 #include <libethcore/KeyManager.h>
 #include <libethereum/Client.h>
+#include "AlethFace.h"
+#include "ZeroFace.h"
 #include "ui_BrainWallet.h"
 using namespace std;
 using namespace dev;
-using namespace aleth;
 using namespace eth;
+using namespace aleth;
+using namespace zero;
 
 DEV_AZ_NOTE_PLUGIN(BrainWallet);
 

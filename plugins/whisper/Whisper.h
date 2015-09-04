@@ -25,7 +25,8 @@
 #include <QString>
 #include <QPair>
 #include <QList>
-#include "AlethFace.h"
+#include <libethcore/Common.h>
+#include "Plugin.h"
 
 namespace Ui
 {
@@ -35,6 +36,8 @@ class Whisper;
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class Whisper: public QObject, public Plugin
@@ -56,5 +59,6 @@ private:
 	QList<KeyPair> m_myIdentities;
 };
 
+}
 }
 }

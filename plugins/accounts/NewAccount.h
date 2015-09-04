@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "AlethFace.h"
-
+#include <libdevcrypto/Common.h>
+#include "Plugin.h"
 
 namespace Ui
 {
@@ -32,6 +32,8 @@ class NewAccount;
 namespace dev
 {
 namespace aleth
+{
+namespace zero
 {
 
 class NewAccount: public QObject, public Plugin
@@ -50,5 +52,6 @@ private:
 	static KeyPair newKeyPair(Type _type);
 };
 
+}
 }
 }

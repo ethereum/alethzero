@@ -14,31 +14,25 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file JsConsole.h
+/** @file AccountNamer.h
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
 
-#pragma once
+#include "AccountNamer.h"
+#include "AlethFace.h"
+using namespace std;
+using namespace dev;
+using namespace aleth;
 
-#include "Plugin.h"
-
-namespace dev
+void AccountNamer::noteKnownChanged()
 {
-namespace aleth
-{
-namespace zero
-{
-
-class JsConsole: public QObject, public Plugin
-{
-	Q_OBJECT
-
-public:
-	JsConsole(ZeroFace* _m);
-	~JsConsole();
-};
-
+	if (m_aleth)
+		m_aleth->noteKnownAddressesChanged(this);
 }
-}
+
+void AccountNamer::noteNamesChanged()
+{
+	if (m_aleth)
+		m_aleth->noteAddressNamesChanged(this);
 }
