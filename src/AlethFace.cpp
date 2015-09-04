@@ -116,13 +116,13 @@ void ZeroFace::noteAllChange()
 PluginRegistrarBase::PluginRegistrarBase(std::string const& _name, PluginFactory const& _f):
 	m_name(_name)
 {
-	cdebug << "Noting linked plugin" << _name;
+//	cdebug << "Noting linked plugin" << _name;
 	ZeroFace::notePlugin(_name, _f);
 }
 
 PluginRegistrarBase::~PluginRegistrarBase()
 {
-	cdebug << "Noting unlinked plugin" << m_name;
+//	cdebug << "Noting unlinked plugin" << m_name;
 	ZeroFace::unnotePlugin(m_name);
 }
 
