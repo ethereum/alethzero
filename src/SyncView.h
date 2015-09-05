@@ -48,10 +48,10 @@ public:
 
 	void setEthereum(dev::eth::Client const* _c) { m_client = _c; }
 
-protected:
+private:
+	virtual void timerEvent(QTimerEvent*);
 	virtual void paintEvent(QPaintEvent*);
 
-private:
 	dev::eth::Client const* m_client = nullptr;
 
 	unsigned m_lastSyncFrom = (unsigned)-1;
