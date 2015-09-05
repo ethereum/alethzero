@@ -202,7 +202,7 @@ void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
 
 	// Prep UI bits.
 	writeSettings();
-	ui->mine->setChecked(false);
+	aleth()->ethereum()->stopMining();
 	ui->net->setChecked(false);
 
 	m_privateChain.setID(_private);
@@ -685,7 +685,7 @@ void AlethZero::on_ourAccounts_doubleClicked()
 void AlethZero::on_clearPending_triggered()
 {
 	writeSettings();
-	ui->mine->setChecked(false);
+	aleth()->ethereum()->stopMining();
 	ui->net->setChecked(false);
 	aleth()->web3()->stopNetwork();
 	aleth()->ethereum()->clearPending();
@@ -702,7 +702,7 @@ void AlethZero::on_retryUnknown_triggered()
 void AlethZero::on_killBlockchain_triggered()
 {
 	writeSettings();
-	ui->mine->setChecked(false);
+	aleth()->ethereum()->stopMining();
 	ui->net->setChecked(false);
 	aleth()->web3()->stopNetwork();
 	aleth()->ethereum()->killChain();

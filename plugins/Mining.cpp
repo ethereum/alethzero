@@ -21,6 +21,8 @@
 
 #include "Mining.h"
 #include <QMenuBar>
+#include <QTimer>
+#include <QActionGroup>
 #include <libdevcore/Log.h>
 #include <libethcore/EthashAux.h>
 #include <libethereum/Client.h>
@@ -40,18 +42,42 @@ Mining::Mining(ZeroFace* _m):
 	QAction* mine = addMenuItem("Mine", "menuMining", false, "&Mining");
 	mine->setCheckable(true);
 	connect(mine, &QAction::triggered, [&](){
-		if (mine->isChecked())
-			aleth()->ethereum()->startMining();
-		else
-			aleth()->ethereum()->stopMining();
+		if (ethereum()->isMining() != mine->isChecked())
+		{
+			if (mine->isChecked())
+				ethereum()->startMining();
+			else
+				ethereum()->stopMining();
+		}
 	});
 	connect(addMenuItem("Prepare Next DAG", "menuMining"), &QAction::triggered, [&](){
 		EthashAux::computeFull(
 			EthashAux::seedHash(
-				aleth()->ethereum()->blockChain().number() + ETHASH_EPOCH_LENGTH
+				ethereum()->blockChain().number() + ETHASH_EPOCH_LENGTH
 			)
 		);
 	});
+
+	auto g = new QActionGroup(this);
+	g->setExclusive(true);
+	auto translate = [](string s) { return s == "cpu" ? "CPU Miner" : s == "opencl" ? "OpenCL (GPU) Miner" : s + " Miner"; };
+	for (auto i: ethereum()->sealers())
+	{
+		QAction* a = addMenuItem(QString::fromStdString(translate(i)), "menuMining", i == ethereum()->sealers().front());
+		connect(a, &QAction::triggered, [=](){ ethereum()->setSealer(i); });
+		g->addAction(a);
+		a->setCheckable(true);
+		if (i == ethereum()->sealer())
+			a->setChecked(true);
+	}
+
+	{
+		QTimer* t = new QTimer(this);
+		connect(t, &QTimer::timeout, [=](){
+			mine->setChecked(ethereum()->isMining());
+		});
+		t->start(1000);
+	}
 }
 
 Mining::~Mining()
