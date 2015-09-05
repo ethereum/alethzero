@@ -14,47 +14,46 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file Transact.cpp
+/** @file Mining.cpp
  * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
 
-#include "Transact.h"
-#include <QToolBar>
+#include "Mining.h"
+#include <QMenuBar>
 #include <libdevcore/Log.h>
+#include <libethcore/EthashAux.h>
 #include <libethereum/Client.h>
-#include <libethcore/KeyManager.h>
 #include "AlethFace.h"
 #include "ZeroFace.h"
-#include "TransactDialog.h"
 using namespace std;
 using namespace dev;
 using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(Transact);
+DEV_AZ_NOTE_PLUGIN(Mining);
 
-Transact::Transact(ZeroFace* _m):
-	Plugin(_m, "Transact")
+Mining::Mining(ZeroFace* _m):
+	Plugin(_m, "Mining")
 {
-	m_dialog = new TransactDialog(_m);
-	m_dialog->setWindowFlags(Qt::Dialog);
-	m_dialog->setWindowModality(Qt::WindowModal);
-
-	QAction* a = addMenuItem("New &Transaction...", "menuActions", false, "A&ctions");
-	connect(a, SIGNAL(triggered()), SLOT(newTransaction()));
-	zero()->findChild<QToolBar*>()->addAction(a);
+	QAction* mine = addMenuItem("Mine", "menuMining", false, "&Mining");
+	mine->setCheckable(true);
+	connect(mine, &QAction::triggered, [&](){
+		if (mine->isChecked())
+			aleth()->ethereum()->startMining();
+		else
+			aleth()->ethereum()->stopMining();
+	});
+	connect(addMenuItem("Prepare Next DAG", "menuMining"), &QAction::triggered, [&](){
+		EthashAux::computeFull(
+			EthashAux::seedHash(
+				aleth()->ethereum()->blockChain().number() + ETHASH_EPOCH_LENGTH
+			)
+		);
+	});
 }
 
-Transact::~Transact()
+Mining::~Mining()
 {
-	delete m_dialog;
 }
-
-void Transact::newTransaction()
-{
-	m_dialog->setEnvironment(aleth()->keyManager().accountsHash(), ethereum(), &aleth()->natSpec());
-	m_dialog->show();
-}
-

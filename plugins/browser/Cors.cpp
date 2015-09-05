@@ -35,7 +35,7 @@ DEV_AZ_NOTE_PLUGIN(Cors);
 Cors::Cors(ZeroFace* _m):
 	Plugin(_m, "Cors")
 {
-	connect(addMenuItem("Change CORS Domain...", "menuTools", true), SIGNAL(triggered()), SLOT(showDialog()));
+	connect(addMenuItem("Change CORS Domain...", "menuConfig", true), SIGNAL(triggered()), SLOT(showDialog()));
 }
 
 Cors::~Cors()

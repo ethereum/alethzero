@@ -124,8 +124,6 @@ private slots:
 	void on_idealPeers_valueChanged(int);
 
 	// Mining
-	void on_mine_triggered();
-	void on_prepNextDAG_triggered();
 
 	// View
 	void on_refresh_triggered();
@@ -142,13 +140,10 @@ private slots:
 	void on_ourAccounts_doubleClicked();
 
 	// Special (debug) stuff
-	void on_paranoia_triggered();
 	void on_killBlockchain_triggered();
 	void on_clearPending_triggered();
 	void on_injectBlock_triggered();
-	void on_forceMining_triggered();
 	void on_usePrivate_triggered();
-	void on_turboMining_triggered();
 	void on_retryUnknown_triggered();
 	void on_vmInterpreter_triggered();
 	void on_vmJIT_triggered();

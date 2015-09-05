@@ -42,7 +42,7 @@ DEV_AZ_NOTE_PLUGIN(BrainWallet);
 BrainWallet::BrainWallet(ZeroFace* _m):
 	Plugin(_m, "BrainWallet")
 {
-	connect(addMenuItem("New Brain Wallet...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
+	connect(addMenuItem("New Brain Wallet...", "menuAccounts", true), SIGNAL(triggered()), SLOT(create()));
 }
 
 BrainWallet::~BrainWallet()

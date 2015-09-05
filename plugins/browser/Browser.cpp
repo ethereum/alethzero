@@ -55,7 +55,7 @@ Browser::Browser(ZeroFace* _m):
 	connect(m_dappLoader, &DappLoader::dappReady, this, &Browser::dappLoaded);
 	connect(m_dappLoader, &DappLoader::pageReady, this, &Browser::pageLoaded);
 
-	connect(addMenuItem("Load Javascript...", "menuTools", true), &QAction::triggered, this, &Browser::loadJs);
+	connect(addMenuItem("Load Javascript...", "menuAccounts", true), &QAction::triggered, this, &Browser::loadJs);
 
 	connect(m_ui->webView, &QWebEngineView::titleChanged, [=]()
 	{

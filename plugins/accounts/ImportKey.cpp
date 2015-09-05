@@ -41,7 +41,7 @@ DEV_AZ_NOTE_PLUGIN(ImportKey);
 ImportKey::ImportKey(ZeroFace* _m):
 	Plugin(_m, "ImportKey")
 {
-	connect(addMenuItem("Import Key...", "menuTools", true), SIGNAL(triggered()), SLOT(import()));
+	connect(addMenuItem("Import Key...", "menuAccounts", true), SIGNAL(triggered()), SLOT(import()));
 }
 
 ImportKey::~ImportKey()

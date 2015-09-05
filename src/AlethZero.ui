@@ -110,14 +110,10 @@
     <addaction name="connect"/>
     <addaction name="hermitMode"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
+   <widget class="QMenu" name="menuAccounts">
     <property name="title">
-     <string>&amp;Tools</string>
+     <string>&amp;Accounts</string>
     </property>
-    <addaction name="mine"/>
-    <addaction name="turboMining"/>
-    <addaction name="prepNextDAG"/>
-    <addaction name="separator"/>
     <addaction name="exportKey"/>
     <addaction name="reencryptAll"/>
     <addaction name="reencryptKey"/>
@@ -135,21 +131,19 @@
     <property name="title">
      <string>&amp;Special</string>
     </property>
-    <addaction name="natSpec"/>
-    <addaction name="paranoia"/>
-    <addaction name="clearPending"/>
-    <addaction name="killBlockchain"/>
-    <addaction name="injectBlock"/>
-    <addaction name="forceMining"/>
-    <addaction name="separator"/>
     <addaction name="vmInterpreter"/>
     <addaction name="vmJIT"/>
     <addaction name="vmSmart"/>
     <addaction name="separator"/>
-    <addaction name="usePrivate"/>
-    <addaction name="retryUnknown"/>
+    <addaction name="clearPending"/>
     <addaction name="confirm"/>
+    <addaction name="natSpec"/>
+    <addaction name="separator"/>
+    <addaction name="retryUnknown"/>
+    <addaction name="injectBlock"/>
     <addaction name="rewindChain"/>
+    <addaction name="killBlockchain"/>
+    <addaction name="usePrivate"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -165,10 +159,16 @@
     </property>
     <addaction name="sentinel"/>
    </widget>
+   <widget class="QMenu" name="menuActions">
+    <property name="title">
+     <string>A&amp;ctions</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuActions"/>
    <addaction name="menuNetwork"/>
-   <addaction name="menuTools"/>
+   <addaction name="menuAccounts"/>
    <addaction name="menuConfig"/>
    <addaction name="menuHelp"/>
    <addaction name="menuSpecial"/>
@@ -417,7 +417,6 @@
     <bool>false</bool>
    </attribute>
    <addaction name="go"/>
-   <addaction name="mine"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget_7">
    <property name="features">
@@ -562,14 +561,6 @@
    </property>
    <property name="text">
     <string>Enable &amp;Network</string>
-   </property>
-  </action>
-  <action name="mine">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Mine</string>
    </property>
   </action>
   <action name="newAccount">

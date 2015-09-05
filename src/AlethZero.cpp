@@ -278,11 +278,6 @@ void AlethZero::installWatches()
 	cdebug << "newBlock watch ID: " << newBlockId;
 }
 
-void AlethZero::on_forceMining_triggered()
-{
-	aleth()->ethereum()->setForceMining(ui->forceMining->isChecked());
-}
-
 QString AlethZero::contents(QString _s)
 {
 	return QString::fromStdString(dev::asString(dev::contents(_s.toStdString())));
@@ -306,11 +301,6 @@ void AlethZero::warn(QString _s)
 void AlethZero::on_about_triggered()
 {
 	QMessageBox::about(this, "About " + windowTitle(), QString("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM) "\n" DEV_QUOTED(ETH_COMMIT_HASH) + (ETH_CLEAN_REPO ? "\nCLEAN" : "\n+ LOCAL CHANGES") + "\n\nBy Gav Wood and the Berlin ÐΞV team, 2014, 2015.\nSee the README for contributors and credits.");
-}
-
-void AlethZero::on_paranoia_triggered()
-{
-	aleth()->ethereum()->setParanoia(ui->paranoia->isChecked());
 }
 
 void AlethZero::writeSettings()
@@ -362,11 +352,6 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	ui->forcePublicIP->setText(s.value("forceAddress", "").toString());
 	ui->dropPeers->setChecked(false);
 	ui->hermitMode->setChecked(s.value("hermitMode", false).toBool());
-	ui->forceMining->setChecked(s.value("forceMining", false).toBool());
-	on_forceMining_triggered();
-	ui->turboMining->setChecked(s.value("turboMining", false).toBool());
-	on_turboMining_triggered();
-	ui->paranoia->setChecked(s.value("paranoia", false).toBool());
 	ui->natSpec->setChecked(s.value("natSpec", true).toBool());
 	ui->showAll->setChecked(s.value("showAll", false).toBool());
 	ui->clientName->setText(s.value("clientName", "").toString());
@@ -480,15 +465,6 @@ void AlethZero::on_preview_triggered()
 {
 	aleth()->ethereum()->setDefault(ui->preview->isChecked() ? PendingBlock : LatestBlock);
 	refreshAll();
-}
-
-void AlethZero::on_prepNextDAG_triggered()
-{
-	EthashAux::computeFull(
-		EthashAux::seedHash(
-			aleth()->ethereum()->blockChain().number() + ETHASH_EPOCH_LENGTH
-		)
-	);
 }
 
 void AlethZero::refreshMining()
@@ -624,11 +600,6 @@ void AlethZero::refreshBlockCount()
 //		.arg(m_privateChain.size() ? "[" + m_privateChain + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number).arg(b.importing).arg(b.verified).arg(b.verifying).arg(b.unverified).arg(b.future).arg(b.unknown).arg(b.bad));
 	ui->chainStatus->setText(QString("%1 #%2")
 		.arg(m_privateChain ? "[" + m_privateChain.id() + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number));
-}
-
-void AlethZero::on_turboMining_triggered()
-{
-	aleth()->ethereum()->setTurboMining(ui->turboMining->isChecked());
 }
 
 void AlethZero::on_refresh_triggered()
@@ -782,17 +753,6 @@ void AlethZero::on_connect_triggered()
 			QMessageBox::warning(this, "Connect to Node", "Couldn't interpret that address. Ensure you've typed it in properly and that it's in a reasonable format.", QMessageBox::Ok);
 		}
 	}
-}
-
-void AlethZero::on_mine_triggered()
-{
-	if (ui->mine->isChecked())
-	{
-//		EthashAux::computeFull(ethereum()->blockChain().number());
-		aleth()->ethereum()->startMining();
-	}
-	else
-		aleth()->ethereum()->stopMining();
 }
 
 void AlethZero::on_killAccount_triggered()

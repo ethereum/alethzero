@@ -21,6 +21,7 @@
 
 #include "Plugin.h"
 #include <QMenu>
+#include <QMenuBar>
 #include <libwebthree/WebThree.h>
 #include "AlethFace.h"
 #include "ZeroFace.h"
@@ -76,11 +77,16 @@ void Plugin::addAction(QAction* _a)
 	zero()->addAction(_a);
 }
 
-QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep)
+QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep, QString _menuTitle)
 {
 	QAction* a = new QAction(_n, zero());
 	QMenu* m = zero()->findChild<QMenu*>(_menuName);
-	if (_sep)
+	if (!m)
+	{
+		m = zero()->menuBar()->addMenu(_menuTitle);
+		m->setObjectName(_menuName);
+	}
+	else if (_sep)
 		m->addSeparator();
 	m->addAction(a);
 	return a;

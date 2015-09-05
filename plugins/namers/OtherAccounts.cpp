@@ -38,7 +38,7 @@ DEV_AZ_NOTE_PLUGIN(OtherAccounts);
 OtherAccounts::OtherAccounts(ZeroFace* _m):
 	AccountNamerPlugin(_m, "OtherAccounts")
 {
-	connect(addMenuItem("Register Third-party Address Names...", "menuTools", true), SIGNAL(triggered()), SLOT(import()));
+	connect(addMenuItem("Register Third-party Address Names...", "menuAccounts", true), SIGNAL(triggered()), SLOT(import()));
 }
 
 void OtherAccounts::import()

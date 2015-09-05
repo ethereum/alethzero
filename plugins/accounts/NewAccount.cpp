@@ -49,7 +49,7 @@ DEV_AZ_NOTE_PLUGIN(NewAccount);
 NewAccount::NewAccount(ZeroFace* _m):
 	Plugin(_m, "NewAccount")
 {
-	connect(addMenuItem("New Account...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
+	connect(addMenuItem("New Account...", "menuAccounts", true), SIGNAL(triggered()), SLOT(create()));
 }
 
 NewAccount::~NewAccount()

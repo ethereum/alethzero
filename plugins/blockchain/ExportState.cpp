@@ -42,7 +42,7 @@ DEV_AZ_NOTE_PLUGIN(ExportState);
 ExportState::ExportState(ZeroFace* _m):
 	Plugin(_m, "Export State")
 {
-	connect(addMenuItem("Export State...", "menuTools", true), SIGNAL(triggered()), SLOT(create()));
+	connect(addMenuItem("Export State...", "menuAccounts", true), SIGNAL(triggered()), SLOT(create()));
 }
 
 void ExportState::create()

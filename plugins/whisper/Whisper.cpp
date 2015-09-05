@@ -103,14 +103,13 @@ static shh::Topics topicFromText(QString _s)
 	return ret;
 }
 
-
 Whisper::Whisper(ZeroFace* _m):
 	Plugin(_m, "Whisper"),
 	m_ui(new Ui::Whisper)
 {
 	dock(Qt::RightDockWidgetArea, "Whisper")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
-	connect(addMenuItem("New Whisper Identity", "menuTools", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
+	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
 	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
 }
 
