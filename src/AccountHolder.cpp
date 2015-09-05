@@ -105,7 +105,7 @@ bool zero::AccountHolder::validateTransaction(TransactionSkeleton const& _t, boo
 			h256 contractCodeHash = m_zero->aleth()->ethereum()->postState().codeHash(_t.to);
 			if (contractCodeHash == EmptySHA3)
 				return make_pair(false, std::string());
-			string userNotice = m_zero->aleth()->natSpec()->userNotice(contractCodeHash, _t.data);
+			string userNotice = m_zero->aleth()->natSpec().userNotice(contractCodeHash, _t.data);
 			QNatspecExpressionEvaluator evaluator;
 			userNotice = evaluator.evalExpression(userNotice);
 			return std::make_pair(true, userNotice);

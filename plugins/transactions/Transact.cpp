@@ -54,7 +54,7 @@ Transact::~Transact()
 
 void Transact::newTransaction()
 {
-	m_dialog->setEnvironment(aleth()->keyManager().accountsHash(), ethereum(), aleth()->natSpec());
+	m_dialog->setEnvironment(aleth()->keyManager().accountsHash(), ethereum(), &aleth()->natSpec());
 	m_dialog->show();
 }
 

@@ -24,6 +24,7 @@
 #include <libdevcore/Log.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
+#include <libwebthree/WebThree.h>
 using namespace std;
 using namespace dev;
 using namespace eth;
@@ -37,6 +38,30 @@ Address AlethFace::getNameReg()
 Address AlethFace::getICAPReg()
 {
 	return Address("a1a111bc074c9cfa781f0c38e63bd51c91b8af00");
+}
+
+eth::Client* AlethFace::ethereum() const
+{
+	return web3()->ethereum();
+}
+
+std::shared_ptr<shh::WhisperHost> AlethFace::whisper() const
+{
+	return web3()->whisper();
+}
+
+Address AlethFace::beneficiary() const
+{
+	return ethereum()->beneficiary();
+}
+
+void AlethFace::setBeneficiary(Address const& _a)
+{
+	if (_a != ethereum()->beneficiary())
+	{
+		ethereum()->setBeneficiary(_a);
+		emit beneficiaryChanged();
+	}
 }
 
 string AlethFace::toReadable(Address const& _a) const

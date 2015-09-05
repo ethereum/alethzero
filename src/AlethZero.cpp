@@ -103,44 +103,6 @@ AlethZero::AlethZero():
 	else if (c_network == eth::Network::Frontier)
 		setWindowTitle("AlethZero Frontier");
 
-	// Open Key Store
-	bool opened = false;
-	if (aleth()->keyManager().exists())
-		while (!opened)
-		{
-			QString s = QInputDialog::getText(nullptr, "Master password", "Enter your MASTER account password.", QLineEdit::Password, QString());
-			if (aleth()->keyManager().load(s.toStdString()))
-				opened = true;
-			else if (QMessageBox::question(
-					nullptr,
-					"Invalid password entered",
-					"The password you entered is incorrect. If you have forgotten your password, and you wish to start afresh, manually remove the file: " + QString::fromStdString(getDataDir("ethereum")) + "/keys.info",
-					QMessageBox::Retry,
-					QMessageBox::Abort)
-				== QMessageBox::Abort)
-				exit(0);
-		}
-	if (!opened)
-	{
-		QString password;
-		while (true)
-		{
-			password = QInputDialog::getText(nullptr, "Master password", "Enter a MASTER password for your key store. Make it strong. You probably want to write it down somewhere and keep it safe and secure; your identity will rely on this - you never want to lose it.", QLineEdit::Password, QString());
-			QString confirm = QInputDialog::getText(nullptr, "Master password", "Confirm this password by typing it again", QLineEdit::Password, QString());
-			if (password == confirm)
-				break;
-			QMessageBox::warning(nullptr, "Try again", "You entered two different passwords - please enter the same password twice.", QMessageBox::Ok);
-		}
-		aleth()->keyManager().create(password.toStdString());
-		aleth()->keyManager().import(ICAP::createDirect(), "Default identity");
-	}
-
-#if ETH_DEBUG
-	m_servers.append("127.0.0.1:30300");
-#endif
-	for (auto const& i: Host::pocHosts())
-		m_servers.append(QString::fromStdString("enode://" + i.first.hex() + "@" + i.second));
-
 	if (!dev::contents(dbPath + "/genesis.json").empty())
 		CanonBlockChain<Ethash>::setGenesis(contentsString(dbPath + "/genesis.json"));
 
@@ -161,16 +123,12 @@ AlethZero::AlethZero():
 	statusBar()->addPermanentWidget(ui->chainStatus);
 	statusBar()->addPermanentWidget(ui->blockCount);
 
-	QSettings s("ethereum", "alethzero");
-	m_networkConfig = s.value("peers").toByteArray();
-	bytesConstRef network((byte*)m_networkConfig.data(), m_networkConfig.size());
-	m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+	m_aleth.init(dbPath);
 
 	ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(aleth()->ethereum()->sealEngine()->name())).arg(aleth()->ethereum()->sealEngine()->revision()).arg(dev::Version));
 
 	m_httpConnector.reset(new dev::SafeHttpServer(SensibleHttpPort, "", "", dev::SensibleHttpThreads));
-	auto w3ss = new WebThreeServer(*m_httpConnector, this);
-	m_server.reset(w3ss);
+	m_server.reset(new WebThreeServer(*m_httpConnector, this));
 	m_server->StartListening();
 
 	setBeneficiary(aleth()->keyManager().accounts().front());
@@ -357,11 +315,6 @@ void AlethZero::writeSettings()
 	if (auto vm = m_vmSelectionGroup->checkedAction())
 		s.setValue("vm", vm->text());
 
-	bytes d = m_webThree->saveNetwork();
-	if (!d.empty())
-		m_networkConfig = QByteArray((char*)d.data(), (int)d.size());
-	s.setValue("peers", m_networkConfig);
-
 	s.setValue("geometry", saveGeometry());
 	s.setValue("windowState", saveState());
 }
@@ -449,24 +402,6 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 		}
 	}
 #endif
-}
-
-Secret AlethZero::FullAleth::retrieveSecret(Address const& _address) const
-{
-	while (true)
-	{
-		Secret s = m_az->aleth()->keyManager().secret(_address, [&](){
-			QDialog d;
-			Ui_GetPassword gp;
-			gp.setupUi(&d);
-			d.setWindowTitle("Unlock Account");
-			gp.label->setText(QString("Enter the password for the account %2 (%1).").arg(QString::fromStdString(_address.abridged())).arg(QString::fromStdString(keyManager().accountName(_address))));
-			gp.entry->setPlaceholderText("Hint: " + QString::fromStdString(m_az->aleth()->keyManager().passwordHint(_address)));
-			return d.exec() == QDialog::Accepted ? gp.entry->text().toStdString() : string();
-		});
-		if (s || QMessageBox::warning(nullptr, "Unlock Account", "The password you gave is incorrect for this key.", QMessageBox::Retry, QMessageBox::Cancel) == QMessageBox::Cancel)
-			return s;
-	}
 }
 
 std::string AlethZero::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
@@ -862,7 +797,6 @@ void AlethZero::on_connect_triggered()
 		on_net_triggered();
 	}
 
-	m_connect.setEnvironment(m_servers);
 	if (m_connect.exec() == QDialog::Accepted)
 	{
 		m_connect.reset();

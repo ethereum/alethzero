@@ -22,7 +22,9 @@
 #pragma once
 
 #include <unordered_set>
-#include <libdevcore/Common.h>
+#include <libethcore/KeyManager.h>
+#include <libwebthree/WebThree.h>
+#include "NatspecHandler.h"
 #include "AlethFace.h"
 
 namespace dev
@@ -31,6 +33,15 @@ namespace dev
 namespace aleth
 {
 
+enum
+{
+	DefaultPasswordFlags = 0,
+	NeedConfirm = 1,
+	IsRetry = 2
+};
+
+static auto DoNotVerify = [](std::string const&){ return true; };
+
 class Aleth: public AlethFace
 {
 	Q_OBJECT
@@ -38,6 +49,15 @@ class Aleth: public AlethFace
 public:
 	explicit Aleth(QObject* _parent = nullptr);
 	virtual ~Aleth();
+
+	void init(std::string const& _dbPath);
+
+	WebThreeDirect* web3() const override { return m_webThree.get(); }
+	NatSpecFace& natSpec() override { return m_natSpecDB; }
+	eth::KeyManager& keyManager() override { return m_keyManager; }
+	Secret retrieveSecret(Address const& _address) const override;
+
+//	void setBeneficiary(Address const& _a);
 
 	// Watch API
 	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
@@ -54,12 +74,19 @@ public:
 	Addresses allKnownAddresses() const override;
 
 protected:
-	void init();
+	virtual std::pair<std::string, bool> getPassword(std::string const& _prompt, std::string const& _title = std::string(), std::string const& _hint = std::string(), std::function<bool(std::string const&)> const& _verify = DoNotVerify, int _flags = DefaultPasswordFlags, std::string const& _failMessage = std::string());
+
+	virtual void openKeyManager();
+	virtual void createKeyManager();
 
 private slots:
 	void checkHandlers();
 
 private:
+	std::unique_ptr<WebThreeDirect> m_webThree;
+	eth::KeyManager m_keyManager;
+	NatspecHandler m_natSpecDB;
+
 	std::map<unsigned, WatchHandler> m_handlers;
 	std::unordered_set<AccountNamer*> m_namers;
 

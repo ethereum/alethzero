@@ -21,9 +21,13 @@
 
 #include "Aleth.h"
 #include <QTimer>
+#include <QSettings>
+#include <QInputDialog>
+#include <QMessageBox>
 #include <libdevcore/Log.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
+#include "ui_GetPassword.h"
 using namespace std;
 using namespace dev;
 using namespace eth;
@@ -36,11 +40,42 @@ Aleth::Aleth(QObject* _parent):
 
 Aleth::~Aleth()
 {
+	QSettings s("ethereum", "alethzero");
+	bytes d = web3()->saveNetwork();
+	s.setValue("peers", QByteArray((char*)d.data(), (int)d.size()));
+
 	m_destructing = true;
 }
 
-void Aleth::init()
+void Aleth::openKeyManager()
 {
+	if (!getPassword("Enter your MASTER account password.", "Master password", "", [&](string const& s){ return !!keyManager().load(s); }, DefaultPasswordFlags, "The password you entered is incorrect. If you have forgotten your password, and you wish to start afresh, manually remove the file: " + getDataDir("ethereum") + "/keys.info").second)
+		exit(-1);
+}
+
+void Aleth::createKeyManager()
+{
+	auto p = getPassword("Enter a MASTER password for your key store. Make it strong. You probably want to write it down somewhere and keep it safe and secure; your identity will rely on this - you never want to lose it.", "Master Password", string(), DoNotVerify, NeedConfirm, "You must have a master password to use this program. Exiting.");
+	if (!p.second)
+		exit(-1);
+
+	keyManager().create(p.first);
+	keyManager().import(ICAP::createDirect(), "Default identity");
+}
+
+void Aleth::init(string const& _dbPath)
+{
+	// Open Key Store
+	if (keyManager().exists())
+		openKeyManager();
+	else
+		createKeyManager();
+
+	QSettings s("ethereum", "alethzero");
+	auto configBytes = s.value("peers").toByteArray();
+	bytesConstRef network((byte*)configBytes.data(), configBytes.size());
+	m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), _dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+
 	{
 		QTimer* t = new QTimer(this);
 		connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
@@ -131,4 +166,61 @@ Addresses Aleth::allKnownAddresses() const
 		ret += i->knownAddresses();
 	sort(ret.begin(), ret.end());
 	return ret;
+}
+
+Secret Aleth::retrieveSecret(Address const& _address) const
+{
+	bool first = true;
+	while (true)
+	{
+		bool ok = false;
+		Secret s = m_keyManager.secret(_address, [&](){
+			string r;
+			tie(r, ok) = getPassword("Enter the password for the account " + m_keyManager.accountName(_address) + " (" + _address.abridged() + "):", "Unlock Account", m_keyManager.passwordHint(_address), DoNotVerify, first ? DefaultPasswordFlags : IsRetry);
+			return r;
+		});
+		if (s)
+			return s;
+		if (!ok)
+			return Secret();
+		first = false;
+	}
+}
+
+pair<string, bool> Aleth::getPassword(string const& _prompt, string const& _title, string const& _hint, function<bool(string const&)> const& _verify, int _flags, string const& _failMessage)
+{
+	QDialog d;
+	Ui_GetPassword gp;
+	gp.setupUi(&d);
+	d.setWindowTitle(QString::fromStdString(_title));
+	gp.label->setText(QString::fromStdString(_prompt));
+	if (!_hint.empty())
+		gp.entry->setPlaceholderText("Hint: " + QString::fromStdString(_hint));
+	gp.confirm->setVisible(!!(_flags & NeedConfirm));
+
+	if (_flags & NeedConfirm)
+	{
+		connect(gp.entry, &QLineEdit::textChanged, [&](){ gp.ok->setEnabled(gp.confirm->text() == gp.entry->text()); });
+		connect(gp.confirm, &QLineEdit::textChanged, [&](){ auto m = gp.confirm->text() == gp.entry->text(); gp.ok->setEnabled(m); gp.error->setText(m ? "Passphrases must match." : ""); });
+	}
+
+	while (true)
+	{
+		if (_flags & IsRetry)
+			gp.error->setText("The password you gave is incorrect.");
+		if (d.exec() == QDialog::Accepted)
+		{
+			std::string ret = gp.entry->text().toStdString();
+			if (_verify(ret))
+				return make_pair(ret, true);
+			else
+				_flags |= IsRetry;
+		}
+		else
+		{
+			if (!_failMessage.empty())
+				QMessageBox::information(nullptr, "Failed Password Entry", QString::fromStdString(_failMessage));
+			return make_pair(string(), false);
+		}
+	}
 }

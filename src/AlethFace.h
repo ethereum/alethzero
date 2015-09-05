@@ -57,9 +57,13 @@ public:
 	// TODO: tidy - all should be references that throw if module unavailable.
 	// TODO: provide a set of available web3 modules.
 	virtual dev::WebThreeDirect* web3() const = 0;
-	virtual dev::eth::Client* ethereum() const = 0;
-	virtual std::shared_ptr<dev::shh::WhisperHost> whisper() const = 0;
-	virtual NatSpecFace* natSpec() = 0;
+	dev::eth::Client* ethereum() const;
+	std::shared_ptr<dev::shh::WhisperHost> whisper() const;
+
+	Address beneficiary() const;
+	void setBeneficiary(Address const& _a);
+
+	virtual NatSpecFace& natSpec() = 0;
 
 	// Watch API
 	virtual unsigned installWatch(dev::eth::LogFilter const& _tf, WatchHandler const& _f) = 0;
@@ -93,6 +97,7 @@ signals:
 	void addressNamesChanged();
 
 	void keyManagerChanged();
+	void beneficiaryChanged();
 };
 
 }
