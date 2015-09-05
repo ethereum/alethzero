@@ -31,6 +31,14 @@ using namespace eth;
 
 SyncView::SyncView(QWidget* _p): QWidget(_p)
 {
+	startTimer(100);
+	m_secondTimer = startTimer(1000);
+}
+
+void SyncView::timerEvent(QTimerEvent* _e)
+{
+	if ((m_client && m_client->isSyncing()) || _e->timerId() == m_secondTimer)
+		update();
 }
 
 void SyncView::paintEvent(QPaintEvent*)

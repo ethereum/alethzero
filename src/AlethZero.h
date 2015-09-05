@@ -179,8 +179,6 @@ private:
 
 	void installWatches();
 
-	virtual void timerEvent(QTimerEvent*) override;
-
 	void refreshNetwork();
 	void refreshMining();
 	void refreshBlockCount();

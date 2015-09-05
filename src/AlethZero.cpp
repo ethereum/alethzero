@@ -147,9 +147,18 @@ AlethZero::AlethZero():
 #endif
 
 	readSettings(true, false);
-
 	installWatches();
-	startTimer(100);
+
+	{
+		QTimer* t = new QTimer(this);
+		connect(t, &QTimer::timeout, [&](){ refreshMining(); });
+		t->start(100);
+	}
+	{
+		QTimer* t = new QTimer(this);
+		connect(t, &QTimer::timeout, [&](){ refreshNetwork(); refreshBlockCount(); });
+		t->start(1000);
+	}
 
 	{
 		QSettings s("ethereum", "alethzero");
@@ -665,30 +674,6 @@ void Main::refreshCache()
 	ui->cacheUsage->setText(t);
 }
 */
-void AlethZero::timerEvent(QTimerEvent*)
-{
-	// 7/18, Alex: aggregating timers, prelude to better threading?
-	// Runs much faster on slower dual-core processors
-	static int interval = 100;
-
-	// refresh mining every 200ms
-	if (interval / 100 % 2 == 0)
-		refreshMining();
-
-	if ((interval / 100 % 2 == 0 && aleth()->ethereum()->isSyncing()) || interval == 1000)
-		ui->downloadView->update();
-
-	// refresh peer list every 1000ms, reset counter
-	if (interval == 1000)
-	{
-		interval = 0;
-		refreshNetwork();
-		refreshBlockCount();
-	}
-	else
-		interval += 100;
-}
-
 void AlethZero::on_injectBlock_triggered()
 {
 	QString s = QInputDialog::getText(this, "Inject Block", "Enter block dump in hex");

@@ -57,6 +57,8 @@ private:
 	unsigned m_lastSyncFrom = (unsigned)-1;
 	unsigned m_lastSyncCount = 0;
 	bool m_wasEstimate = false;
+
+	int m_secondTimer;
 };
 
 }
