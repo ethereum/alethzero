@@ -20,6 +20,7 @@
  */
 
 #include "GasPricing.h"
+#include <QSettings>
 #include <libdevcore/Log.h>
 #include <libethereum/Client.h>
 #include "AlethFace.h"
@@ -54,6 +55,18 @@ void GasPricing::gasPrices()
 		static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setAsk(fromValueUnits(gp.askUnits, gp.askValue));
 		// TODO: cooperation with Transact plugin/dialog.
 //		m_transact->resetGasPrice();
+		aleth()->noteSettingsChanged();
 	}
 }
 
+void GasPricing::readSettings(QSettings const& _s)
+{
+	static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setAsk(u256(_s.value("askPrice", QString::fromStdString(toString(DefaultGasPrice))).toString().toStdString()));
+	static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setBid(u256(_s.value("bidPrice", QString::fromStdString(toString(DefaultGasPrice))).toString().toStdString()));
+}
+
+void GasPricing::writeSettings(QSettings& _s)
+{
+	_s.setValue("askPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->ask())));
+	_s.setValue("bidPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->bid())));
+}

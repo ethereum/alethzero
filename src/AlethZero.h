@@ -70,6 +70,26 @@ namespace zero
 
 class WebThreeServer;
 
+class PrivateChainManager: public QObject
+{
+	Q_OBJECT
+
+public:
+	PrivateChainManager(AlethFace* _aleth): m_aleth(_aleth) {}
+
+	explicit operator bool() const { return !!m_id.isEmpty(); }
+
+	QString id() const { return m_id; }
+	void setID(QString _id);
+
+signals:
+	void changed(QString _id);
+
+private:
+	AlethFace* m_aleth;
+	QString m_id;	// TODO: move into Aleth.
+};
+
 class AlethZero: public ZeroFace
 {
 	Q_OBJECT
@@ -141,6 +161,8 @@ private slots:
 
 	void refreshAll();
 
+	void onBeneficiaryChanged();
+
 private:
 	template <class P> void loadPlugin() { Plugin* p = new P(this); initPlugin(p); }
 	void initPlugin(Plugin* _p);
@@ -155,8 +177,6 @@ private:
 
 	void setPrivateChain(QString const& _private, bool _forceConfigure = false);
 
-	void keysChanged();
-
 	void installWatches();
 
 	virtual void timerEvent(QTimerEvent*) override;
@@ -166,33 +186,16 @@ private:
 	void refreshBlockCount();
 	void refreshBalances();
 
-	void setBeneficiary(Address const& _b);
 	std::string getPassword(std::string const& _title, std::string const& _for, std::string* _hint = nullptr, bool* _ok = nullptr);
 
 	std::unique_ptr<Ui::Main> ui;
 	QActionGroup* m_vmSelectionGroup = nullptr;
 
-	QString m_privateChain;	// TODO: move into Aleth.
-
-	dev::Address m_beneficiary;	// TODO: move into Aleth?
-
 	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;	// TODO: move into Aleth, eventually.
 	std::unique_ptr<WebThreeServer> m_server;	// TODO: move into Aleth, eventually.
 
-	class FullAleth: public Aleth
-	{
-	public:
-		FullAleth(AlethZero* _az): m_az(_az) {}
-
-		void noteKeysChanged() override { m_az->refreshBalances(); }
-
-		void noteSettingsChanged() override { m_az->writeSettings(); }
-
-	private:
-		AlethZero* m_az;
-	};
-
-	FullAleth m_aleth;
+	Aleth m_aleth;
+	PrivateChainManager m_privateChain;
 
 	Connect m_connect;
 };

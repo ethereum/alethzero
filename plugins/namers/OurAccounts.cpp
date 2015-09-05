@@ -36,7 +36,7 @@ DEV_AZ_NOTE_PLUGIN(OurAccounts);
 OurAccounts::OurAccounts(ZeroFace* _m):
 	AccountNamerPlugin(_m, "OurAccounts")
 {
-	connect(aleth(), SIGNAL(keyManagerChanged()), SLOT(updateNames()));
+	connect(aleth(), SIGNAL(keysChanged()), SLOT(updateNames()));
 	updateNames();
 }
 

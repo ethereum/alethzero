@@ -55,6 +55,8 @@ class ZeroFace: public QMainWindow
 {
 	Q_OBJECT
 
+	friend class Plugin; // Plugin::noteSettingsChanged() calls ZeroFace::writeSettings().
+
 public:
 	explicit ZeroFace(QWidget* _parent = nullptr): QMainWindow(_parent) {}
 	virtual ~ZeroFace()
@@ -80,6 +82,8 @@ protected:
 	std::shared_ptr<Plugin> takePlugin(std::string const& _name) { auto it = m_plugins.find(_name); std::shared_ptr<Plugin> ret; if (it != m_plugins.end()) { ret = it->second; m_plugins.erase(it); } return ret; }
 
 	static std::unordered_map<std::string, PluginFactory>* s_linkedPlugins;
+
+	virtual void writeSettings() = 0;
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<Plugin>> m_plugins;

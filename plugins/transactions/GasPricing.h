@@ -39,6 +39,10 @@ public:
 
 private slots:
 	void gasPrices();
+
+private:
+	void readSettings(QSettings const&) override;
+	void writeSettings(QSettings&) override;
 };
 
 }

@@ -50,7 +50,7 @@ public:
 	explicit Aleth(QObject* _parent = nullptr);
 	virtual ~Aleth();
 
-	void init(std::string const& _dbPath);
+	void init();
 
 	WebThreeDirect* web3() const override { return m_webThree.get(); }
 	NatSpecFace& natSpec() override { return m_natSpecDB; }

@@ -86,6 +86,11 @@ QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep)
 	return a;
 }
 
+void Plugin::noteSettingsChanged()
+{
+	m_zero->writeSettings();
+}
+
 PluginRegistrarBase::PluginRegistrarBase(std::string const& _name, PluginFactory const& _f):
 	m_name(_name)
 {

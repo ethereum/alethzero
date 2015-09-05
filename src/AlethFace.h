@@ -88,16 +88,18 @@ public:
 	// Key managing API
 	virtual dev::Secret retrieveSecret(dev::Address const& _a) const = 0;
 	virtual dev::eth::KeyManager& keyManager() = 0;
-	virtual void noteKeysChanged() = 0;
+	virtual void noteKeysChanged() { emit keysChanged(); }	// TODO: remove and use keyManager directly, once it supports C++ function signals.
 
-	virtual void noteSettingsChanged() = 0;
+	virtual void noteSettingsChanged() { emit settingsChanged(); }
 
 signals:
 	void knownAddressesChanged();
 	void addressNamesChanged();
 
-	void keyManagerChanged();
 	void beneficiaryChanged();
+
+	void keysChanged();
+	void settingsChanged();
 };
 
 }

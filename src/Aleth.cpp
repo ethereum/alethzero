@@ -63,8 +63,25 @@ void Aleth::createKeyManager()
 	keyManager().import(ICAP::createDirect(), "Default identity");
 }
 
-void Aleth::init(string const& _dbPath)
+void Aleth::init()
 {
+	// Get options
+	std::string dbPath = getDataDir();
+	for (int i = 1; i < qApp->arguments().size(); ++i)
+	{
+		QString arg = qApp->arguments()[i];
+		if (arg == "--frontier")
+			resetNetwork(eth::Network::Frontier);
+		else if (arg == "--olympic")
+			resetNetwork(eth::Network::Olympic);
+		else if (arg == "--genesis-json" && i + 1 < qApp->arguments().size())
+			CanonBlockChain<Ethash>::setGenesis(contentsString(qApp->arguments()[++i].toStdString()));
+		else if ((arg == "--db-path" || arg == "-d") && i + 1 < qApp->arguments().size())
+			dbPath = qApp->arguments()[++i].toStdString();
+	}
+	if (!dev::contents(dbPath + "/genesis.json").empty())
+		CanonBlockChain<Ethash>::setGenesis(contentsString(dbPath + "/genesis.json"));
+
 	// Open Key Store
 	if (keyManager().exists())
 		openKeyManager();
@@ -74,13 +91,16 @@ void Aleth::init(string const& _dbPath)
 	QSettings s("ethereum", "alethzero");
 	auto configBytes = s.value("peers").toByteArray();
 	bytesConstRef network((byte*)configBytes.data(), configBytes.size());
-	m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), _dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+	m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
 
 	{
 		QTimer* t = new QTimer(this);
 		connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
 		t->start(200);
 	}
+
+	setBeneficiary(keyManager().accounts().front());
+	ethereum()->setDefault(LatestBlock);
 }
 
 unsigned Aleth::installWatch(LogFilter const& _tf, WatchHandler const& _f)

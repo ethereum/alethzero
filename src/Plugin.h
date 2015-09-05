@@ -68,6 +68,8 @@ public:
 	virtual void readSettings(QSettings const&) {}
 	virtual void writeSettings(QSettings&) {}
 
+	void noteSettingsChanged();
+
 private:
 	ZeroFace* m_zero = nullptr;
 	std::string m_name;
