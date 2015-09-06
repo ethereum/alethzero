@@ -29,4 +29,5 @@ find_package(Qt5Widgets)
 
 add_subdirectory(libaleth)
 add_subdirectory(alethzero)
+add_subdirectory(alethone)
 
