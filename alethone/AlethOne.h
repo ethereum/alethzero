@@ -22,6 +22,7 @@
 #pragma once
 
 #include <QDialog>
+#include <libaleth/Aleth.h>
 
 namespace Ui {
 class AlethOne;
@@ -42,8 +43,13 @@ public:
 	AlethOne();
 	~AlethOne();
 
+private slots:
+
+
 private:
-	Ui::AlethOne *ui;
+	Ui::AlethOne* m_ui;
+
+	Aleth m_aleth;
 };
 
 }
