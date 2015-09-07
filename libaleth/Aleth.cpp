@@ -207,7 +207,7 @@ Secret Aleth::retrieveSecret(Address const& _address) const
 	}
 }
 
-pair<string, bool> Aleth::getPassword(string const& _prompt, string const& _title, string const& _hint, function<bool(string const&)> const& _verify, int _flags, string const& _failMessage)
+pair<string, bool> Aleth::getPassword(string const& _prompt, string const& _title, string const& _hint, function<bool(string const&)> const& _verify, int _flags, string const& _failMessage) const
 {
 	QDialog d;
 	Ui_GetPassword gp;

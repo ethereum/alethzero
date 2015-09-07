@@ -12,14 +12,8 @@ eth_add_executable(${EXECUTABLE}
 )
 
 set_target_properties(${EXECUTABLE} PROPERTIES AUTOUIC ON AUTOMOC ON)
+target_include_directories(${EXECUTABLE} PUBLIC ..)
 target_link_libraries(${EXECUTABLE} aleth)
 eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets Eth::ethereum)
 
 eth_install_executable(${EXECUTABLE})
-
-eth_package(${EXECUTABLE}
-	NAME "AlethOne"
-	DESCRIPTION "The Ethereum Miner and Wallet"
-	WIN_ICON "${CMAKE_CURRENT_SOURCE_DIR}/alethone.ico"
-	OSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/alethone.icns"
-)

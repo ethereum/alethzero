@@ -38,11 +38,7 @@
 #include <QtGui/QClipboard>
 #include <QtCore/QtCore>
 #include <boost/algorithm/string.hpp>
-#include <test/JsonSpiritHeaders.h>
-#ifndef _MSC_VER
-#include <libserpent/funcs.h>
-#include <libserpent/util.h>
-#endif
+#include <json_spirit/JsonSpiritHeaders.h>
 #include <libdevcore/FileSystem.h>
 #include <libethcore/CommonJS.h>
 #include <libethcore/EthashAux.h>
