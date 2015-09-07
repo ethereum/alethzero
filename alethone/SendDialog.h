@@ -14,7 +14,7 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file AlethOne.cpp
+/** @file SendDialog.cpp
  * @author Gav Wood <i@gavwood.com>
  * @date 2014
  */
@@ -22,37 +22,43 @@
 #pragma once
 
 #include <QDialog>
-#include <libaleth/Aleth.h>
+#include <libethcore/Common.h>
 
 namespace Ui {
-class AlethOne;
+class SendDialog;
 }
 
 namespace dev
 {
 namespace aleth
 {
-namespace one
-{
 
-class AlethOne: public QDialog
+class AlethFace;
+
+class SendDialog: public QDialog
 {
 	Q_OBJECT
 
 public:
-	AlethOne();
-	~AlethOne();
+	SendDialog(QWidget* _parent, AlethFace* _aleth);
+	~SendDialog();
 
 private slots:
 	void on_send_clicked();
+	void on_cancel_clicked();
+	void on_value_textChanged(QString _s);
+	void on_to_textChanged(QString _s);
 
 private:
-	void log(QString _s);
+	void updateProblem();
 
-	Ui::AlethOne* m_ui;
-	Aleth m_aleth;
+	Ui::SendDialog* m_ui;
+	AlethFace* m_aleth;
+
+	u256 m_value = UndefinedU256;
+	Address m_to;
+	bytes m_data;
 };
 
-}
 }
 }
