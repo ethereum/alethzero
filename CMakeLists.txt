@@ -24,31 +24,10 @@ include(EthExecutableHelper)
 # Include utils
 include(EthUtils)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-file(GLOB_RECURSE SRC_LIST "src/*.cpp" "plugins/*.cpp")
-file(GLOB_RECURSE HEADERS "src/*.h" "plugins/*.h")
-file(GLOB_RECURSE UI_RESOURCES "src/*.ui" "plugins/*.ui")
-
-eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${CMAKE_CURRENT_SOURCE_DIR}/..")
-
-eth_name(EXECUTABLE AlethZero)
-
 # required for qt5_wrap_ui below, TODO: remove this
 find_package(Qt5Widgets)
 
-include_directories(src)
+add_subdirectory(libaleth)
+add_subdirectory(alethzero)
+add_subdirectory(alethone)
 
-# eth_add_executable is defined in cmake/EthExecutableHelper.cmake
-eth_add_executable(${EXECUTABLE}
-	ICON alethzero
-	UI_RESOURCES ${UI_RESOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/alethzero.icns" ${JSRES}
-	WIN_RESOURCES src/alethzero.rc
-)
-
-eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets Eth::ethereum Web3::web3jsonrpc Eth::natspec Solidity)
-
-# required because AUTOUIC can't handle multiple ui includes in one cpp file
-qt5_wrap_ui(ui_Main.h src/Main.ui)
-qt5_wrap_ui(ui_GetPassword.h src/GetPassword.ui)
-
-eth_install_executable(${EXECUTABLE})
