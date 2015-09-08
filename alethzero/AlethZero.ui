@@ -131,18 +131,10 @@
     <property name="title">
      <string>&amp;Special</string>
     </property>
-    <addaction name="vmInterpreter"/>
-    <addaction name="vmJIT"/>
-    <addaction name="vmSmart"/>
-    <addaction name="separator"/>
     <addaction name="clearPending"/>
     <addaction name="confirm"/>
     <addaction name="natSpec"/>
     <addaction name="separator"/>
-    <addaction name="retryUnknown"/>
-    <addaction name="injectBlock"/>
-    <addaction name="rewindChain"/>
-    <addaction name="killBlockchain"/>
     <addaction name="usePrivate"/>
    </widget>
    <widget class="QMenu" name="menuView">

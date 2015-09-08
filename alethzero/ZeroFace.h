@@ -77,6 +77,9 @@ public:
 	virtual WebThreeServer* web3Server() const = 0;
 	virtual dev::SafeHttpServer* web3ServerConnector() const = 0;
 
+	virtual void allStop() = 0;
+	virtual void carryOn() = 0;
+
 protected:
 	template <class F> void forEach(F const& _f) { for (auto const& p: m_plugins) _f(p.second); }
 	std::shared_ptr<Plugin> takePlugin(std::string const& _name) { auto it = m_plugins.find(_name); std::shared_ptr<Plugin> ret; if (it != m_plugins.end()) { ret = it->second; m_plugins.erase(it); } return ret; }
