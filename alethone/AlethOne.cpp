@@ -57,7 +57,10 @@ AlethOne::AlethOne():
 
 	connect(m_ui->local, &QRadioButton::toggled, [=](bool on){
 		if (on)
-			m_aleth.open(Aleth::Bootstrap);
+		{
+			if (!m_aleth.open(Aleth::Bootstrap))
+				m_ui->pool->setChecked(true);
+		}
 		else
 			m_aleth.close();
 	});

@@ -94,7 +94,7 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 		open();
 }
 
-void Aleth::open(OnInit _connect)
+bool Aleth::open(OnInit _connect)
 {
 	if (!m_webThree)
 	{
@@ -102,7 +102,15 @@ void Aleth::open(OnInit _connect)
 		auto configBytes = s.value("peers").toByteArray();
 		bytesConstRef network((byte*)configBytes.data(), configBytes.size());
 
-		m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+		try
+		{
+			m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+		}
+		catch (DatabaseAlreadyOpen&)
+		{
+			return false;
+		}
+
 		web3()->setClientVersion(WebThreeDirect::composeClientVersion(m_clientVersion, m_nodeName));
 		setBeneficiary(keyManager().accounts().front());
 		ethereum()->setDefault(LatestBlock);
@@ -120,6 +128,7 @@ void Aleth::open(OnInit _connect)
 				web3()->requirePeer(i.first, i.second);
 		}
 	}
+	return true;
 }
 
 void Aleth::close()

@@ -66,7 +66,7 @@ public:
 	Secret retrieveSecret(Address const& _address) const override;
 
 	/// Start the webthree subsystem.
-	void open(OnInit _open = Bootstrap);
+	bool open(OnInit _open = Bootstrap);
 	/// Stop the webthree subsystem.
 	void close();
 
