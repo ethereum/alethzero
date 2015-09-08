@@ -131,9 +131,7 @@
     <property name="title">
      <string>&amp;Special</string>
     </property>
-    <addaction name="clearPending"/>
     <addaction name="confirm"/>
-    <addaction name="natSpec"/>
     <addaction name="separator"/>
     <addaction name="usePrivate"/>
    </widget>

@@ -140,7 +140,6 @@ private slots:
 	void on_ourAccounts_doubleClicked();
 
 	// Special (debug) stuff
-	void on_clearPending_triggered();
 	void on_usePrivate_triggered();
 	void on_confirm_triggered();
 
