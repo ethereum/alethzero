@@ -149,7 +149,6 @@
     <property name="title">
      <string>&amp;Config</string>
     </property>
-    <addaction name="sentinel"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">

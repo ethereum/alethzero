@@ -166,14 +166,6 @@ void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
 	carryOn();
 }
 
-void AlethZero::on_sentinel_triggered()
-{
-	bool ok;
-	QString sentinel = QInputDialog::getText(nullptr, "Enter sentinel address", "Enter the sentinel address for bad block reporting (e.g. http://badblockserver.com:8080). Enter nothing to disable.", QLineEdit::Normal, QString::fromStdString(aleth()->ethereum()->sentinel()), &ok);
-	if (ok)
-		aleth()->ethereum()->setSentinel(sentinel.toStdString());
-}
-
 NetworkPreferences AlethZero::netPrefs() const
 {
 	auto listenIP = ui->listenIP->text().toStdString();

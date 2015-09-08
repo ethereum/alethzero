@@ -144,9 +144,6 @@ private slots:
 	void on_usePrivate_triggered();
 	void on_confirm_triggered();
 
-	// Config
-	void on_sentinel_triggered();
-
 	void refreshAll();
 
 	void onBeneficiaryChanged();
