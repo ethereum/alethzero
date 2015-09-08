@@ -45,19 +45,18 @@
 #include <libserpent/funcs.h>
 #include <libserpent/util.h>
 #endif
-#include <libaleth/QNatspec.h>
-#include <libaleth/Debugger.h>
+#include "QNatspec.h"
+#include "Debugger.h"
 #include "ui_TransactDialog.h"
 using namespace std;
 using namespace dev;
 using namespace eth;
 using namespace aleth;
-using namespace zero;
 
-TransactDialog::TransactDialog(ZeroFace* _m):
-	QDialog(_m),
+TransactDialog::TransactDialog(QWidget* _parent, AlethFace* _aleth):
+	QDialog(_parent),
 	m_ui(new Ui::TransactDialog),
-	m_main(_m)
+	m_aleth(_aleth)
 {
 	m_ui->setupUi(this);
 
@@ -172,8 +171,6 @@ void TransactDialog::on_destination_currentTextChanged(QString)
 			m_ui->calculatedName->setText(QString::fromStdString(aleth()->toReadable(p.first)));
 		else
 			m_ui->calculatedName->setText("Unknown Address");
-
-//		ui->calculatedName->setText(m_main->toName(a) + " (" + ICAP(a).encoded() + ")");
 
 		if (!p.second.empty())
 		{

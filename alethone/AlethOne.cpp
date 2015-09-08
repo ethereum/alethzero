@@ -38,6 +38,13 @@ using namespace eth;
 using namespace aleth;
 using namespace one;
 
+string niceVersion(string const& _v)
+{
+	if (_v.substr(1, 4) == ".9.9" && _v.size() >= 6)
+		return toString(stoi(_v.substr(0, 1)) + 1) + ".0rc" + _v.substr(5);
+	return _v;
+}
+
 AlethOne::AlethOne():
 	m_ui(new Ui::AlethOne)
 {
@@ -90,7 +97,7 @@ AlethOne::AlethOne():
 		m_ui->mine->addWidget(a);
 	}
 
-	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : "Frontier") + QString(" AlethOne v") + dev::Version + "-" DEV_QUOTED(ETH_BUILD_TYPE) "-" DEV_QUOTED(ETH_BUILD_PLATFORM) "-" + QString(DEV_QUOTED(ETH_COMMIT_HASH)).mid(0, 6) + (ETH_CLEAN_REPO ? "" : "+"));
+	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : "Frontier") + QString(" AlethOne v") + QString::fromStdString(niceVersion(dev::Version)) + "-" DEV_QUOTED(ETH_BUILD_TYPE) "-" DEV_QUOTED(ETH_BUILD_PLATFORM) "-" + QString(DEV_QUOTED(ETH_COMMIT_HASH)).mid(0, 6) + (ETH_CLEAN_REPO ? "" : "+"));
 	m_ui->beneficiary->setText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
 	m_ui->sync->setAleth(&m_aleth);
 

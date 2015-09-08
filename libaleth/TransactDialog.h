@@ -21,14 +21,13 @@
 
 #pragma once
 
-#include <libdevcore/RLP.h>
-#include <libethcore/Common.h>
-#include <libethereum/Transaction.h>
 #include <QDialog>
 #include <QMap>
 #include <QList>
-#include <libaleth/AlethFace.h>
-#include "ZeroFace.h"
+#include <libdevcore/RLP.h>
+#include <libethcore/Common.h>
+#include <libethereum/Transaction.h>
+#include "AlethFace.h"
 
 namespace Ui { class TransactDialog; }
 
@@ -39,9 +38,6 @@ namespace eth { class Client; }
 namespace solidity { class CompilerStack; }
 
 namespace aleth
-{
-
-namespace zero
 {
 
 struct GasRequirements
@@ -58,7 +54,7 @@ class TransactDialog: public QDialog
 	Q_OBJECT
 
 public:
-	explicit TransactDialog(zero::ZeroFace* _main);
+	explicit TransactDialog(QWidget* _parent, AlethFace* _aleth);
 	~TransactDialog();
 
 	void resetGasPrice();
@@ -103,7 +99,7 @@ private:
 
 	void timerEvent(QTimerEvent*) override;
 
-	AlethFace* aleth() const { return m_main->aleth(); }
+	AlethFace* aleth() const { return m_aleth; }
 	dev::eth::Client* ethereum() const { return aleth()->ethereum(); }
 
 	Ui::TransactDialog* m_ui = nullptr;
@@ -112,7 +108,7 @@ private:
 	dev::bytes m_data;
 
 	dev::AddressHash m_accounts;
-	zero::ZeroFace* m_main = nullptr;
+	AlethFace* m_aleth = nullptr;
 	NatSpecFace* m_natSpecDB = nullptr;
 
 	QString m_dataInfo;
@@ -126,5 +122,3 @@ private:
 
 }
 }
-}
-

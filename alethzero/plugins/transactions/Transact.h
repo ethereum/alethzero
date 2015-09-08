@@ -27,10 +27,11 @@ namespace dev
 {
 namespace aleth
 {
-namespace zero
-{
 
 class TransactDialog;
+
+namespace zero
+{
 
 class Transact: public QObject, public Plugin
 {

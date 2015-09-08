@@ -25,8 +25,8 @@
 #include <libethereum/Client.h>
 #include <libethcore/KeyManager.h>
 #include <libaleth/AlethFace.h>
+#include <libaleth/TransactDialog.h>
 #include "ZeroFace.h"
-#include "TransactDialog.h"
 using namespace std;
 using namespace dev;
 using namespace eth;
@@ -38,7 +38,7 @@ DEV_AZ_NOTE_PLUGIN(Transact);
 Transact::Transact(ZeroFace* _m):
 	Plugin(_m, "Transact")
 {
-	m_dialog = new TransactDialog(_m);
+	m_dialog = new TransactDialog(_m, _m->aleth());
 	m_dialog->setWindowFlags(Qt::Dialog);
 	m_dialog->setWindowModality(Qt::WindowModal);
 
