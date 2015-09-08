@@ -133,6 +133,8 @@ AlethZero::AlethZero():
 		initPlugin(i.second(this));
 	}
 
+	connect(aleth(), SIGNAL(knownAddressesChanged(AccountNamer*)), SLOT(refreshAll()));
+	connect(aleth(), SIGNAL(addressNamesChanged(AccountNamer*)), SLOT(refreshAll()));
 	connect(&m_aleth, &AlethFace::keysChanged, [&](){ refreshBalances(); });
 
 	readSettings(false, true);
@@ -566,12 +568,12 @@ void AlethZero::on_net_triggered()
 	if (ui->net->isChecked())
 	{
 		aleth()->web3()->startNetwork();
-		ui->downloadView->setEthereum(aleth()->ethereum());
+		ui->downloadView->setAleth(aleth());
 		ui->enode->setText(QString::fromStdString(aleth()->web3()->enode()));
 	}
 	else
 	{
-		ui->downloadView->setEthereum(nullptr);
+		ui->downloadView->setAleth(nullptr);
 		writeSettings();
 		aleth()->web3()->stopNetwork();
 	}

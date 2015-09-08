@@ -28,8 +28,8 @@
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include <libwebthree/WebThree.h>
+#include <libaleth/SendDialog.h>
 #include "BuildInfo.h"
-#include "SendDialog.h"
 #include "ui_AlethOne.h"
 using namespace std;
 using namespace dev;
@@ -43,20 +43,27 @@ AlethOne::AlethOne():
 {
 	setWindowFlags(Qt::Window);
 	m_ui->setupUi(this);
-	m_aleth.init();
+	m_aleth.init(Aleth::Nothing, "AlethOne", "anon");
 
 	auto g = new QButtonGroup(this);
 	g->setExclusive(true);
-	auto nom = findChild<QToolButton*>("noMining");
-	g->addButton(nom);
-	connect(nom, &QToolButton::clicked, [=]()
+	g->addButton(m_ui->noMining);
+	connect(m_ui->noMining, &QToolButton::clicked, [=]()
 	{
 		if (m_aleth)
 			m_aleth.ethereum()->stopMining();
 		m_slave.stop();
 	});
 
-	connect(m_ui->local, &QRadioButton::toggled, [=](bool on){ if (on) m_aleth.open(); else m_aleth.close(); });
+	connect(m_ui->local, &QRadioButton::toggled, [=](bool on){
+		if (on)
+		{
+			if (!m_aleth.open(Aleth::Bootstrap))
+				m_ui->pool->setChecked(true);
+		}
+		else
+			m_aleth.close();
+	});
 
 	auto translate = [](QString s) { return s == "cpu" ? "CPU" : s == "opencl" ? "OpenCL" : s + " Miner"; };
 	for (QString i: m_slave.sealers())
@@ -84,71 +91,57 @@ AlethOne::AlethOne():
 	}
 
 	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : "Frontier") + QString(" AlethOne v") + dev::Version + "-" DEV_QUOTED(ETH_BUILD_TYPE) "-" DEV_QUOTED(ETH_BUILD_PLATFORM) "-" + QString(DEV_QUOTED(ETH_COMMIT_HASH)).mid(0, 6) + (ETH_CLEAN_REPO ? "" : "+"));
-	m_ui->beneficiary->setText(QString::fromStdString(ICAP(m_aleth.beneficiary()).encoded()));
-	m_ui->sync->setEthereum(m_aleth.ethereum());
-
-	m_aleth.web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethOne", "anon"));
-	m_aleth.web3()->startNetwork();
-	for (auto const& i: Host::pocHosts())
-		m_aleth.web3()->requirePeer(i.first, i.second);
+	m_ui->beneficiary->setText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
+	m_ui->sync->setAleth(&m_aleth);
 
 	{
 		QTimer* t = new QTimer(this);
 		connect(t, &QTimer::timeout, [=](){
-			if (m_aleth)
+			if (m_ui->noMining->isChecked())
 			{
-				m_ui->peers->setValue(m_aleth.web3()->peerCount());
-				auto s = m_aleth.ethereum()->isSyncing();
-				auto m = m_aleth.ethereum()->isMining();
-				auto r = m_aleth.ethereum()->hashrate();
+				m_ui->hashrate->setText("/");
+				m_ui->underHashrate->setText("Not mining");
+				m_ui->overHashrate->setText("Off");
+			}
+			else
+			{
+				bool s;
+				bool m;
+				u256 r;
+				if (m_aleth)
+				{
+					m_ui->peers->setValue(m_aleth.web3()->peerCount());
+					s = m_aleth.ethereum()->isSyncing();
+					m = m_aleth.ethereum()->isMining();
+					r = m_aleth.ethereum()->hashrate();
+				}
+				else
+				{
+					m_ui->peers->setValue(0);
+					s = false;
+					m = m_slave.isWorking();
+					r = m ? m_slave.hashrate() : 0;
+				}
 				m_ui->stack->setCurrentIndex(s ? 0 : 1);
 				if (!s)
 				{
+					m_ui->overHashrate->setText(translate(m_aleth ? QString::fromStdString(m_aleth.ethereum()->sealer()) : m_slave.sealer()));
 					if (r > 0)
 					{
 						QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
 						m_ui->hashrate->setText(ss[0]);
 						m_ui->underHashrate->setText(ss[1]);
-						m_ui->overHashrate->setText(translate(QString::fromStdString(m_aleth.ethereum()->sealer())));
 					}
 					else if (m)
 					{
 						m_ui->hashrate->setText("...");
-						m_ui->underHashrate->setText("Preparing DAG...");
-						m_ui->overHashrate->setText("");
+						m_ui->underHashrate->setText("Preparing...");
 					}
 					else
 					{
-						m_ui->hashrate->setText("/");
-						m_ui->underHashrate->setText("Not mining");
-						m_ui->overHashrate->setText("Off");
+						m_ui->hashrate->setText("...");
+						m_ui->underHashrate->setText("Waiting...");
 					}
-				}
-			}
-			else
-			{
-				m_ui->peers->setValue(0);
-				auto m = m_slave.isWorking();
-				auto r = m_slave.hashrate();
-				m_ui->stack->setCurrentIndex(1);
-				if (!m)
-				{
-					m_ui->hashrate->setText("/");
-					m_ui->underHashrate->setText("Waiting for work");
-					m_ui->overHashrate->setText("Off");
-				}
-				else if (r)
-				{
-					QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
-					m_ui->hashrate->setText(ss[0]);
-					m_ui->underHashrate->setText(ss[1]);
-					m_ui->overHashrate->setText(translate(m_slave.sealer()));
-				}
-				else
-				{
-					m_ui->hashrate->setText("...");
-					m_ui->underHashrate->setText("Preparing DAG...");
-					m_ui->overHashrate->setText("");
 				}
 			}
 		});

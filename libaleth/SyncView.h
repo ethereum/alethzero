@@ -39,6 +39,8 @@ namespace eth { class Client; }
 namespace aleth
 {
 
+class AlethFace;
+
 class SyncView: public QWidget
 {
 	Q_OBJECT
@@ -46,13 +48,13 @@ class SyncView: public QWidget
 public:
 	SyncView(QWidget* _p = nullptr);
 
-	void setEthereum(dev::eth::Client const* _c) { m_client = _c; }
+	void setAleth(AlethFace const* _a) { m_aleth = _a; }
 
 private:
 	virtual void timerEvent(QTimerEvent*);
 	virtual void paintEvent(QPaintEvent*);
 
-	dev::eth::Client const* m_client = nullptr;
+	AlethFace const* m_aleth = nullptr;
 
 	unsigned m_lastSyncFrom = (unsigned)-1;
 	unsigned m_lastSyncCount = 0;

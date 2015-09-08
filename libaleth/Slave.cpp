@@ -20,6 +20,7 @@
  */
 
 #include "Slave.h"
+#include <QTimer>
 #include <QTimerEvent>
 #include <jsonrpccpp/server/connectors/httpserver.h>
 #include <jsonrpccpp/client/connectors/httpclient.h>
@@ -54,8 +55,10 @@ void SlaveAux::start()
 	{
 		m_engine->farm().setWork(EthashProofOfWork::WorkPackage());
 		m_engine->farm().start(m_engine->sealer());
-		m_workTimer = startTimer(500);
-		m_rateTimer = startTimer(2000);
+		QTimer::singleShot(0, this, [&](){
+			this->m_workTimer = startTimer(500);
+			this->m_rateTimer = startTimer(2000);
+		});
 	}
 }
 

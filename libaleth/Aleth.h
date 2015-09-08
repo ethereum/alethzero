@@ -47,11 +47,18 @@ class Aleth: public AlethFace
 	Q_OBJECT
 
 public:
+	enum OnInit
+	{
+		Nothing,
+		OpenOnly,
+		Bootstrap
+	};
+
 	explicit Aleth(QObject* _parent = nullptr);
 	virtual ~Aleth();
 
 	/// Initialise everything. Must be called first. Begins start()ed.
-	void init();
+	void init(OnInit _open = OpenOnly, std::string const& _clientVersion = "unknown", std::string const& _nodeName = "anon");
 
 	WebThreeDirect* web3() const override { return m_webThree.get(); }
 	NatSpecFace& natSpec() override { return m_natSpecDB; }
@@ -59,13 +66,9 @@ public:
 	Secret retrieveSecret(Address const& _address) const override;
 
 	/// Start the webthree subsystem.
-	void open();
+	bool open(OnInit _open = Bootstrap);
 	/// Stop the webthree subsystem.
 	void close();
-	/// Check whether the webthree subsystem is active.
-	explicit operator bool() const { return !!m_webThree; }
-
-//	void setBeneficiary(Address const& _a);
 
 	// Watch API
 	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
@@ -82,7 +85,7 @@ public:
 	Addresses allKnownAddresses() const override;
 
 protected:
-	virtual std::pair<std::string, bool> getPassword(std::string const& _prompt, std::string const& _title = std::string(), std::string const& _hint = std::string(), std::function<bool(std::string const&)> const& _verify = DoNotVerify, int _flags = DefaultPasswordFlags, std::string const& _failMessage = std::string());
+	virtual std::pair<std::string, bool> getPassword(std::string const& _prompt, std::string const& _title = std::string(), std::string const& _hint = std::string(), std::function<bool(std::string const&)> const& _verify = DoNotVerify, int _flags = DefaultPasswordFlags, std::string const& _failMessage = std::string()) const;
 
 	virtual void openKeyManager();
 	virtual void createKeyManager();
@@ -100,6 +103,8 @@ private:
 
 	bool m_destructing = false;
 	std::string m_dbPath;
+	std::string m_clientVersion;
+	std::string m_nodeName;
 };
 
 }

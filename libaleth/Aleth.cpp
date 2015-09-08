@@ -25,11 +25,13 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <libdevcore/Log.h>
+#include <libp2p/Host.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include "ui_GetPassword.h"
 using namespace std;
 using namespace dev;
+using namespace p2p;
 using namespace eth;
 using namespace aleth;
 
@@ -60,8 +62,11 @@ void Aleth::createKeyManager()
 	keyManager().import(ICAP::createDirect(), "Default identity");
 }
 
-void Aleth::init()
+void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _nodeName)
 {
+	m_clientVersion = _clientVersion;
+	m_nodeName = _nodeName;
+
 	// Get options
 	std::string m_dbPath = getDataDir();
 	for (int i = 1; i < qApp->arguments().size(); ++i)
@@ -85,16 +90,11 @@ void Aleth::init()
 	else
 		createKeyManager();
 
-	{
-		QTimer* t = new QTimer(this);
-		connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
-		t->start(200);
-	}
-
-	open();
+	if (_onInit >= OpenOnly)
+		open();
 }
 
-void Aleth::open()
+bool Aleth::open(OnInit _connect)
 {
 	if (!m_webThree)
 	{
@@ -102,23 +102,51 @@ void Aleth::open()
 		auto configBytes = s.value("peers").toByteArray();
 		bytesConstRef network((byte*)configBytes.data(), configBytes.size());
 
-		m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+		try
+		{
+			m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+		}
+		catch (DatabaseAlreadyOpen&)
+		{
+			return false;
+		}
+
+		web3()->setClientVersion(WebThreeDirect::composeClientVersion(m_clientVersion, m_nodeName));
 		setBeneficiary(keyManager().accounts().front());
 		ethereum()->setDefault(LatestBlock);
+
+		{
+			QTimer* t = new QTimer(this);
+			connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
+			t->start(200);
+		}
+
+		if (_connect >= Bootstrap)
+		{
+			web3()->startNetwork();
+			for (auto const& i: Host::pocHosts())
+				web3()->requirePeer(i.first, i.second);
+		}
 	}
+	return true;
 }
 
 void Aleth::close()
 {
+	if (!isOpen())
+		return;
 	QSettings s("ethereum", "alethzero");
 	bytes d = web3()->saveNetwork();
 	s.setValue("peers", QByteArray((char*)d.data(), (int)d.size()));
 
+	delete findChild<QTimer*>();
 	m_webThree.reset(nullptr);
 }
 
 unsigned Aleth::installWatch(LogFilter const& _tf, WatchHandler const& _f)
 {
+	if (!isOpen())
+		return (unsigned)-1;
 	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
 	m_handlers[ret] = _f;
 	_f(LocalisedLogEntries());
@@ -127,6 +155,8 @@ unsigned Aleth::installWatch(LogFilter const& _tf, WatchHandler const& _f)
 
 unsigned Aleth::installWatch(h256 const& _tf, WatchHandler const& _f)
 {
+	if (!isOpen())
+		return (unsigned)-1;
 	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
 	m_handlers[ret] = _f;
 	_f(LocalisedLogEntries());
@@ -135,6 +165,8 @@ unsigned Aleth::installWatch(h256 const& _tf, WatchHandler const& _f)
 
 void Aleth::uninstallWatch(unsigned _w)
 {
+	if (!isOpen())
+		return;
 	cdebug << "!!! Main: uninstalling watch" << _w;
 	ethereum()->uninstallWatch(_w);
 	m_handlers.erase(_w);
@@ -142,6 +174,8 @@ void Aleth::uninstallWatch(unsigned _w)
 
 void Aleth::checkHandlers()
 {
+	if (!isOpen())
+		return;
 	for (auto const& i: m_handlers)
 	{
 		auto ls = ethereum()->checkWatchSafe(i.first);
@@ -221,7 +255,7 @@ Secret Aleth::retrieveSecret(Address const& _address) const
 	}
 }
 
-pair<string, bool> Aleth::getPassword(string const& _prompt, string const& _title, string const& _hint, function<bool(string const&)> const& _verify, int _flags, string const& _failMessage)
+pair<string, bool> Aleth::getPassword(string const& _prompt, string const& _title, string const& _hint, function<bool(string const&)> const& _verify, int _flags, string const& _failMessage) const
 {
 	QDialog d;
 	Ui_GetPassword gp;

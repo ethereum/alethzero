@@ -10,7 +10,7 @@ else()
 	set(ETH_DIR "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
 endif()
 
-eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}")
+eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}/..")
 
 eth_name(EXECUTABLE AlethZero)
 
@@ -22,6 +22,7 @@ eth_add_executable(${EXECUTABLE}
 )
 
 target_link_libraries(${EXECUTABLE} aleth)
+target_include_directories(${EXECUTABLE} PUBLIC ..)
 eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets Eth::ethereum Web3::web3jsonrpc Eth::natspec)
 eth_use(${EXECUTABLE} OPTIONAL Solidity)
 
@@ -30,10 +31,3 @@ qt5_wrap_ui(ui_AlethZero.h AlethZero.ui)
 qt5_wrap_ui(ui_Connect.h Connect.ui)
 
 eth_install_executable(${EXECUTABLE})
-
-eth_package(${EXECUTABLE}
-	NAME "Ethereum"
-	DESCRIPTION "The Ethereum Toolset"
-	WIN_ICON "${CMAKE_CURRENT_SOURCE_DIR}/alethzero.ico"
-	OSX_ICON "${CMAKE_CURRENT_SOURCE_DIR}/alethzero.icns"
-)

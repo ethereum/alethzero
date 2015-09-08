@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>434</width>
-    <height>527</height>
+    <width>403</width>
+    <height>310</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -120,6 +120,12 @@
         <layout class="QHBoxLayout" name="mine">
          <item>
           <widget class="QToolButton" name="noMining">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Off</string>
            </property>
@@ -139,7 +145,7 @@
           <string>Local</string>
          </property>
          <property name="checked">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <attribute name="buttonGroup">
           <string notr="true">buttonGroup</string>
@@ -166,11 +172,11 @@
        </item>
        <item>
         <widget class="QRadioButton" name="pool">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
          <property name="text">
           <string>Pool</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
          </property>
          <attribute name="buttonGroup">
           <string notr="true">buttonGroup</string>
@@ -178,11 +184,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="url">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-        </widget>
+        <widget class="QLineEdit" name="url"/>
        </item>
       </layout>
      </widget>
