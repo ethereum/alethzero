@@ -51,26 +51,31 @@ AlethOne::AlethOne():
 	g->addButton(nom);
 	connect(nom, &QToolButton::clicked, [=]()
 	{
-		m_aleth.ethereum()->stopMining();
+		if (m_aleth)
+			m_aleth.ethereum()->stopMining();
 		m_slave.stop();
 	});
-	auto translate = [](string s) { return s == "cpu" ? "CPU" : s == "opencl" ? "OpenCL" : s + " Miner"; };
-	for (auto i: m_aleth.ethereum()->sealers())
+
+	connect(m_ui->local, &QRadioButton::toggled, [=](bool on){ if (on) m_aleth.open(); else m_aleth.close(); });
+
+	auto translate = [](QString s) { return s == "cpu" ? "CPU" : s == "opencl" ? "OpenCL" : s + " Miner"; };
+	for (QString i: m_slave.sealers())
 	{
 		QToolButton* a = new QToolButton(this);
-		a->setText(QString::fromStdString(translate(i)));
+		a->setText(translate(i));
+		a->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
 		a->setCheckable(true);
 		connect(a, &QToolButton::clicked, [=]()
 		{
 			if (m_ui->local->isChecked())
 			{
-				m_aleth.ethereum()->setSealer(i);
+				m_aleth.ethereum()->setSealer(i.toStdString());
 				m_aleth.ethereum()->startMining();
 			}
 			else if (m_ui->pool->isChecked())
 			{
 				m_slave.setURL(m_ui->url->text());
-				m_slave.setSealer(QString::fromStdString(i));
+				m_slave.setSealer(i);
 				m_slave.start();
 			}
 		});
@@ -90,38 +95,67 @@ AlethOne::AlethOne():
 	{
 		QTimer* t = new QTimer(this);
 		connect(t, &QTimer::timeout, [=](){
-			m_ui->peers->setValue(m_aleth.web3()->peerCount());
-			auto s = m_aleth.ethereum()->isSyncing();
-			auto m = m_aleth.ethereum()->isMining();
-			auto r = m_aleth.ethereum()->hashrate();
-			m_ui->stack->setCurrentIndex(s ? 0 : 1);
-			if (!s)
+			if (m_aleth)
 			{
-				if (r > 0)
+				m_ui->peers->setValue(m_aleth.web3()->peerCount());
+				auto s = m_aleth.ethereum()->isSyncing();
+				auto m = m_aleth.ethereum()->isMining();
+				auto r = m_aleth.ethereum()->hashrate();
+				m_ui->stack->setCurrentIndex(s ? 0 : 1);
+				if (!s)
+				{
+					if (r > 0)
+					{
+						QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
+						m_ui->hashrate->setText(ss[0]);
+						m_ui->underHashrate->setText(ss[1]);
+						m_ui->overHashrate->setText(translate(QString::fromStdString(m_aleth.ethereum()->sealer())));
+					}
+					else if (m)
+					{
+						m_ui->hashrate->setText("...");
+						m_ui->underHashrate->setText("Preparing DAG...");
+						m_ui->overHashrate->setText("");
+					}
+					else
+					{
+						m_ui->hashrate->setText("/");
+						m_ui->underHashrate->setText("Not mining");
+						m_ui->overHashrate->setText("Off");
+					}
+				}
+			}
+			else
+			{
+				m_ui->peers->setValue(0);
+				auto m = m_slave.isWorking();
+				auto r = m_slave.hashrate();
+				m_ui->stack->setCurrentIndex(1);
+				if (!m)
+				{
+					m_ui->hashrate->setText("/");
+					m_ui->underHashrate->setText("Waiting for work");
+					m_ui->overHashrate->setText("Off");
+				}
+				else if (r)
 				{
 					QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
 					m_ui->hashrate->setText(ss[0]);
 					m_ui->underHashrate->setText(ss[1]);
-					m_ui->overHashrate->setText(QString::fromStdString(translate(m_aleth.ethereum()->sealer())));
+					m_ui->overHashrate->setText(translate(m_slave.sealer()));
 				}
-				else if (m)
+				else
 				{
 					m_ui->hashrate->setText("...");
 					m_ui->underHashrate->setText("Preparing DAG...");
 					m_ui->overHashrate->setText("");
-				}
-				else
-				{
-					m_ui->hashrate->setText("/");
-					m_ui->underHashrate->setText("Not mining");
-					m_ui->overHashrate->setText("Off");
 				}
 			}
 		});
 		t->start(1000);
 	}
 
-	m_aleth.installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
+	m_aleth.installWatch(ChainChangedFilter, [&](LocalisedLogEntries const&){
 		log(QString("New block #%1").arg(m_aleth.ethereum()->number()));
 		u256 balance = 0;
 		auto accounts = m_aleth.keyManager().accounts();

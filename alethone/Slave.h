@@ -63,6 +63,9 @@ public:
 
 	QStringList sealers() const;
 
+	bool isWorking() const;
+	u256 hashrate() const { return m_hashrate; }
+
 signals:
 	void newWork(eth::EthashProofOfWork::WorkPackage _work);
 	void generatingDAG(unsigned _pc);
@@ -83,7 +86,9 @@ private:
 
 	h256 m_id;
 	QString m_url;
-	int m_timerId;
+	int m_rateTimer;
+	int m_workTimer;
+	u256 m_hashrate;
 
 	eth::EthashProofOfWork::WorkPackage m_current;
 	eth::EthashProofOfWork::Solution m_solution;
@@ -101,6 +106,9 @@ public:
 
 	void start() { m_aux->start(); }
 	void stop() { m_aux->stop(); }
+
+	bool isWorking() const { return m_aux->isWorking(); }
+	u256 hashrate() const { return m_aux->hashrate(); }
 
 	QString url() const { return m_aux->url(); }
 	void setURL(QString _url) { m_aux->setURL(_url); }

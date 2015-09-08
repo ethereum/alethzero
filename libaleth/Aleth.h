@@ -50,12 +50,20 @@ public:
 	explicit Aleth(QObject* _parent = nullptr);
 	virtual ~Aleth();
 
+	/// Initialise everything. Must be called first. Begins start()ed.
 	void init();
 
 	WebThreeDirect* web3() const override { return m_webThree.get(); }
 	NatSpecFace& natSpec() override { return m_natSpecDB; }
 	eth::KeyManager& keyManager() override { return m_keyManager; }
 	Secret retrieveSecret(Address const& _address) const override;
+
+	/// Start the webthree subsystem.
+	void open();
+	/// Stop the webthree subsystem.
+	void close();
+	/// Check whether the webthree subsystem is active.
+	explicit operator bool() const { return !!m_webThree; }
 
 //	void setBeneficiary(Address const& _a);
 
@@ -91,6 +99,7 @@ private:
 	std::unordered_set<AccountNamer*> m_namers;
 
 	bool m_destructing = false;
+	std::string m_dbPath;
 };
 
 }

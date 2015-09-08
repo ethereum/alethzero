@@ -20,6 +20,7 @@
  */
 
 #include "Slave.h"
+#include <QTimerEvent>
 #include <jsonrpccpp/server/connectors/httpserver.h>
 #include <jsonrpccpp/client/connectors/httpclient.h>
 #include <libdevcore/Log.h>
@@ -42,13 +43,19 @@ SlaveAux::~SlaveAux()
 {
 }
 
+bool SlaveAux::isWorking() const
+{
+	return m_engine->farm().isMining() && m_engine->farm().work();
+}
+
 void SlaveAux::start()
 {
 	if (!m_engine->farm().isMining())
 	{
 		m_engine->farm().setWork(EthashProofOfWork::WorkPackage());
 		m_engine->farm().start(m_engine->sealer());
-		m_timerId = startTimer(500);
+		m_workTimer = startTimer(500);
+		m_rateTimer = startTimer(2000);
 	}
 }
 
@@ -57,11 +64,12 @@ void SlaveAux::stop()
 	if (m_engine->farm().isMining())
 	{
 		m_engine->farm().stop();
-		killTimer(m_timerId);
+		killTimer(m_rateTimer);
+		killTimer(m_workTimer);
 	}
 }
 
-void SlaveAux::timerEvent(QTimerEvent*)
+void SlaveAux::timerEvent(QTimerEvent* _e)
 {
 	QString u = m_url;
 	if (u.isEmpty())
@@ -73,51 +81,57 @@ void SlaveAux::timerEvent(QTimerEvent*)
 
 	::FarmClient rpc(*client);
 
-	// Submit hashrate
-	auto mp = m_engine->farm().miningProgress();
-	m_engine->farm().resetMiningProgress();
-	auto rate = mp.rate();
-	try
+	if (_e->timerId() == m_rateTimer)
 	{
-		rpc.eth_submitHashrate(toJS((u256)rate), "0x" + m_id.hex());
-	}
-	catch (jsonrpc::JsonRpcException const& _e)
-	{
-		cwarn << "Failed to submit hashrate.";
-		cwarn << boost::diagnostic_information(_e);
-	}
-
-	// Check for new work
-	try
-	{
-		Json::Value v = rpc.eth_getWork();
-		if (!v[0].asString().empty())
+		// Submit hashrate
+		auto mp = m_engine->farm().miningProgress();
+		m_engine->farm().resetMiningProgress();
+		m_hashrate = mp.rate();
+		try
 		{
-			h256 newHeaderHash(v[0].asString());
-			h256 newSeedHash(v[1].asString());
-			if (!(m_dag = EthashAux::full(newSeedHash, true, [&](unsigned _pc){ onGeneratingDAG(_pc); return 0; })))
-			{
-				emit dagGenerationFailed();
-				return;
-			}
-
-			if (m_precompute)
-				EthashAux::computeFull(sha3(newSeedHash), true);
-
-			if (newHeaderHash != m_current.headerHash)
-			{
-				m_current.headerHash = newHeaderHash;
-				m_current.seedHash = newSeedHash;
-				m_current.boundary = h256(fromHex(v[2].asString()), h256::AlignRight);
-				onNewWork(m_current);
-			}
+			rpc.eth_submitHashrate(toJS(m_hashrate), "0x" + m_id.hex());
+		}
+		catch (jsonrpc::JsonRpcException const& _e)
+		{
+			cwarn << "Failed to submit hashrate.";
+			cwarn << boost::diagnostic_information(_e);
 		}
 	}
-	catch (jsonrpc::JsonRpcException&)
+
+	if (_e->timerId() == m_workTimer)
 	{
-		for (auto i = 3; --i; this_thread::sleep_for(chrono::seconds(1)))
-			cerr << "JSON-RPC problem. Probably couldn't connect. Retrying in " << i << "... \r";
-		cerr << endl;
+		// Check for new work
+		try
+		{
+			Json::Value v = rpc.eth_getWork();
+			if (!v[0].asString().empty())
+			{
+				h256 newHeaderHash(v[0].asString());
+				h256 newSeedHash(v[1].asString());
+				if (!(m_dag = EthashAux::full(newSeedHash, true, [&](unsigned _pc){ onGeneratingDAG(_pc); return 0; })))
+				{
+					emit dagGenerationFailed();
+					return;
+				}
+
+				if (m_precompute)
+					EthashAux::computeFull(sha3(newSeedHash), true);
+
+				if (newHeaderHash != m_current.headerHash)
+				{
+					m_current.headerHash = newHeaderHash;
+					m_current.seedHash = newSeedHash;
+					m_current.boundary = h256(fromHex(v[2].asString()), h256::AlignRight);
+					onNewWork(m_current);
+				}
+			}
+		}
+		catch (jsonrpc::JsonRpcException&)
+		{
+			for (auto i = 3; --i; this_thread::sleep_for(chrono::seconds(1)))
+				cerr << "JSON-RPC problem. Probably couldn't connect. Retrying in " << i << "... \r";
+			cerr << endl;
+		}
 	}
 }
 
