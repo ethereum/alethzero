@@ -130,8 +130,8 @@ AlethZero::AlethZero():
 		initPlugin(i.second(this));
 	}
 
-	connect(this, SIGNAL(knownAddressesChanged(AccountNamer*)), SLOT(refreshAll()));
-	connect(this, SIGNAL(addressNamesChanged(AccountNamer*)), SLOT(refreshAll()));
+	connect(aleth(), SIGNAL(knownAddressesChanged(AccountNamer*)), SLOT(refreshAll()));
+	connect(aleth(), SIGNAL(addressNamesChanged(AccountNamer*)), SLOT(refreshAll()));
 	connect(&m_aleth, &AlethFace::keysChanged, [&](){ refreshBalances(); });
 
 	readSettings(false, true);
