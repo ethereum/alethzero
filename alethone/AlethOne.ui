@@ -184,7 +184,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="url"/>
+        <widget class="QLineEdit" name="url">
+         <property name="text">
+          <string>http://127.0.0.1:8545</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
