@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>434</width>
-    <height>527</height>
+    <width>403</width>
+    <height>310</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -120,6 +120,12 @@
         <layout class="QHBoxLayout" name="mine">
          <item>
           <widget class="QToolButton" name="noMining">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="text">
             <string>Off</string>
            </property>
@@ -167,7 +173,7 @@
        <item>
         <widget class="QRadioButton" name="pool">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="text">
           <string>Pool</string>
@@ -180,7 +186,7 @@
        <item>
         <widget class="QLineEdit" name="url">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
         </widget>
        </item>

@@ -56,6 +56,8 @@ public:
 
 	// TODO: tidy - all should be references that throw if module unavailable.
 	// TODO: provide a set of available web3 modules.
+	bool isOpen() const { return !!web3(); }
+	explicit operator bool() const { return isOpen(); }
 	virtual dev::WebThreeDirect* web3() const = 0;
 	dev::eth::Client* ethereum() const;
 	std::shared_ptr<dev::shh::WhisperHost> whisper() const;

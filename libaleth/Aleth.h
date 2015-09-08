@@ -62,8 +62,6 @@ public:
 	void open();
 	/// Stop the webthree subsystem.
 	void close();
-	/// Check whether the webthree subsystem is active.
-	explicit operator bool() const { return !!m_webThree; }
 
 //	void setBeneficiary(Address const& _a);
 

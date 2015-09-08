@@ -609,12 +609,12 @@ void AlethZero::on_net_triggered()
 		aleth()->web3()->setNetworkPreferences(netPrefs(), ui->dropPeers->isChecked());
 		aleth()->ethereum()->setNetworkId((h256)(u256)(int)c_network);
 		aleth()->web3()->startNetwork();
-		ui->downloadView->setEthereum(aleth()->ethereum());
+		ui->downloadView->setAleth(aleth());
 		ui->enode->setText(QString::fromStdString(aleth()->web3()->enode()));
 	}
 	else
 	{
-		ui->downloadView->setEthereum(nullptr);
+		ui->downloadView->setAleth(nullptr);
 		writeSettings();
 		aleth()->web3()->stopNetwork();
 	}

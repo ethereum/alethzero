@@ -23,6 +23,7 @@
 #include <QtWidgets>
 #include <QtCore>
 #include <libethereum/DownloadMan.h>
+#include <libaleth/AlethFace.h>
 #include "Grapher.h"
 using namespace std;
 using namespace dev;
@@ -37,7 +38,7 @@ SyncView::SyncView(QWidget* _p): QWidget(_p)
 
 void SyncView::timerEvent(QTimerEvent* _e)
 {
-	if ((m_client && m_client->isSyncing()) || _e->timerId() == m_secondTimer)
+	if ((m_aleth && m_aleth->isOpen() && m_aleth->ethereum()->isSyncing()) || _e->timerId() == m_secondTimer)
 		update();
 }
 
@@ -48,14 +49,16 @@ void SyncView::paintEvent(QPaintEvent*)
 	painter.setRenderHint(QPainter::Antialiasing, true);
 	painter.setRenderHint(QPainter::HighQualityAntialiasing, true);
 
-	if (!m_client || !isVisible() || !rect().width() || !rect().height())
+	if (!m_aleth || !m_aleth->isOpen() || !isVisible() || !rect().width() || !rect().height())
 		return;
 
-	DownloadMan const* man = m_client->downloadMan();
-	BlockQueueStatus bqs = m_client->blockQueueStatus();
-	SyncStatus sync = m_client->syncStatus();
+	auto client = m_aleth->ethereum();
 
-	unsigned syncFrom = m_client->numberFromHash(PendingBlockHash);
+	DownloadMan const* man = client->downloadMan();
+	BlockQueueStatus bqs = client->blockQueueStatus();
+	SyncStatus sync = client->syncStatus();
+
+	unsigned syncFrom = client->numberFromHash(PendingBlockHash);
 	unsigned syncImported = syncFrom;
 	unsigned syncImporting = syncImported + bqs.importing;
 	unsigned syncVerified = syncImporting + bqs.verified;
@@ -64,12 +67,12 @@ void SyncView::paintEvent(QPaintEvent*)
 	unsigned syncCount = syncUnverified + bqs.unknown - syncFrom;
 
 	// best effort guess. assumes there's no forks.
-	unsigned downloadFrom = sync.state == SyncState::Idle ? m_lastSyncFrom : m_client->numberFromHash(m_client->isKnown(man->firstBlock()) ? man->firstBlock() : PendingBlockHash);
+	unsigned downloadFrom = sync.state == SyncState::Idle ? m_lastSyncFrom : client->numberFromHash(client->isKnown(man->firstBlock()) ? man->firstBlock() : PendingBlockHash);
 	unsigned downloadCount = sync.state == SyncState::Idle ? m_lastSyncCount : sync.blocksTotal;
 	unsigned downloadDone = downloadFrom + (sync.state == SyncState::Idle ? m_lastSyncCount : sync.blocksReceived);
 	unsigned downloadPoint = downloadFrom + (sync.state == SyncState::Idle ? m_lastSyncCount : man->overview().lastComplete);
 
-	unsigned hashFrom = sync.state == SyncState::Hashes ? m_client->numberFromHash(PendingBlockHash) : downloadFrom;
+	unsigned hashFrom = sync.state == SyncState::Hashes ? client->numberFromHash(PendingBlockHash) : downloadFrom;
 	unsigned hashCount = sync.state == SyncState::Hashes ? sync.hashesTotal : downloadCount;
 	unsigned hashDone = hashFrom + (sync.state == SyncState::Hashes ? sync.hashesReceived : hashCount);
 

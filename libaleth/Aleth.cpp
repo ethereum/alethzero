@@ -85,12 +85,6 @@ void Aleth::init()
 	else
 		createKeyManager();
 
-	{
-		QTimer* t = new QTimer(this);
-		connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
-		t->start(200);
-	}
-
 	open();
 }
 
@@ -105,6 +99,12 @@ void Aleth::open()
 		m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
 		setBeneficiary(keyManager().accounts().front());
 		ethereum()->setDefault(LatestBlock);
+
+		{
+			QTimer* t = new QTimer(this);
+			connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
+			t->start(200);
+		}
 	}
 }
 
@@ -114,11 +114,14 @@ void Aleth::close()
 	bytes d = web3()->saveNetwork();
 	s.setValue("peers", QByteArray((char*)d.data(), (int)d.size()));
 
+	delete findChild<QTimer*>();
 	m_webThree.reset(nullptr);
 }
 
 unsigned Aleth::installWatch(LogFilter const& _tf, WatchHandler const& _f)
 {
+	if (!isOpen())
+		return (unsigned)-1;
 	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
 	m_handlers[ret] = _f;
 	_f(LocalisedLogEntries());
@@ -127,6 +130,8 @@ unsigned Aleth::installWatch(LogFilter const& _tf, WatchHandler const& _f)
 
 unsigned Aleth::installWatch(h256 const& _tf, WatchHandler const& _f)
 {
+	if (!isOpen())
+		return (unsigned)-1;
 	auto ret = ethereum()->installWatch(_tf, Reaping::Manual);
 	m_handlers[ret] = _f;
 	_f(LocalisedLogEntries());
@@ -135,6 +140,8 @@ unsigned Aleth::installWatch(h256 const& _tf, WatchHandler const& _f)
 
 void Aleth::uninstallWatch(unsigned _w)
 {
+	if (!isOpen())
+		return;
 	cdebug << "!!! Main: uninstalling watch" << _w;
 	ethereum()->uninstallWatch(_w);
 	m_handlers.erase(_w);
@@ -142,6 +149,8 @@ void Aleth::uninstallWatch(unsigned _w)
 
 void Aleth::checkHandlers()
 {
+	if (!isOpen())
+		return;
 	for (auto const& i: m_handlers)
 	{
 		auto ls = ethereum()->checkWatchSafe(i.first);

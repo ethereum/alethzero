@@ -23,7 +23,7 @@
 
 #include <QDialog>
 #include <libaleth/Aleth.h>
-#include "Slave.h"
+#include <libaleth/Slave.h>
 
 namespace Ui {
 class AlethOne;
