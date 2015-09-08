@@ -31,3 +31,4 @@ build
 
 # vim stuff
 *.swp
+*.user
