@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1617</width>
-    <height>1371</height>
+    <width>1088</width>
+    <height>792</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -88,8 +88,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1617</width>
-     <height>24</height>
+     <width>1088</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -104,11 +104,8 @@
     </property>
     <addaction name="go"/>
     <addaction name="separator"/>
-    <addaction name="upnp"/>
-    <addaction name="dropPeers"/>
     <addaction name="net"/>
     <addaction name="connect"/>
-    <addaction name="hermitMode"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -124,6 +121,7 @@
     <addaction name="killAccount"/>
     <addaction name="separator"/>
     <addaction name="separator"/>
+    <addaction name="settings"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -288,130 +286,22 @@
     <number>2</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3">
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
+    <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QSplitter" name="splitter">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
+      <widget class="QListWidget" name="peers">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
        </property>
-       <widget class="QListWidget" name="peers">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="frameShape">
-         <enum>QFrame::NoFrame</enum>
-        </property>
-       </widget>
-       <widget class="QWidget" name="layoutWidget">
-        <layout class="QGridLayout" name="gridLayout_2">
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="listenIP">
-           <property name="inputMask">
-            <string/>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-           <property name="placeholderText">
-            <string>Automatic</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>&amp;Listen on</string>
-           </property>
-           <property name="buddy">
-            <cstring>port</cstring>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="2">
-          <widget class="QSpinBox" name="port">
-           <property name="minimum">
-            <number>1024</number>
-           </property>
-           <property name="maximum">
-            <number>32767</number>
-           </property>
-           <property name="value">
-            <number>30303</number>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="3">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Public IP</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="4">
-          <widget class="QLineEdit" name="forcePublicIP">
-           <property name="placeholderText">
-            <string>Automatic</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Ideal &amp;Peers</string>
-           </property>
-           <property name="buddy">
-            <cstring>idealPeers</cstring>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>&amp;Client Name</string>
-           </property>
-           <property name="buddy">
-            <cstring>clientName</cstring>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="4">
-          <widget class="QSpinBox" name="idealPeers">
-           <property name="minimum">
-            <number>1</number>
-           </property>
-           <property name="value">
-            <number>5</number>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1" colspan="2">
-          <widget class="QLineEdit" name="clientName">
-           <property name="placeholderText">
-            <string>Anonymous</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0" colspan="5">
-          <widget class="QLineEdit" name="enode">
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="enode">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
     </layout>
@@ -605,43 +495,6 @@
         </property>
        </widget>
       </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
-  <widget class="QDockWidget" name="configDock">
-   <property name="features">
-    <set>QDockWidget::DockWidgetFeatureMask</set>
-   </property>
-   <property name="windowTitle">
-    <string>Settings</string>
-   </property>
-   <attribute name="dockWidgetArea">
-    <number>2</number>
-   </attribute>
-   <widget class="QWidget" name="dockWidgetContents_9">
-    <layout class="QGridLayout" name="gridLayout_3">
-     <property name="leftMargin">
-      <number>0</number>
-     </property>
-     <property name="topMargin">
-      <number>0</number>
-     </property>
-     <property name="rightMargin">
-      <number>0</number>
-     </property>
-     <property name="bottomMargin">
-      <number>0</number>
-     </property>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>Name Registrar</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="nameReg"/>
      </item>
     </layout>
    </widget>
@@ -1165,6 +1018,14 @@
     <string>Import Ether &amp;Presale Wallet...</string>
    </property>
   </action>
+  <action name="settings">
+   <property name="text">
+    <string>&amp;Preferences...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P, F10</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -1182,12 +1043,9 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>listenIP</tabstop>
-  <tabstop>port</tabstop>
   <tabstop>transactionQueue</tabstop>
   <tabstop>pendingInfo</tabstop>
   <tabstop>blockChainFilter</tabstop>
-  <tabstop>nameReg</tabstop>
   <tabstop>nodes</tabstop>
  </tabstops>
  <resources/>

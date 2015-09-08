@@ -69,6 +69,8 @@ class OurWebThreeStubServer;
 class DappLoader;
 class DappHost;
 struct Dapp;
+class SettingsDialog;
+struct NetworkSettings;
 
 QString contentsOfQResource(std::string const& res);
 
@@ -110,6 +112,7 @@ public:
 	Addresses allKnownAddresses() const override;
 
 	void noteSettingsChanged() override { writeSettings(); }
+	void addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory) override;
 
 public slots:
 	void note(QString _entry);
@@ -130,7 +133,6 @@ private slots:
 	void on_go_triggered();
 	void on_net_triggered();
 	void on_connect_triggered();
-	void on_idealPeers_valueChanged(int);
 
 	// Mining
 	void on_mine_triggered();
@@ -155,7 +157,7 @@ private slots:
 	void on_blocks_currentItemChanged();
 
 	// Misc
-	void on_nameReg_textChanged();
+	void on_settings_triggered();
 
 	// Special (debug) stuff
 	void on_paranoia_triggered();
@@ -163,7 +165,6 @@ private slots:
 	void on_clearPending_triggered();
 	void on_injectBlock_triggered();
 	void on_forceMining_triggered();
-	void on_usePrivate_triggered();
 	void on_turboMining_triggered();
 	void on_retryUnknown_triggered();
 	void on_vmInterpreter_triggered();
@@ -194,7 +195,8 @@ private:
 
 	void debugDumpState(int _add);
 
-	p2p::NetworkPreferences netPrefs() const;
+	void setNetPrefs(NetworkSettings const& _settings);
+	NetworkSettings netPrefs() const;
 
 	QString lookup(QString const& _n) const;
 	Address getCurrencies() const;
@@ -202,6 +204,7 @@ private:
 	void updateFee();
 	void readSettings(bool _skipGeometry = false, bool _onlyGeometry = false);
 	void writeSettings();
+	void createSettingsPages();
 
 	void setPrivateChain(QString const& _private, bool _forceConfigure = false);
 
@@ -265,6 +268,8 @@ private:
 	std::unordered_set<AccountNamer*> m_namers;
 
 	bool m_destructing = false;
+
+	SettingsDialog* m_settingsDialog = nullptr;
 };
 
 }

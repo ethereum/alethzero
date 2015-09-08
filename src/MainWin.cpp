@@ -66,6 +66,9 @@
 #include "BuildInfo.h"
 #include "OurWebThreeStubServer.h"
 #include "Debugger.h"
+#include "SettingsDialog.h"
+#include "NetworkSettings.h"
+#include "NameregSettings.h"
 #include "ui_Main.h"
 #include "ui_GetPassword.h"
 using namespace std;
@@ -159,8 +162,6 @@ Main::Main(QWidget* _parent):
 	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
 	cerr << "Client database version: " << c_databaseVersion << endl;
 
-	ui->configDock->close();
-
 //	statusBar()->addPermanentWidget(ui->cacheUsage);
 	ui->cacheUsage->hide();
 	statusBar()->addPermanentWidget(ui->balance);
@@ -201,6 +202,7 @@ Main::Main(QWidget* _parent):
 	ui->vmSmart->setEnabled(false);
 #endif
 
+	createSettingsPages();
 	readSettings(true, false);
 
 	connect(ui->blockChainDockWidget, &QDockWidget::visibilityChanged, [=]() { refreshBlockChain(); });
@@ -238,6 +240,34 @@ Main::~Main()
 
 	m_destructing = true;
 	killPlugins();
+}
+
+void Main::createSettingsPages()
+{
+	m_settingsDialog = new SettingsDialog(this);
+	m_settingsDialog->addPage(0, "Network", [this](){
+		NetworkSettingsPage* network = new NetworkSettingsPage();
+		connect(m_settingsDialog, &SettingsDialog::displayed, [this, network]() { network->setPrefs(netPrefs()); });
+		connect(m_settingsDialog, &SettingsDialog::applied, [this, network]() { setNetPrefs(network->prefs()); });
+		return network;
+	});
+	m_settingsDialog->addPage(1, "Name Registrar", [this](){
+		NameregSettingsPage* namereg = new NameregSettingsPage();
+		connect(m_settingsDialog, &SettingsDialog::displayed, [this, namereg]() { namereg->setAddress(QString::fromStdString(toHex(m_nameReg.ref()))); });
+		connect(m_settingsDialog, &SettingsDialog::applied, [this, namereg]() {
+			string s = namereg->address().toStdString();
+			if (s.size() == 40)
+			{
+				m_nameReg = Address(fromHex(s));
+				refreshAll();
+			}
+			else
+				m_nameReg = Address();
+			writeSettings();
+		});
+		return namereg;
+	});
+
 }
 
 string Main::fromRaw(h256 const& _n, unsigned* _inc)
@@ -327,41 +357,6 @@ void Main::on_sentinel_triggered()
 	QString sentinel = QInputDialog::getText(nullptr, "Enter sentinel address", "Enter the sentinel address for bad block reporting (e.g. http://badblockserver.com:8080). Enter nothing to disable.", QLineEdit::Normal, QString::fromStdString(ethereum()->sentinel()), &ok);
 	if (ok)
 		ethereum()->setSentinel(sentinel.toStdString());
-}
-
-NetworkPreferences Main::netPrefs() const
-{
-	auto listenIP = ui->listenIP->text().toStdString();
-	try
-	{
-		listenIP = bi::address::from_string(listenIP).to_string();
-	}
-	catch (...)
-	{
-		listenIP.clear();
-	}
-
-	auto publicIP = ui->forcePublicIP->text().toStdString();
-	try
-	{
-		publicIP = bi::address::from_string(publicIP).to_string();
-	}
-	catch (...)
-	{
-		publicIP.clear();
-	}
-
-	NetworkPreferences ret;
-
-	if (isPublicAddress(publicIP))
-		ret = NetworkPreferences(publicIP, listenIP, ui->port->value(), ui->upnp->isChecked());
-	else
-		ret = NetworkPreferences(listenIP, ui->port->value(), ui->upnp->isChecked());
-
-	ret.discovery = m_privateChain.isEmpty() && !ui->hermitMode->isChecked();
-	ret.pin = !ret.discovery;
-
-	return ret;
 }
 
 void Main::onKeysChanged()
@@ -653,17 +648,11 @@ void Main::writeSettings()
 	s.setValue("bidPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->bid())));
 	s.setValue("upnp", ui->upnp->isChecked());
 	s.setValue("hermitMode", ui->hermitMode->isChecked());
-	s.setValue("forceAddress", ui->forcePublicIP->text());
 	s.setValue("forceMining", ui->forceMining->isChecked());
 	s.setValue("turboMining", ui->turboMining->isChecked());
 	s.setValue("paranoia", ui->paranoia->isChecked());
 	s.setValue("natSpec", ui->natSpec->isChecked());
 	s.setValue("showAll", ui->showAll->isChecked());
-	s.setValue("clientName", ui->clientName->text());
-	s.setValue("idealPeers", ui->idealPeers->value());
-	s.setValue("listenIP", ui->listenIP->text());
-	s.setValue("port", ui->port->value());
-	s.setValue("privateChain", m_privateChain);
 	if (auto vm = m_vmSelectionGroup->checkedAction())
 		s.setValue("vm", vm->text());
 
@@ -671,7 +660,7 @@ void Main::writeSettings()
 	if (!d.empty())
 		m_networkConfig = QByteArray((char*)d.data(), (int)d.size());
 	s.setValue("peers", m_networkConfig);
-	s.setValue("nameReg", ui->nameReg->text());
+	s.setValue("nameReg", QString::fromStdString(toHex(m_nameReg.ref())));
 
 	s.setValue("geometry", saveGeometry());
 	s.setValue("windowState", saveState());
@@ -695,10 +684,8 @@ void Main::setPrivateChain(QString const& _private, bool _forceConfigure)
 	ui->net->setChecked(false);
 	web3()->stopNetwork();
 
-	web3()->setNetworkPreferences(netPrefs());
 	ethereum()->reopenChain();
 
-	readSettings(true);
 	installWatches();
 	refreshAll();
 }
@@ -739,8 +726,6 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	static_cast<TrivialGasPricer*>(ethereum()->gasPricer().get())->setBid(u256(s.value("bidPrice", QString::fromStdString(toString(DefaultGasPrice))).toString().toStdString()));
 
 	ui->upnp->setChecked(s.value("upnp", true).toBool());
-	ui->forcePublicIP->setText(s.value("forceAddress", "").toString());
-	ui->dropPeers->setChecked(false);
 	ui->hermitMode->setChecked(s.value("hermitMode", false).toBool());
 	ui->forceMining->setChecked(s.value("forceMining", false).toBool());
 	on_forceMining_triggered();
@@ -749,14 +734,13 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	ui->paranoia->setChecked(s.value("paranoia", false).toBool());
 	ui->natSpec->setChecked(s.value("natSpec", true).toBool());
 	ui->showAll->setChecked(s.value("showAll", false).toBool());
-	ui->clientName->setText(s.value("clientName", "").toString());
-	if (ui->clientName->text().isEmpty())
-		ui->clientName->setText(QInputDialog::getText(nullptr, "Enter identity", "Enter a name that will identify you on the peer network"));
-	ui->idealPeers->setValue(s.value("idealPeers", ui->idealPeers->value()).toInt());
-	ui->listenIP->setText(s.value("listenIP", "").toString());
-	ui->port->setValue(s.value("port", ui->port->value()).toInt());
-	ui->nameReg->setText(s.value("nameReg", "").toString());
-	setPrivateChain(s.value("privateChain", "").toString());
+	NetworkSettings netSettings = netPrefs();
+	if (netSettings.clientName.isEmpty())
+		netSettings.clientName = QInputDialog::getText(nullptr, "Enter identity", "Enter a name that will identify you on the peer network");
+	setNetPrefs(netSettings);
+	std::string nameReg = s.value("nameReg", "").toString().toStdString();
+	if (nameReg.size() == 40)
+		m_nameReg = Address(fromHex(nameReg));
 
 #if ETH_EVMJIT // We care only if JIT is enabled. Otherwise it can cause misconfiguration.
 	auto vmName = s.value("vm").toString();
@@ -780,6 +764,24 @@ void Main::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	}
 #endif
 
+}
+
+void Main::setNetPrefs(NetworkSettings const& _settings)
+{
+	web3()->setIdealPeerCount(_settings.idealPeers);
+	web3()->setNetworkPreferences(_settings.p2pSettings, _settings.dropPeers);
+	web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", _settings.clientName.toStdString()));
+	setPrivateChain(_settings.privateChain ? _settings.privateChainId : "");
+	QSettings s("ethereum", "alethzero");
+	_settings.write(s);
+}
+
+NetworkSettings Main::netPrefs() const
+{
+	NetworkSettings settings;
+	QSettings s("ethereum", "alethzero");
+	settings.read(s);
+	return settings;
 }
 
 std::string Main::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
@@ -822,22 +824,6 @@ void Main::on_exportKey_triggered()
 	}
 }
 
-void Main::on_usePrivate_triggered()
-{
-	QString pc;
-	if (ui->usePrivate->isChecked())
-	{
-		bool ok;
-		pc = QInputDialog::getText(this, "Enter Name", "Enter the name of your private chain", QLineEdit::Normal, QString("NewChain-%1").arg(time(0)), &ok);
-		if (!ok)
-		{
-			ui->usePrivate->setChecked(false);
-			return;
-		}
-	}
-	setPrivateChain(pc);
-}
-
 void Main::on_vmInterpreter_triggered() { VMFactory::setKind(VMKind::Interpreter); }
 void Main::on_vmJIT_triggered() { VMFactory::setKind(VMKind::JIT); }
 void Main::on_vmSmart_triggered() { VMFactory::setKind(VMKind::Smart); }
@@ -851,18 +837,6 @@ void Main::on_rewindChain_triggered()
 		ethereum()->rewind(n);
 		refreshAll();
 	}
-}
-
-void Main::on_nameReg_textChanged()
-{
-	string s = ui->nameReg->text().toStdString();
-	if (s.size() == 40)
-	{
-		m_nameReg = Address(fromHex(s));
-		refreshAll();
-	}
-	else
-		m_nameReg = Address();
 }
 
 void Main::on_preview_triggered()
@@ -1632,11 +1606,6 @@ void Main::debugDumpState(int _add)
 	}
 }
 
-void Main::on_idealPeers_valueChanged(int)
-{
-	m_webThree->setIdealPeerCount(ui->idealPeers->value());
-}
-
 void Main::on_ourAccounts_doubleClicked()
 {
 	auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
@@ -1681,14 +1650,9 @@ void Main::on_killBlockchain_triggered()
 
 void Main::on_net_triggered()
 {
-	ui->port->setEnabled(!ui->net->isChecked());
-	ui->clientName->setEnabled(!ui->net->isChecked());
-	web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", ui->clientName->text().toStdString()));
 	if (ui->net->isChecked())
 	{
-		web3()->setIdealPeerCount(ui->idealPeers->value());
-		web3()->setNetworkPreferences(netPrefs(), ui->dropPeers->isChecked());
-		ethereum()->setNetworkId((h256)(u256)(int)c_network);
+		setNetPrefs(netPrefs());
 		web3()->startNetwork();
 		ui->downloadView->setEthereum(ethereum());
 		ui->enode->setText(QString::fromStdString(web3()->enode()));
@@ -1882,4 +1846,14 @@ void Main::unloadPlugin(string const& _name)
 	shared_ptr<Plugin> p = takePlugin(_name);
 	if (p)
 		finalisePlugin(p.get());
+}
+
+void Main::addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory)
+{
+	m_settingsDialog->addPage(_index, _categoryName, _pageFactory);
+}
+
+void Main::on_settings_triggered()
+{
+	m_settingsDialog->exec();
 }

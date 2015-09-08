@@ -50,6 +50,7 @@ class Plugin;
 class MainFace;
 class Main;
 class OurWebThreeStubServer;
+class SettingsPage;
 
 using WatchHandler = std::function<void(dev::eth::LocalisedLogEntries const&)>;
 
@@ -86,6 +87,8 @@ public:
 	void killPlugins();
 
 	void allChange();
+	
+	virtual void addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory) = 0;
 
 	using Context::render;
 
@@ -127,6 +130,10 @@ signals:
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<Plugin>> m_plugins;
+};
+
+class SettingsPage: public QWidget
+{
 };
 
 class Plugin
