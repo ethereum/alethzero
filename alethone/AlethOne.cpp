@@ -43,7 +43,7 @@ AlethOne::AlethOne():
 {
 	setWindowFlags(Qt::Window);
 	m_ui->setupUi(this);
-	m_aleth.init();
+	m_aleth.init(Aleth::Nothing, "AlethOne", "anon");
 
 	auto g = new QButtonGroup(this);
 	g->setExclusive(true);
@@ -55,7 +55,12 @@ AlethOne::AlethOne():
 		m_slave.stop();
 	});
 
-	connect(m_ui->local, &QRadioButton::toggled, [=](bool on){ if (on) m_aleth.open(); else m_aleth.close(); });
+	connect(m_ui->local, &QRadioButton::toggled, [=](bool on){
+		if (on)
+			m_aleth.open(Aleth::Bootstrap);
+		else
+			m_aleth.close();
+	});
 
 	auto translate = [](QString s) { return s == "cpu" ? "CPU" : s == "opencl" ? "OpenCL" : s + " Miner"; };
 	for (QString i: m_slave.sealers())
@@ -83,13 +88,8 @@ AlethOne::AlethOne():
 	}
 
 	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : "Frontier") + QString(" AlethOne v") + dev::Version + "-" DEV_QUOTED(ETH_BUILD_TYPE) "-" DEV_QUOTED(ETH_BUILD_PLATFORM) "-" + QString(DEV_QUOTED(ETH_COMMIT_HASH)).mid(0, 6) + (ETH_CLEAN_REPO ? "" : "+"));
-	m_ui->beneficiary->setText(QString::fromStdString(ICAP(m_aleth.beneficiary()).encoded()));
+	m_ui->beneficiary->setText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
 	m_ui->sync->setAleth(&m_aleth);
-
-	m_aleth.web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethOne", "anon"));
-	m_aleth.web3()->startNetwork();
-	for (auto const& i: Host::pocHosts())
-		m_aleth.web3()->requirePeer(i.first, i.second);
 
 	{
 		QTimer* t = new QTimer(this);
@@ -122,24 +122,22 @@ AlethOne::AlethOne():
 				m_ui->stack->setCurrentIndex(s ? 0 : 1);
 				if (!s)
 				{
+					m_ui->overHashrate->setText(translate(m_aleth ? QString::fromStdString(m_aleth.ethereum()->sealer()) : m_slave.sealer()));
 					if (r > 0)
 					{
 						QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
 						m_ui->hashrate->setText(ss[0]);
 						m_ui->underHashrate->setText(ss[1]);
-						m_ui->overHashrate->setText(translate(QString::fromStdString(m_aleth.ethereum()->sealer())));
 					}
 					else if (m)
 					{
 						m_ui->hashrate->setText("...");
-						m_ui->underHashrate->setText("Preparing DAG...");
-						m_ui->overHashrate->setText("");
+						m_ui->underHashrate->setText("Preparing...");
 					}
 					else
 					{
-						m_ui->hashrate->setText("/");
-						m_ui->underHashrate->setText("Not mining");
-						m_ui->overHashrate->setText("Off");
+						m_ui->hashrate->setText("...");
+						m_ui->underHashrate->setText("Waiting...");
 					}
 				}
 			}

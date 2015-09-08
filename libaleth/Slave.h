@@ -31,6 +31,8 @@ Q_DECLARE_METATYPE(dev::h256)
 Q_DECLARE_METATYPE(dev::eth::EthashProofOfWork::Solution)
 Q_DECLARE_METATYPE(dev::eth::EthashProofOfWork::WorkPackage)
 
+class QTimer;
+
 namespace jsonrpc { class HttpClient; }
 
 namespace dev
@@ -86,6 +88,7 @@ private:
 
 	h256 m_id;
 	QString m_url;
+	QTimer* m_work;
 	int m_rateTimer;
 	int m_workTimer;
 	u256 m_hashrate;

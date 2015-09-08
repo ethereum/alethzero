@@ -25,11 +25,13 @@
 #include <QInputDialog>
 #include <QMessageBox>
 #include <libdevcore/Log.h>
+#include <libp2p/Host.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include "ui_GetPassword.h"
 using namespace std;
 using namespace dev;
+using namespace p2p;
 using namespace eth;
 using namespace aleth;
 
@@ -60,8 +62,11 @@ void Aleth::createKeyManager()
 	keyManager().import(ICAP::createDirect(), "Default identity");
 }
 
-void Aleth::init()
+void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _nodeName)
 {
+	m_clientVersion = _clientVersion;
+	m_nodeName = _nodeName;
+
 	// Get options
 	std::string m_dbPath = getDataDir();
 	for (int i = 1; i < qApp->arguments().size(); ++i)
@@ -85,10 +90,11 @@ void Aleth::init()
 	else
 		createKeyManager();
 
-	open();
+	if (_onInit >= OpenOnly)
+		open();
 }
 
-void Aleth::open()
+void Aleth::open(OnInit _connect)
 {
 	if (!m_webThree)
 	{
@@ -97,6 +103,7 @@ void Aleth::open()
 		bytesConstRef network((byte*)configBytes.data(), configBytes.size());
 
 		m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+		web3()->setClientVersion(WebThreeDirect::composeClientVersion(m_clientVersion, m_nodeName));
 		setBeneficiary(keyManager().accounts().front());
 		ethereum()->setDefault(LatestBlock);
 
@@ -105,11 +112,20 @@ void Aleth::open()
 			connect(t, SIGNAL(timeout()), SLOT(checkHandlers()));
 			t->start(200);
 		}
+
+		if (_connect >= Bootstrap)
+		{
+			web3()->startNetwork();
+			for (auto const& i: Host::pocHosts())
+				web3()->requirePeer(i.first, i.second);
+		}
 	}
 }
 
 void Aleth::close()
 {
+	if (!isOpen())
+		return;
 	QSettings s("ethereum", "alethzero");
 	bytes d = web3()->saveNetwork();
 	s.setValue("peers", QByteArray((char*)d.data(), (int)d.size()));
