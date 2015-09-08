@@ -47,28 +47,12 @@ using namespace zero;
 using namespace p2p;
 using namespace eth;
 
-void PrivateChainManager::setID(QString _id)
-{
-	if (m_id != _id)
-	{
-		m_id = _id;
-		CanonBlockChain<Ethash>::forceGenesisExtraData(m_id.isEmpty() ? bytes() : sha3(m_id.toStdString()).asBytes());
-		CanonBlockChain<Ethash>::forceGenesisDifficulty(m_id.isEmpty() ? u256() : c_minimumDifficulty);
-		CanonBlockChain<Ethash>::forceGenesisGasLimit(m_id.isEmpty() ? u256() : u256(1) << 32);
-
-		m_aleth->web3()->stopNetwork();
-		m_aleth->ethereum()->reopenChain();
-		emit changed(_id);
-	}
-}
-
 AlethZero::AlethZero():
-	ui(new Ui::Main),
-	m_aleth(this),
-	m_privateChain(&m_aleth)
+	m_ui(new Ui::Main),
+	m_aleth(this)
 {
 	setWindowFlags(Qt::Window);
-	ui->setupUi(this);
+	m_ui->setupUi(this);
 
 	cerr << "State root: " << CanonBlockChain<Ethash>::genesis().stateRoot() << endl;
 	auto block = CanonBlockChain<Ethash>::createGenesisBlock();
@@ -78,14 +62,14 @@ AlethZero::AlethZero():
 	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
 	cerr << "Client database version: " << c_databaseVersion << endl;
 
-//	statusBar()->addPermanentWidget(ui->cacheUsage);
-	ui->cacheUsage->hide();
-	statusBar()->addPermanentWidget(ui->balance);
-	statusBar()->addPermanentWidget(ui->peerCount);
-	statusBar()->addPermanentWidget(ui->mineStatus);
-	statusBar()->addPermanentWidget(ui->syncStatus);
-	statusBar()->addPermanentWidget(ui->chainStatus);
-	statusBar()->addPermanentWidget(ui->blockCount);
+//	statusBar()->addPermanentWidget(m_ui->cacheUsage);
+	m_ui->cacheUsage->hide();
+	statusBar()->addPermanentWidget(m_ui->balance);
+	statusBar()->addPermanentWidget(m_ui->peerCount);
+	statusBar()->addPermanentWidget(m_ui->mineStatus);
+	statusBar()->addPermanentWidget(m_ui->syncStatus);
+	statusBar()->addPermanentWidget(m_ui->chainStatus);
+	statusBar()->addPermanentWidget(m_ui->blockCount);
 
 	connect(&m_aleth, SIGNAL(beneficiaryChanged()), SLOT(onBeneficiaryChanged()));
 	m_aleth.init();
@@ -95,7 +79,7 @@ AlethZero::AlethZero():
 	else if (c_network == eth::Network::Frontier)
 		setWindowTitle("AlethZero Frontier");
 
-	ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(aleth()->ethereum()->sealEngine()->name())).arg(aleth()->ethereum()->sealEngine()->revision()).arg(dev::Version));
+	m_ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(aleth()->ethereum()->sealEngine()->name())).arg(aleth()->ethereum()->sealEngine()->revision()).arg(dev::Version));
 
 	m_httpConnector.reset(new dev::SafeHttpServer(SensibleHttpPort, "", "", dev::SensibleHttpThreads));
 	m_server.reset(new WebThreeServer(*m_httpConnector, this));
@@ -113,15 +97,6 @@ AlethZero::AlethZero():
 		QTimer* t = new QTimer(this);
 		connect(t, &QTimer::timeout, [&](){ refreshNetwork(); refreshBlockCount(); });
 		t->start(1000);
-	}
-
-	{
-		QSettings s("ethereum", "alethzero");
-		if (s.value("splashMessage", true).toBool())
-		{
-			QMessageBox::information(this, "Here Be Dragons!", "This is beta software: it is not yet at the release stage.\nPlease don't blame us if it does something unexpected or if you're underwhelmed with the user-experience. We have great plans for it in terms of UX down the line but right now we just want to make sure everything works roughly as expected. We welcome contributions, be they in code, testing or documentation!\nAfter you close this message it won't appear again.");
-			s.setValue("splashMessage", false);
-		}
 	}
 
 	for (auto const& i: *s_linkedPlugins)
@@ -173,7 +148,7 @@ void AlethZero::allStop()
 {
 	writeSettings();
 	aleth()->ethereum()->stopMining();
-	ui->net->setChecked(false);
+	m_ui->net->setChecked(false);
 	aleth()->web3()->stopNetwork();
 }
 
@@ -234,18 +209,17 @@ void AlethZero::writeSettings()
 		p->writeSettings(s);
 	});
 
-	s.setValue("upnp", ui->upnp->isChecked());
-	s.setValue("hermitMode", ui->hermitMode->isChecked());
-	s.setValue("forceAddress", ui->forcePublicIP->text());
-	s.setValue("forceMining", ui->forceMining->isChecked());
-	s.setValue("turboMining", ui->turboMining->isChecked());
-	s.setValue("paranoia", ui->paranoia->isChecked());
-	s.setValue("showAll", ui->showAll->isChecked());
-	s.setValue("clientName", ui->clientName->text());
-	s.setValue("idealPeers", ui->idealPeers->value());
-	s.setValue("listenIP", ui->listenIP->text());
-	s.setValue("port", ui->port->value());
-	s.setValue("privateChain", m_privateChain.id());
+	s.setValue("upnp", m_ui->upnp->isChecked());
+	s.setValue("hermitMode", m_ui->hermitMode->isChecked());
+	s.setValue("forceAddress", m_ui->forcePublicIP->text());
+	s.setValue("forceMining", m_ui->forceMining->isChecked());
+	s.setValue("turboMining", m_ui->turboMining->isChecked());
+	s.setValue("paranoia", m_ui->paranoia->isChecked());
+	s.setValue("showAll", m_ui->showAll->isChecked());
+	s.setValue("clientName", m_ui->clientName->text());
+	s.setValue("idealPeers", m_ui->idealPeers->value());
+	s.setValue("listenIP", m_ui->listenIP->text());
+	s.setValue("port", m_ui->port->value());
 
 	s.setValue("geometry", saveGeometry());
 	s.setValue("windowState", saveState());
@@ -266,18 +240,17 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 		p->readSettings(s);
 	});
 
-	ui->upnp->setChecked(s.value("upnp", true).toBool());
-	ui->forcePublicIP->setText(s.value("forceAddress", "").toString());
-	ui->dropPeers->setChecked(false);
-	ui->hermitMode->setChecked(s.value("hermitMode", false).toBool());
-	ui->showAll->setChecked(s.value("showAll", false).toBool());
-	ui->clientName->setText(s.value("clientName", "").toString());
-	if (ui->clientName->text().isEmpty())
-		ui->clientName->setText(QInputDialog::getText(nullptr, "Enter identity", "Enter a name that will identify you on the peer network"));
-	ui->idealPeers->setValue(s.value("idealPeers", ui->idealPeers->value()).toInt());
-	ui->listenIP->setText(s.value("listenIP", "").toString());
-	ui->port->setValue(s.value("port", ui->port->value()).toInt());
-	setPrivateChain(s.value("privateChain", "").toString());
+	m_ui->upnp->setChecked(s.value("upnp", true).toBool());
+	m_ui->forcePublicIP->setText(s.value("forceAddress", "").toString());
+	m_ui->dropPeers->setChecked(false);
+	m_ui->hermitMode->setChecked(s.value("hermitMode", false).toBool());
+	m_ui->showAll->setChecked(s.value("showAll", false).toBool());
+	m_ui->clientName->setText(s.value("clientName", "").toString());
+	if (m_ui->clientName->text().isEmpty())
+		m_ui->clientName->setText(QInputDialog::getText(nullptr, "Enter identity", "Enter a name that will identify you on the peer network"));
+	m_ui->idealPeers->setValue(s.value("idealPeers", m_ui->idealPeers->value()).toInt());
+	m_ui->listenIP->setText(s.value("listenIP", "").toString());
+	m_ui->port->setValue(s.value("port", m_ui->port->value()).toInt());
 }
 
 void AlethZero::onKeysChanged()
@@ -288,11 +261,11 @@ void AlethZero::onKeysChanged()
 void AlethZero::onBeneficiaryChanged()
 {
 	Address b = aleth()->beneficiary();
-	for (int i = 0; i < ui->ourAccounts->count(); ++i)
+	for (int i = 0; i < m_ui->ourAccounts->count(); ++i)
 	{
-		auto hba = ui->ourAccounts->item(i)->data(Qt::UserRole).toByteArray();
+		auto hba = m_ui->ourAccounts->item(i)->data(Qt::UserRole).toByteArray();
 		auto h = Address((byte const*)hba.data(), Address::ConstructFromPointer);
-		ui->ourAccounts->item(i)->setCheckState(h == b ? Qt::Checked : Qt::Unchecked);
+		m_ui->ourAccounts->item(i)->setCheckState(h == b ? Qt::Checked : Qt::Unchecked);
 	}
 }
 
@@ -303,14 +276,14 @@ void AlethZero::refreshMining()
 	if (gp.first != EthashAux::NotGenerating)
 		t = QString("DAG for #%1-#%2: %3% complete; ").arg(gp.first).arg(gp.first + ETHASH_EPOCH_LENGTH - 1).arg(gp.second);
 	WorkingProgress p = aleth()->ethereum()->miningProgress();
-	ui->mineStatus->setText(t + (aleth()->ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
+	m_ui->mineStatus->setText(t + (aleth()->ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
 }
 
 void AlethZero::refreshBalances()
 {
 	cwatch << "refreshBalances()";
 	// update all the balance-dependent stuff.
-	ui->ourAccounts->clear();
+	m_ui->ourAccounts->clear();
 	u256 totalBalance = 0;
 /*	map<Address, tuple<QString, u256, u256>> altCoins;
 	Address coinsAddr = getCurrencies();
@@ -335,7 +308,7 @@ void AlethZero::refreshBalances()
 				.arg(QString::fromStdString(aleth()->toReadable(address)))
 				.arg(formatBalance(b).c_str())
 				.arg((unsigned)aleth()->ethereum()->countAt(address))
-			, ui->ourAccounts);
+			, m_ui->ourAccounts);
 		li->setData(Qt::UserRole, QByteArray((char const*)address.data(), Address::size));
 		li->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 		li->setCheckState(bene == address ? Qt::Checked : Qt::Unchecked);
@@ -353,22 +326,22 @@ void AlethZero::refreshBalances()
 			s << setw(toString(get<2>(c.second) - 1).size()) << setfill('0') << (get<1>(c.second) % get<2>(c.second));
 			b += QString::fromStdString(toString(get<1>(c.second) / get<2>(c.second)) + "." + s.str() + " ") + get<0>(c.second).toUpper() + " | ";
 		}*/
-	ui->balance->setText(b + QString::fromStdString(formatBalance(totalBalance)));
+	m_ui->balance->setText(b + QString::fromStdString(formatBalance(totalBalance)));
 }
 
 void AlethZero::refreshNetwork()
 {
 	auto ps = aleth()->web3()->peers();
 
-	ui->peerCount->setText(QString::fromStdString(toString(ps.size())) + " peer(s)");
-	ui->peers->clear();
-	ui->nodes->clear();
+	m_ui->peerCount->setText(QString::fromStdString(toString(ps.size())) + " peer(s)");
+	m_ui->peers->clear();
+	m_ui->nodes->clear();
 
 	if (aleth()->web3()->haveNetwork())
 	{
 		map<h512, QString> sessions;
 		for (PeerSessionInfo const& i: ps)
-			ui->peers->addItem(QString("[%8 %7] %3 ms - %1:%2 - %4 %5 %6")
+			m_ui->peers->addItem(QString("[%8 %7] %3 ms - %1:%2 - %4 %5 %6")
 				.arg(QString::fromStdString(i.host))
 				.arg(i.port)
 				.arg(chrono::duration_cast<chrono::milliseconds>(i.lastPing).count())
@@ -380,7 +353,7 @@ void AlethZero::refreshNetwork()
 
 		auto ns = aleth()->web3()->nodes();
 		for (p2p::Peer const& i: ns)
-			ui->nodes->insertItem(sessions.count(i.id) ? 0 : ui->nodes->count(), QString("[%1 %3] %2 - ( %4 ) - *%5")
+			m_ui->nodes->insertItem(sessions.count(i.id) ? 0 : m_ui->nodes->count(), QString("[%1 %3] %2 - ( %4 ) - *%5")
 				.arg(QString::fromStdString(i.id.abridged()))
 				.arg(QString::fromStdString(i.endpoint.address.to_string()))
 				.arg(i.id == aleth()->web3()->id() ? "self" : sessions.count(i.id) ? sessions[i.id] : "disconnected")
@@ -399,12 +372,12 @@ void AlethZero::refreshBlockCount()
 		syncStatus += QString(": %1/%2%3").arg(sync.hashesReceived).arg(sync.hashesEstimated ? "~" : "").arg(sync.hashesTotal);
 	if (sync.state == SyncState::Blocks || sync.state == SyncState::NewBlocks)
 		syncStatus += QString(": %1/%2").arg(sync.blocksReceived).arg(sync.blocksTotal);
-	ui->syncStatus->setText(syncStatus);
+	m_ui->syncStatus->setText(syncStatus);
 //	BlockQueueStatus b = ethereum()->blockQueueStatus();
-//	ui->chainStatus->setText(QString("%3 importing %4 ready %5 verifying %6 unverified %7 future %8 unknown %9 bad  %1 #%2")
+//	m_ui->chainStatus->setText(QString("%3 importing %4 ready %5 verifying %6 unverified %7 future %8 unknown %9 bad  %1 #%2")
 //		.arg(m_privateChain.size() ? "[" + m_privateChain + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number).arg(b.importing).arg(b.verified).arg(b.verifying).arg(b.unverified).arg(b.future).arg(b.unknown).arg(b.bad));
-	ui->chainStatus->setText(QString("%1 #%2")
-		.arg(m_privateChain ? "[" + m_privateChain.id() + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number));
+	m_ui->chainStatus->setText(QString("%1 #%2")
+		.arg(/*m_privateChain ? "[" + m_privateChain.id() + "] " :*/ c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number));		// TODO: some way for the plugin to display this
 }
 
 void AlethZero::refreshAll()
@@ -454,59 +427,27 @@ void Main::refreshCache()
 	t += ", ";
 	f(s.memDetails, "family");
 	t += ")";
-	ui->cacheUsage->setText(t);
+	m_ui->cacheUsage->setText(t);
 }
 */
 
 void AlethZero::on_confirm_triggered()
 {
-	web3Server()->ethAccounts()->setEnabled(ui->confirm->isChecked());
+	web3Server()->ethAccounts()->setEnabled(m_ui->confirm->isChecked());
 }
 
 void AlethZero::on_preview_triggered()
 {
-	aleth()->ethereum()->setDefault(ui->preview->isChecked() ? PendingBlock : LatestBlock);
+	aleth()->ethereum()->setDefault(m_ui->preview->isChecked() ? PendingBlock : LatestBlock);
 	refreshAll();
 }
 
 
 //////////////////////// CHAIN AND NETPREFS /////////////////////////////////
 
-void AlethZero::on_usePrivate_triggered()
-{
-	QString pc;
-	if (ui->usePrivate->isChecked())
-	{
-		bool ok;
-		pc = QInputDialog::getText(this, "Enter Name", "Enter the name of your private chain", QLineEdit::Normal, QString("NewChain-%1").arg(time(0)), &ok);
-		if (!ok)
-		{
-			ui->usePrivate->setChecked(false);
-			return;
-		}
-	}
-	setPrivateChain(pc);
-}
-
-void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
-{
-	if (m_privateChain.id() == _private && !_forceConfigure)
-		return;
-
-	// Prep UI bits.
-	allStop();
-
-	m_privateChain.setID(_private);
-	aleth()->web3()->setNetworkPreferences(netPrefs());
-	ui->usePrivate->setChecked(!!m_privateChain);
-
-	// Rejig UI bits.
-	carryOn();
-}
-
 NetworkPreferences AlethZero::netPrefs() const
 {
-	auto listenIP = ui->listenIP->text().toStdString();
+	auto listenIP = m_ui->listenIP->text().toStdString();
 	try
 	{
 		listenIP = bi::address::from_string(listenIP).to_string();
@@ -516,7 +457,7 @@ NetworkPreferences AlethZero::netPrefs() const
 		listenIP.clear();
 	}
 
-	auto publicIP = ui->forcePublicIP->text().toStdString();
+	auto publicIP = m_ui->forcePublicIP->text().toStdString();
 	try
 	{
 		publicIP = bi::address::from_string(publicIP).to_string();
@@ -529,11 +470,11 @@ NetworkPreferences AlethZero::netPrefs() const
 	NetworkPreferences ret;
 
 	if (isPublicAddress(publicIP))
-		ret = NetworkPreferences(publicIP, listenIP, ui->port->value(), ui->upnp->isChecked());
+		ret = NetworkPreferences(publicIP, listenIP, m_ui->port->value(), m_ui->upnp->isChecked());
 	else
-		ret = NetworkPreferences(listenIP, ui->port->value(), ui->upnp->isChecked());
+		ret = NetworkPreferences(listenIP, m_ui->port->value(), m_ui->upnp->isChecked());
 
-	ret.discovery = !m_privateChain && !ui->hermitMode->isChecked();
+	ret.discovery = !CanonBlockChain<Ethash>::isNonStandard() && !m_ui->hermitMode->isChecked();
 	ret.pin = !ret.discovery;
 
 	return ret;
@@ -544,14 +485,14 @@ NetworkPreferences AlethZero::netPrefs() const
 
 void AlethZero::on_idealPeers_valueChanged(int)
 {
-	aleth()->web3()->setIdealPeerCount(ui->idealPeers->value());
+	aleth()->web3()->setIdealPeerCount(m_ui->idealPeers->value());
 }
 
 void AlethZero::on_go_triggered()
 {
-	if (!ui->net->isChecked())
+	if (!m_ui->net->isChecked())
 	{
-		ui->net->setChecked(true);
+		m_ui->net->setChecked(true);
 		on_net_triggered();
 	}
 	for (auto const& i: Host::pocHosts())
@@ -560,21 +501,21 @@ void AlethZero::on_go_triggered()
 
 void AlethZero::on_net_triggered()
 {
-	ui->port->setEnabled(!ui->net->isChecked());
-	ui->clientName->setEnabled(!ui->net->isChecked());
-	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", ui->clientName->text().toStdString()));
-	if (ui->net->isChecked())
+	m_ui->port->setEnabled(!m_ui->net->isChecked());
+	m_ui->clientName->setEnabled(!m_ui->net->isChecked());
+	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", m_ui->clientName->text().toStdString()));
+	if (m_ui->net->isChecked())
 	{
-		aleth()->web3()->setIdealPeerCount(ui->idealPeers->value());
-		aleth()->web3()->setNetworkPreferences(netPrefs(), ui->dropPeers->isChecked());
+		aleth()->web3()->setIdealPeerCount(m_ui->idealPeers->value());
+		aleth()->web3()->setNetworkPreferences(netPrefs(), m_ui->dropPeers->isChecked());
 		aleth()->ethereum()->setNetworkId((h256)(u256)(int)c_network);
 		aleth()->web3()->startNetwork();
-		ui->downloadView->setAleth(aleth());
-		ui->enode->setText(QString::fromStdString(aleth()->web3()->enode()));
+		m_ui->downloadView->setAleth(aleth());
+		m_ui->enode->setText(QString::fromStdString(aleth()->web3()->enode()));
 	}
 	else
 	{
-		ui->downloadView->setAleth(nullptr);
+		m_ui->downloadView->setAleth(nullptr);
 		writeSettings();
 		aleth()->web3()->stopNetwork();
 	}
@@ -582,9 +523,9 @@ void AlethZero::on_net_triggered()
 
 void AlethZero::on_connect_triggered()
 {
-	if (!ui->net->isChecked())
+	if (!m_ui->net->isChecked())
 	{
-		ui->net->setChecked(true);
+		m_ui->net->setChecked(true);
 		on_net_triggered();
 	}
 
@@ -608,7 +549,7 @@ void AlethZero::on_connect_triggered()
 
 void AlethZero::on_ourAccounts_doubleClicked()
 {
-	auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
+	auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 	auto h = Address((byte const*)hba.data(), Address::ConstructFromPointer);
 	qApp->clipboard()->setText(QString::fromStdString(ICAP(h).encoded()) + " (" + QString::fromStdString(h.hex()) + ")");
 }
@@ -621,9 +562,9 @@ void AlethZero::on_ourAccounts_itemClicked(QListWidgetItem* _i)
 
 void AlethZero::on_exportKey_triggered()
 {
-	if (ui->ourAccounts->currentRow() >= 0)
+	if (m_ui->ourAccounts->currentRow() >= 0)
 	{
-		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
+		auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
 		Secret s = aleth()->retrieveSecret(h);
 		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(aleth()->toReadable(h) + " is:\n" + s.makeInsecure().hex()));
@@ -632,9 +573,9 @@ void AlethZero::on_exportKey_triggered()
 
 void AlethZero::on_killAccount_triggered()
 {
-	if (ui->ourAccounts->currentRow() >= 0)
+	if (m_ui->ourAccounts->currentRow() >= 0)
 	{
-		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
+		auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
 		QString s = QInputDialog::getText(this, QString::fromStdString("Kill Account " + aleth()->keyManager().accountName(h) + "?!"),
 			QString::fromStdString("Account " + aleth()->keyManager().accountName(h) + " (" + aleth()->toReadable(h) + ") has " + formatBalance(aleth()->ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
@@ -653,9 +594,9 @@ void AlethZero::on_killAccount_triggered()
 
 void AlethZero::on_reencryptKey_triggered()
 {
-	if (ui->ourAccounts->currentRow() >= 0)
+	if (m_ui->ourAccounts->currentRow() >= 0)
 	{
-		auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
+		auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
 		Address a((byte const*)hba.data(), Address::ConstructFromPointer);
 		QStringList kdfs = {"PBKDF2-SHA256", "Scrypt"};
 		bool ok = true;

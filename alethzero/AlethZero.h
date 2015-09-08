@@ -70,26 +70,6 @@ namespace zero
 
 class WebThreeServer;
 
-class PrivateChainManager: public QObject
-{
-	Q_OBJECT
-
-public:
-	PrivateChainManager(AlethFace* _aleth): m_aleth(_aleth) {}
-
-	explicit operator bool() const { return !m_id.isEmpty(); }
-
-	QString id() const { return m_id; }
-	void setID(QString _id);
-
-signals:
-	void changed(QString _id);
-
-private:
-	AlethFace* m_aleth;
-	QString m_id;	// TODO: move into Aleth.
-};
-
 class AlethZero: public ZeroFace
 {
 	Q_OBJECT
@@ -123,8 +103,6 @@ private slots:
 	void on_connect_triggered();
 	void on_idealPeers_valueChanged(int);
 
-	// Mining
-
 	// View
 	void on_refresh_triggered();
 	void on_preview_triggered();
@@ -134,13 +112,10 @@ private slots:
 	void on_reencryptKey_triggered();
 	void on_reencryptAll_triggered();
 	void on_exportKey_triggered();
-
-	// Stuff concerning the blocks/transactions/accounts panels
 	void on_ourAccounts_itemClicked(QListWidgetItem* _i);
 	void on_ourAccounts_doubleClicked();
 
 	// Special (debug) stuff
-	void on_usePrivate_triggered();
 	void on_confirm_triggered();
 
 	void refreshAll();
@@ -158,11 +133,8 @@ private:
 
 	p2p::NetworkPreferences netPrefs() const;
 
-	void updateFee();
 	void readSettings(bool _skipGeometry = false, bool _onlyGeometry = false);
 	void writeSettings();
-
-	void setPrivateChain(QString const& _private, bool _forceConfigure = false);
 
 	void installWatches();
 
@@ -173,13 +145,12 @@ private:
 
 	std::string getPassword(std::string const& _title, std::string const& _for, std::string* _hint = nullptr, bool* _ok = nullptr);
 
-	std::unique_ptr<Ui::Main> ui;
+	std::unique_ptr<Ui::Main> m_ui;
 
 	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;	// TODO: move into Aleth, eventually.
 	std::unique_ptr<WebThreeServer> m_server;	// TODO: move into Aleth, eventually.
 
 	Aleth m_aleth;
-	PrivateChainManager m_privateChain;
 
 	Connect m_connect;
 };
