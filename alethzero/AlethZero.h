@@ -140,15 +140,8 @@ private slots:
 	void on_ourAccounts_doubleClicked();
 
 	// Special (debug) stuff
-	void on_killBlockchain_triggered();
 	void on_clearPending_triggered();
-	void on_injectBlock_triggered();
 	void on_usePrivate_triggered();
-	void on_retryUnknown_triggered();
-	void on_vmInterpreter_triggered();
-	void on_vmJIT_triggered();
-	void on_vmSmart_triggered();
-	void on_rewindChain_triggered();
 	void on_confirm_triggered();
 
 	// Config
@@ -159,6 +152,9 @@ private slots:
 	void onBeneficiaryChanged();
 
 private:
+	void allStop() override;
+	void carryOn() override;
+
 	template <class P> void loadPlugin() { Plugin* p = new P(this); initPlugin(p); }
 	void initPlugin(Plugin* _p);
 	void finalisePlugin(Plugin* _p);
@@ -182,7 +178,6 @@ private:
 	std::string getPassword(std::string const& _title, std::string const& _for, std::string* _hint = nullptr, bool* _ok = nullptr);
 
 	std::unique_ptr<Ui::Main> ui;
-	QActionGroup* m_vmSelectionGroup = nullptr;
 
 	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;	// TODO: move into Aleth, eventually.
 	std::unique_ptr<WebThreeServer> m_server;	// TODO: move into Aleth, eventually.

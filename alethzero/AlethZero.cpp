@@ -20,47 +20,20 @@
  */
 
 #include <fstream>
-
 // Make sure boost/asio.hpp is included before windows.h.
 #include <boost/asio.hpp>
-
 #include "AlethZero.h"
-
 #pragma GCC diagnostic ignored "-Wpedantic"
 //pragma GCC diagnostic ignored "-Werror=pedantic"
-#include <QtNetwork/QNetworkReply>
-#include <QtWidgets/QFileDialog>
-#include <QtWidgets/QDialog>
+#include <QtCore/QtCore>
+#include <QtGui/QClipboard>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QListWidgetItem>
-#include <QtWidgets/QAbstractButton>
-#include <QtGui/QClipboard>
-#include <QtCore/QtCore>
-#include <boost/algorithm/string.hpp>
-#include <test/JsonSpiritHeaders.h>
-#ifndef _MSC_VER
-#include <libserpent/funcs.h>
-#include <libserpent/util.h>
-#endif
-#include <libdevcore/FileSystem.h>
-#include <libethcore/CommonJS.h>
 #include <libethcore/EthashAux.h>
 #include <libethcore/ICAP.h>
-#include <liblll/Compiler.h>
-#include <liblll/CodeFragment.h>
-#include <libsolidity/Scanner.h>
-#include <libsolidity/AST.h>
-#include <libsolidity/SourceReferenceFormatter.h>
-#include <libevm/VM.h>
-#include <libevm/VMFactory.h>
-#include <libethereum/CanonBlockChain.h>
-#include <libethereum/ExtVM.h>
 #include <libethereum/Client.h>
-#include <libethereum/Utility.h>
 #include <libethereum/EthereumHost.h>
-#include <libethereum/DownloadMan.h>
-#include <libweb3jsonrpc/WebThreeStubServer.h>
 #include <libweb3jsonrpc/SafeHttpServer.h>
 #include <libaleth/SyncView.h>
 #include "AccountHolder.h"
@@ -73,7 +46,6 @@ using namespace aleth;
 using namespace zero;
 using namespace p2p;
 using namespace eth;
-namespace js = json_spirit;
 
 void PrivateChainManager::setID(QString _id)
 {
@@ -128,21 +100,6 @@ AlethZero::AlethZero():
 	m_httpConnector.reset(new dev::SafeHttpServer(SensibleHttpPort, "", "", dev::SensibleHttpThreads));
 	m_server.reset(new WebThreeServer(*m_httpConnector, this));
 	m_server->StartListening();
-
-	m_vmSelectionGroup = new QActionGroup{ui->menuConfig};
-	m_vmSelectionGroup->addAction(ui->vmInterpreter);
-	m_vmSelectionGroup->addAction(ui->vmJIT);
-	m_vmSelectionGroup->addAction(ui->vmSmart);
-	m_vmSelectionGroup->setExclusive(true);
-
-#if ETH_EVMJIT
-	ui->vmSmart->setChecked(true); // Default when JIT enabled
-	on_vmSmart_triggered();
-#else
-	ui->vmInterpreter->setChecked(true);
-	ui->vmJIT->setEnabled(false);
-	ui->vmSmart->setEnabled(false);
-#endif
 
 	readSettings(true, false);
 	installWatches();
@@ -199,18 +156,14 @@ void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
 		return;
 
 	// Prep UI bits.
-	writeSettings();
-	aleth()->ethereum()->stopMining();
-	ui->net->setChecked(false);
+	allStop();
 
 	m_privateChain.setID(_private);
-
-	// Rejig UI bits.
 	aleth()->web3()->setNetworkPreferences(netPrefs());
 	ui->usePrivate->setChecked(!!m_privateChain);
-	readSettings(true);
-	installWatches();
-	refreshAll();
+
+	// Rejig UI bits.
+	carryOn();
 }
 
 void AlethZero::on_sentinel_triggered()
@@ -324,8 +277,6 @@ void AlethZero::writeSettings()
 	s.setValue("listenIP", ui->listenIP->text());
 	s.setValue("port", ui->port->value());
 	s.setValue("privateChain", m_privateChain.id());
-	if (auto vm = m_vmSelectionGroup->checkedAction())
-		s.setValue("vm", vm->text());
 
 	s.setValue("geometry", saveGeometry());
 	s.setValue("windowState", saveState());
@@ -359,28 +310,6 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	ui->listenIP->setText(s.value("listenIP", "").toString());
 	ui->port->setValue(s.value("port", ui->port->value()).toInt());
 	setPrivateChain(s.value("privateChain", "").toString());
-
-#if ETH_EVMJIT // We care only if JIT is enabled. Otherwise it can cause misconfiguration.
-	auto vmName = s.value("vm").toString();
-	if (!vmName.isEmpty())
-	{
-		if (vmName == ui->vmInterpreter->text())
-		{
-			ui->vmInterpreter->setChecked(true);
-			on_vmInterpreter_triggered();
-		}
-		else if (vmName == ui->vmJIT->text())
-		{
-			ui->vmJIT->setChecked(true);
-			on_vmJIT_triggered();
-		}
-		else if (vmName == ui->vmSmart->text())
-		{
-			ui->vmSmart->setChecked(true);
-			on_vmSmart_triggered();
-		}
-	}
-#endif
 }
 
 std::string AlethZero::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
@@ -437,21 +366,6 @@ void AlethZero::on_usePrivate_triggered()
 		}
 	}
 	setPrivateChain(pc);
-}
-
-void AlethZero::on_vmInterpreter_triggered() { VMFactory::setKind(VMKind::Interpreter); }
-void AlethZero::on_vmJIT_triggered() { VMFactory::setKind(VMKind::JIT); }
-void AlethZero::on_vmSmart_triggered() { VMFactory::setKind(VMKind::Smart); }
-
-void AlethZero::on_rewindChain_triggered()
-{
-	bool ok;
-	int n = QInputDialog::getInt(this, "Rewind Chain", "Enter the number of the new chain head.", aleth()->ethereum()->number() * 9 / 10, 1, aleth()->ethereum()->number(), 1, &ok);
-	if (ok)
-	{
-		aleth()->ethereum()->rewind(n);
-		refreshAll();
-	}
 }
 
 void AlethZero::on_confirm_triggered()
@@ -643,24 +557,6 @@ void Main::refreshCache()
 	ui->cacheUsage->setText(t);
 }
 */
-void AlethZero::on_injectBlock_triggered()
-{
-	QString s = QInputDialog::getText(this, "Inject Block", "Enter block dump in hex");
-	try
-	{
-		bytes b = fromHex(s.toStdString(), WhenError::Throw);
-		aleth()->ethereum()->injectBlock(b);
-	}
-	catch (BadHexCharacter& _e)
-	{
-		cwarn << "invalid hex character, transaction rejected";
-		cwarn << boost::diagnostic_information(_e);
-	}
-	catch (...)
-	{
-		cwarn << "block rejected";
-	}
-}
 
 void AlethZero::on_idealPeers_valueChanged(int)
 {
@@ -682,28 +578,21 @@ void AlethZero::on_ourAccounts_doubleClicked()
 
 void AlethZero::on_clearPending_triggered()
 {
-	writeSettings();
-	aleth()->ethereum()->stopMining();
-	ui->net->setChecked(false);
-	aleth()->web3()->stopNetwork();
+	allStop();
 	aleth()->ethereum()->clearPending();
-	readSettings(true);
-	installWatches();
-	refreshAll();
+	carryOn();
 }
 
-void AlethZero::on_retryUnknown_triggered()
-{
-	aleth()->ethereum()->retryUnknown();
-}
-
-void AlethZero::on_killBlockchain_triggered()
+void AlethZero::allStop()
 {
 	writeSettings();
 	aleth()->ethereum()->stopMining();
 	ui->net->setChecked(false);
 	aleth()->web3()->stopNetwork();
-	aleth()->ethereum()->killChain();
+}
+
+void AlethZero::carryOn()
+{
 	readSettings(true);
 	installWatches();
 	refreshAll();

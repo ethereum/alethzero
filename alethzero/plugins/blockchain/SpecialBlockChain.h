@@ -14,45 +14,34 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file AlethOne.cpp
+/** @file SpecialBlockChain.h
  * @author Gav Wood <i@gavwood.com>
- * @date 2014
+ * @date 2015
  */
 
 #pragma once
 
-#include <QDialog>
-#include <libaleth/Aleth.h>
-#include "Slave.h"
-
-namespace Ui {
-class AlethOne;
-}
+#include "Plugin.h"
 
 namespace dev
 {
 namespace aleth
 {
-namespace one
+namespace zero
 {
 
-class AlethOne: public QDialog
+class SpecialBlockChain: public QObject, public Plugin
 {
 	Q_OBJECT
 
 public:
-	AlethOne();
-	~AlethOne();
+	SpecialBlockChain(ZeroFace* _z);
 
 private slots:
-	void on_send_clicked();
-
-private:
-	void log(QString _s);
-
-	Ui::AlethOne* m_ui;
-	Aleth m_aleth;
-	Slave m_slave;
+	void rewind();
+	void inject();
+	void retryUnknown();
+	void kill();
 };
 
 }

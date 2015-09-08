@@ -58,7 +58,9 @@ public:
 	QDockWidget* dock(Qt::DockWidgetArea _area = Qt::RightDockWidgetArea, QString _title = QString());
 	void addToDock(Qt::DockWidgetArea _area, QDockWidget* _dockwidget, Qt::Orientation _orientation);
 	void addAction(QAction* _a);
+	QMenu* ensureMenu(QString _menuName, QString _menuTitle);
 	QAction* addMenuItem(QString _name, QString _menuName, bool _separate = false, QString _menuTitle = QString());
+	QAction* addSeparator(QString _name, QString _menuName, QString _menuTitle = QString());
 
 	AlethFace* aleth() const;
 	dev::WebThreeDirect* web3() const;

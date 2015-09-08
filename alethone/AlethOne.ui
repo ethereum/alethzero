@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>AlethOne</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="alethone.qrc">
+    <normaloff>:/AlethOne.png</normaloff>:/AlethOne.png</iconset>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <widget class="QSplitter" name="splitter">
@@ -245,7 +249,9 @@ font-size: 9pt</string>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="alethone.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>noMining</sender>

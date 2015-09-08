@@ -49,14 +49,31 @@ AlethOne::AlethOne():
 	g->setExclusive(true);
 	auto nom = findChild<QToolButton*>("noMining");
 	g->addButton(nom);
-	connect(nom, &QToolButton::clicked, [=](){ m_aleth.ethereum()->stopMining(); });
+	connect(nom, &QToolButton::clicked, [=]()
+	{
+		m_aleth.ethereum()->stopMining();
+		m_slave.stop();
+	});
 	auto translate = [](string s) { return s == "cpu" ? "CPU" : s == "opencl" ? "OpenCL" : s + " Miner"; };
 	for (auto i: m_aleth.ethereum()->sealers())
 	{
 		QToolButton* a = new QToolButton(this);
 		a->setText(QString::fromStdString(translate(i)));
 		a->setCheckable(true);
-		connect(a, &QToolButton::clicked, [=](){ m_aleth.ethereum()->setSealer(i); m_aleth.ethereum()->startMining(); });
+		connect(a, &QToolButton::clicked, [=]()
+		{
+			if (m_ui->local->isChecked())
+			{
+				m_aleth.ethereum()->setSealer(i);
+				m_aleth.ethereum()->startMining();
+			}
+			else if (m_ui->pool->isChecked())
+			{
+				m_slave.setURL(m_ui->url->text());
+				m_slave.setSealer(QString::fromStdString(i));
+				m_slave.start();
+			}
+		});
 		g->addButton(a);
 		m_ui->mine->addWidget(a);
 	}

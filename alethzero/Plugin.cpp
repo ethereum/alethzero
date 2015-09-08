@@ -77,18 +77,32 @@ void Plugin::addAction(QAction* _a)
 	zero()->addAction(_a);
 }
 
-QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep, QString _menuTitle)
+QMenu* Plugin::ensureMenu(QString _menuName, QString _menuTitle)
 {
-	QAction* a = new QAction(_n, zero());
 	QMenu* m = zero()->findChild<QMenu*>(_menuName);
 	if (!m)
 	{
 		m = zero()->menuBar()->addMenu(_menuTitle);
 		m->setObjectName(_menuName);
 	}
-	else if (_sep)
+	return m;
+}
+
+QAction* Plugin::addMenuItem(QString _n, QString _menuName, bool _sep, QString _menuTitle)
+{
+	QMenu* m = ensureMenu(_menuName, _menuTitle);
+	if (_sep)
 		m->addSeparator();
+	QAction* a = new QAction(_n, zero());
 	m->addAction(a);
+	return a;
+}
+
+QAction* Plugin::addSeparator(QString _n, QString _menuName, QString _menuTitle)
+{
+	QMenu* m = ensureMenu(_menuName, _menuTitle);
+	QAction* a = m->addSeparator();
+	a->setText(_n);
 	return a;
 }
 

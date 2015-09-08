@@ -14,45 +14,36 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file AlethOne.cpp
+/** @file EVMJIT.h
  * @author Gav Wood <i@gavwood.com>
- * @date 2014
+ * @date 2015
  */
 
 #pragma once
 
-#include <QDialog>
-#include <libaleth/Aleth.h>
-#include "Slave.h"
+#include "Plugin.h"
 
-namespace Ui {
-class AlethOne;
-}
+class QActionGroup;
 
 namespace dev
 {
 namespace aleth
 {
-namespace one
+namespace zero
 {
 
-class AlethOne: public QDialog
+class EVMJIT: public QObject, public Plugin
 {
 	Q_OBJECT
 
 public:
-	AlethOne();
-	~AlethOne();
-
-private slots:
-	void on_send_clicked();
+	EVMJIT(ZeroFace* _z);
 
 private:
-	void log(QString _s);
+	void readSettings(QSettings const&) override;
+	void writeSettings(QSettings&) override;
 
-	Ui::AlethOne* m_ui;
-	Aleth m_aleth;
-	Slave m_slave;
+	QActionGroup* m_group = nullptr;
 };
 
 }

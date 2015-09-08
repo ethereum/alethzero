@@ -70,7 +70,6 @@ private:
 	void fillContracts();
 	void generateJSON();
 
-private:
 	AlethFace* aleth() const;
 
 	ZeroFace* m_main;
