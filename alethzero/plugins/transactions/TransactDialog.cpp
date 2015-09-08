@@ -233,14 +233,14 @@ void TransactDialog::on_copyUnsigned_clicked()
 static string getFunctionHashes(dev::solidity::CompilerStack const& _compiler, string const& _contractName)
 {
 	string ret = "";
-	auto const& contract = _compiler.getContractDefinition(_contractName);
-	auto interfaceFunctions = contract.getInterfaceFunctions();
+	auto const& contract = _compiler.contractDefinition(_contractName);
+	auto interfaceFunctions = contract.interfaceFunctions();
 
 	for (auto const& it: interfaceFunctions)
 	{
 		ret += it.first.abridged();
 		ret += " :";
-		ret += it.second->getDeclaration().getName() + "\n";
+		ret += it.second->declaration().name() + "\n";
 	}
 	return ret;
 }
@@ -269,8 +269,8 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 //				compiler.addSources(dev::solidity::StandardSources);
 			data = compiler.compile(_user, _opt);
 			solidity = "<h4>Solidity</h4>";
-			solidity += "<pre>var " + compiler.defaultContractName() + " = web3.eth.contract(" + QString::fromStdString(compiler.getInterface()).replace(QRegExp("\\s"), "").toHtmlEscaped().toStdString() + ");</pre>";
-			solidity += "<pre>" + QString::fromStdString(compiler.getSolidityInterface()).toHtmlEscaped().toStdString() + "</pre>";
+			solidity += "<pre>var " + compiler.defaultContractName() + " = web3.eth.contract(" + QString::fromStdString(compiler.interface()).replace(QRegExp("\\s"), "").toHtmlEscaped().toStdString() + ");</pre>";
+			solidity += "<pre>" + QString::fromStdString(compiler.solidityInterface()).toHtmlEscaped().toStdString() + "</pre>";
 			solidity += "<pre>" + QString::fromStdString(getFunctionHashes(compiler, "")).toHtmlEscaped().toStdString() + "</pre>";
 		}
 		catch (dev::Exception const& exception)
@@ -585,10 +585,10 @@ void TransactDialog::on_send_clicked()
 			{
 				dev::solidity::CompilerStack compiler(true);
 				m_data = compiler.compile(src, m_ui->optimize->isChecked());
-				for (string const& s: compiler.getContractNames())
+				for (string const& s: compiler.contractNames())
 				{
-					h256 contractHash = compiler.getContractCodeHash(s);
-					m_natSpecDB->add(contractHash, compiler.getMetadata(s, dev::solidity::DocumentationType::NatspecUser));
+					h256 contractHash = compiler.contractCodeHash(s);
+					m_natSpecDB->add(contractHash, compiler.metadata(s, dev::solidity::DocumentationType::NatspecUser));
 				}
 			}
 			catch (...) {}
