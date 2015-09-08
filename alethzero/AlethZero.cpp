@@ -57,6 +57,7 @@ void PrivateChainManager::setID(QString _id)
 		CanonBlockChain<Ethash>::forceGenesisExtraData(m_id.isEmpty() ? bytes() : sha3(m_id.toStdString()).asBytes());
 		CanonBlockChain<Ethash>::forceGenesisDifficulty(m_id.isEmpty() ? u256() : c_minimumDifficulty);
 		CanonBlockChain<Ethash>::forceGenesisGasLimit(m_id.isEmpty() ? u256() : u256(1) << 32);
+
 		m_aleth->web3()->stopNetwork();
 		m_aleth->ethereum()->setNetworkId(sha3(m_id.toStdString()));
 		m_aleth->ethereum()->reopenChain();
