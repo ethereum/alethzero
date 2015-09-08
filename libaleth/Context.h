@@ -28,7 +28,7 @@
 namespace dev
 {
 
-namespace eth { class StateDiff; }
+namespace eth { struct StateDiff; }
 
 namespace aleth
 {
