@@ -32,6 +32,13 @@ NatSpecFace::~NatSpecFace()
 {
 }
 
+string dev::niceVersion(string const& _v)
+{
+	if (_v.substr(1, 4) == ".9.9" && _v.size() >= 6)
+		return toString(stoi(_v.substr(0, 1)) + 1) + ".0rc" + _v.substr(5);
+	return _v;
+}
+
 string dev::aleth::fromRaw(h256 const& _n, unsigned* _inc)
 {
 	if (_n)

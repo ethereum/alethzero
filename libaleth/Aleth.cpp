@@ -68,7 +68,7 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 	m_nodeName = _nodeName;
 
 	// Get options
-	std::string m_dbPath = getDataDir();
+	m_dbPath = getDataDir();
 	for (int i = 1; i < qApp->arguments().size(); ++i)
 	{
 		QString arg = qApp->arguments()[i];
@@ -104,7 +104,7 @@ bool Aleth::open(OnInit _connect)
 
 		try
 		{
-			m_webThree.reset(new WebThreeDirect(string("AlethZero/v") + dev::Version + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+			m_webThree.reset(new WebThreeDirect(m_clientVersion + "/v" + niceVersion(dev::Version) + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
 		}
 		catch (DatabaseAlreadyOpen&)
 		{

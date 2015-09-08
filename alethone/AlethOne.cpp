@@ -38,13 +38,6 @@ using namespace eth;
 using namespace aleth;
 using namespace one;
 
-string niceVersion(string const& _v)
-{
-	if (_v.substr(1, 4) == ".9.9" && _v.size() >= 6)
-		return toString(stoi(_v.substr(0, 1)) + 1) + ".0rc" + _v.substr(5);
-	return _v;
-}
-
 AlethOne::AlethOne():
 	m_ui(new Ui::AlethOne)
 {
@@ -104,34 +97,31 @@ AlethOne::AlethOne():
 	{
 		QTimer* t = new QTimer(this);
 		connect(t, &QTimer::timeout, [=](){
-			if (m_ui->noMining->isChecked())
+			m_ui->peers->setValue(m_aleth ? m_aleth.web3()->peerCount() : 0);
+			bool s = m_aleth ? m_aleth.ethereum()->isSyncing() : false;
+			m_ui->stack->setCurrentIndex(s ? 0 : 1);
+			if (!s)
 			{
-				m_ui->hashrate->setText("/");
-				m_ui->underHashrate->setText("Not mining");
-				m_ui->overHashrate->setText("Off");
-			}
-			else
-			{
-				bool s;
-				bool m;
-				u256 r;
-				if (m_aleth)
+				if (m_ui->noMining->isChecked())
 				{
-					m_ui->peers->setValue(m_aleth.web3()->peerCount());
-					s = m_aleth.ethereum()->isSyncing();
-					m = m_aleth.ethereum()->isMining();
-					r = m_aleth.ethereum()->hashrate();
+					m_ui->hashrate->setText("/");
+					m_ui->underHashrate->setText("Not mining");
+					m_ui->overHashrate->setText("Off");
 				}
 				else
 				{
-					m_ui->peers->setValue(0);
-					s = false;
-					m = m_slave.isWorking();
-					r = m ? m_slave.hashrate() : 0;
-				}
-				m_ui->stack->setCurrentIndex(s ? 0 : 1);
-				if (!s)
-				{
+					bool m;
+					u256 r;
+					if (m_aleth)
+					{
+						m = m_aleth.ethereum()->isMining();
+						r = m_aleth.ethereum()->hashrate();
+					}
+					else
+					{
+						m = m_slave.isWorking();
+						r = m ? m_slave.hashrate() : 0;
+					}
 					m_ui->overHashrate->setText(translate(m_aleth ? QString::fromStdString(m_aleth.ethereum()->sealer()) : m_slave.sealer()));
 					if (r > 0)
 					{

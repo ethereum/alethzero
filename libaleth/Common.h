@@ -32,6 +32,9 @@ class QSpinBox;
 namespace dev
 {
 
+// TODO: move to libdevcore when you fancy a big recompile.
+std::string niceVersion(std::string const& _v);
+
 namespace aleth
 {
 
