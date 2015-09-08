@@ -21,7 +21,7 @@
 
 #include "SendDialog.h"
 #include <libethereum/Client.h>
-#include <libaleth/AlethFace.h>
+#include "AlethFace.h"
 #include "ui_SendDialog.h"
 using namespace std;
 using namespace dev;

@@ -23,7 +23,7 @@
 #include <QtWidgets>
 #include <QtCore>
 #include <libethereum/DownloadMan.h>
-#include <libaleth/AlethFace.h>
+#include "AlethFace.h"
 #include "Grapher.h"
 using namespace std;
 using namespace dev;
