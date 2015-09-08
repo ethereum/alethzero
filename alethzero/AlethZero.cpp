@@ -39,6 +39,8 @@
 #include "AccountHolder.h"
 #include "WebThreeServer.h"
 #include "BuildInfo.h"
+#include "SettingsDialog.h"
+#include "NetworkSettings.h"
 #include "ui_AlethZero.h"
 using namespace std;
 using namespace dev;
@@ -55,8 +57,8 @@ void PrivateChainManager::setID(QString _id)
 		CanonBlockChain<Ethash>::forceGenesisExtraData(m_id.isEmpty() ? bytes() : sha3(m_id.toStdString()).asBytes());
 		CanonBlockChain<Ethash>::forceGenesisDifficulty(m_id.isEmpty() ? u256() : c_minimumDifficulty);
 		CanonBlockChain<Ethash>::forceGenesisGasLimit(m_id.isEmpty() ? u256() : u256(1) << 32);
-
 		m_aleth->web3()->stopNetwork();
+		m_aleth->ethereum()->setNetworkId(sha3(m_id.toStdString()));
 		m_aleth->ethereum()->reopenChain();
 		emit changed(_id);
 	}
@@ -101,6 +103,7 @@ AlethZero::AlethZero():
 	m_server.reset(new WebThreeServer(*m_httpConnector, this));
 	m_server->StartListening();
 
+	createSettingsPages();
 	readSettings(true, false);
 	installWatches();
 
@@ -150,6 +153,17 @@ AlethZero::~AlethZero()
 	killPlugins();
 }
 
+void AlethZero::createSettingsPages()
+{
+	m_settingsDialog = new SettingsDialog(this);
+	m_settingsDialog->addPage(0, "Network", [this](){
+		NetworkSettingsPage* network = new NetworkSettingsPage();
+		connect(m_settingsDialog, &SettingsDialog::displayed, [this, network]() { network->setPrefs(netPrefs()); });
+		connect(m_settingsDialog, &SettingsDialog::applied, [this, network]() { setNetPrefs(network->prefs()); });
+		return network;
+	});
+}
+
 void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
 {
 	if (m_privateChain.id() == _private && !_forceConfigure)
@@ -159,7 +173,6 @@ void AlethZero::setPrivateChain(QString const& _private, bool _forceConfigure)
 	allStop();
 
 	m_privateChain.setID(_private);
-	aleth()->web3()->setNetworkPreferences(netPrefs());
 	ui->usePrivate->setChecked(!!m_privateChain);
 
 	// Rejig UI bits.
@@ -172,41 +185,6 @@ void AlethZero::on_sentinel_triggered()
 	QString sentinel = QInputDialog::getText(nullptr, "Enter sentinel address", "Enter the sentinel address for bad block reporting (e.g. http://badblockserver.com:8080). Enter nothing to disable.", QLineEdit::Normal, QString::fromStdString(aleth()->ethereum()->sentinel()), &ok);
 	if (ok)
 		aleth()->ethereum()->setSentinel(sentinel.toStdString());
-}
-
-NetworkPreferences AlethZero::netPrefs() const
-{
-	auto listenIP = ui->listenIP->text().toStdString();
-	try
-	{
-		listenIP = bi::address::from_string(listenIP).to_string();
-	}
-	catch (...)
-	{
-		listenIP.clear();
-	}
-
-	auto publicIP = ui->forcePublicIP->text().toStdString();
-	try
-	{
-		publicIP = bi::address::from_string(publicIP).to_string();
-	}
-	catch (...)
-	{
-		publicIP.clear();
-	}
-
-	NetworkPreferences ret;
-
-	if (isPublicAddress(publicIP))
-		ret = NetworkPreferences(publicIP, listenIP, ui->port->value(), ui->upnp->isChecked());
-	else
-		ret = NetworkPreferences(listenIP, ui->port->value(), ui->upnp->isChecked());
-
-	ret.discovery = !m_privateChain && !ui->hermitMode->isChecked();
-	ret.pin = !ret.discovery;
-
-	return ret;
 }
 
 void AlethZero::onKeysChanged()
@@ -266,16 +244,11 @@ void AlethZero::writeSettings()
 
 	s.setValue("upnp", ui->upnp->isChecked());
 	s.setValue("hermitMode", ui->hermitMode->isChecked());
-	s.setValue("forceAddress", ui->forcePublicIP->text());
 	s.setValue("forceMining", ui->forceMining->isChecked());
 	s.setValue("turboMining", ui->turboMining->isChecked());
 	s.setValue("paranoia", ui->paranoia->isChecked());
 	s.setValue("natSpec", ui->natSpec->isChecked());
 	s.setValue("showAll", ui->showAll->isChecked());
-	s.setValue("clientName", ui->clientName->text());
-	s.setValue("idealPeers", ui->idealPeers->value());
-	s.setValue("listenIP", ui->listenIP->text());
-	s.setValue("port", ui->port->value());
 	s.setValue("privateChain", m_privateChain.id());
 
 	s.setValue("geometry", saveGeometry());
@@ -298,19 +271,34 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 	});
 
 	ui->upnp->setChecked(s.value("upnp", true).toBool());
-	ui->forcePublicIP->setText(s.value("forceAddress", "").toString());
 	ui->dropPeers->setChecked(false);
 	ui->hermitMode->setChecked(s.value("hermitMode", false).toBool());
 	ui->natSpec->setChecked(s.value("natSpec", true).toBool());
 	ui->showAll->setChecked(s.value("showAll", false).toBool());
-	ui->clientName->setText(s.value("clientName", "").toString());
-	if (ui->clientName->text().isEmpty())
-		ui->clientName->setText(QInputDialog::getText(nullptr, "Enter identity", "Enter a name that will identify you on the peer network"));
-	ui->idealPeers->setValue(s.value("idealPeers", ui->idealPeers->value()).toInt());
-	ui->listenIP->setText(s.value("listenIP", "").toString());
-	ui->port->setValue(s.value("port", ui->port->value()).toInt());
-	setPrivateChain(s.value("privateChain", "").toString());
+	NetworkSettings netSettings = netPrefs();
+	if (netSettings.clientName.isEmpty())
+		netSettings.clientName = QInputDialog::getText(nullptr, "Enter identity", "Enter a name that will identify you on the peer network");
+	setNetPrefs(netSettings);
 }
+
+void AlethZero::setNetPrefs(NetworkSettings const& _settings)
+{
+	aleth()->web3()->setIdealPeerCount(_settings.idealPeers);
+	aleth()->web3()->setNetworkPreferences(_settings.p2pSettings, _settings.dropPeers);
+	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", _settings.clientName.toStdString()));
+	setPrivateChain(_settings.privateChain ? _settings.privateChainId : "");
+	QSettings s("ethereum", "alethzero");
+	_settings.write(s);
+}
+
+NetworkSettings AlethZero::netPrefs() const
+{
+	NetworkSettings settings;
+	QSettings s("ethereum", "alethzero");
+	settings.read(s);
+	return settings;
+}
+
 
 std::string AlethZero::getPassword(std::string const& _title, std::string const& _for, std::string* _hint, bool* _ok)
 {
@@ -350,22 +338,6 @@ void AlethZero::on_exportKey_triggered()
 		Secret s = aleth()->retrieveSecret(h);
 		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(aleth()->toReadable(h) + " is:\n" + s.makeInsecure().hex()));
 	}
-}
-
-void AlethZero::on_usePrivate_triggered()
-{
-	QString pc;
-	if (ui->usePrivate->isChecked())
-	{
-		bool ok;
-		pc = QInputDialog::getText(this, "Enter Name", "Enter the name of your private chain", QLineEdit::Normal, QString("NewChain-%1").arg(time(0)), &ok);
-		if (!ok)
-		{
-			ui->usePrivate->setChecked(false);
-			return;
-		}
-	}
-	setPrivateChain(pc);
 }
 
 void AlethZero::on_confirm_triggered()
@@ -558,11 +530,6 @@ void Main::refreshCache()
 }
 */
 
-void AlethZero::on_idealPeers_valueChanged(int)
-{
-	aleth()->web3()->setIdealPeerCount(ui->idealPeers->value());
-}
-
 void AlethZero::on_ourAccounts_doubleClicked()
 {
 	auto hba = ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
@@ -600,14 +567,8 @@ void AlethZero::carryOn()
 
 void AlethZero::on_net_triggered()
 {
-	ui->port->setEnabled(!ui->net->isChecked());
-	ui->clientName->setEnabled(!ui->net->isChecked());
-	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", ui->clientName->text().toStdString()));
 	if (ui->net->isChecked())
 	{
-		aleth()->web3()->setIdealPeerCount(ui->idealPeers->value());
-		aleth()->web3()->setNetworkPreferences(netPrefs(), ui->dropPeers->isChecked());
-		aleth()->ethereum()->setNetworkId((h256)(u256)(int)c_network);
 		aleth()->web3()->startNetwork();
 		ui->downloadView->setEthereum(aleth()->ethereum());
 		ui->enode->setText(QString::fromStdString(aleth()->web3()->enode()));
@@ -742,4 +703,14 @@ void AlethZero::unloadPlugin(string const& _name)
 	shared_ptr<Plugin> p = takePlugin(_name);
 	if (p)
 		finalisePlugin(p.get());
+}
+
+void AlethZero::addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory)
+{
+	m_settingsDialog->addPage(_index, _categoryName, _pageFactory);
+}
+
+void AlethZero::on_settings_triggered()
+{
+	m_settingsDialog->exec();
 }

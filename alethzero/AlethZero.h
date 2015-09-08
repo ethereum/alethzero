@@ -48,9 +48,7 @@
 class QListWidgetItem;
 class QActionGroup;
 
-namespace Ui {
-class Main;
-}
+namespace Ui { class Main; }
 
 namespace dev
 {
@@ -69,6 +67,8 @@ namespace zero
 {
 
 class WebThreeServer;
+class SettingsDialog;
+class NetworkSettings;
 
 class PrivateChainManager: public QObject
 {
@@ -121,7 +121,6 @@ private slots:
 	void on_go_triggered();
 	void on_net_triggered();
 	void on_connect_triggered();
-	void on_idealPeers_valueChanged(int);
 
 	// Mining
 
@@ -141,10 +140,10 @@ private slots:
 
 	// Special (debug) stuff
 	void on_clearPending_triggered();
-	void on_usePrivate_triggered();
 	void on_confirm_triggered();
 
 	// Config
+	void on_settings_triggered();
 	void on_sentinel_triggered();
 
 	void refreshAll();
@@ -159,8 +158,12 @@ private:
 	void initPlugin(Plugin* _p);
 	void finalisePlugin(Plugin* _p);
 	void unloadPlugin(std::string const& _name);
+	void addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory) override;
 
-	p2p::NetworkPreferences netPrefs() const;
+	void createSettingsPages();
+
+	void setNetPrefs(NetworkSettings const& _settings);
+	NetworkSettings netPrefs() const;
 
 	void updateFee();
 	void readSettings(bool _skipGeometry = false, bool _onlyGeometry = false);
@@ -186,6 +189,8 @@ private:
 	PrivateChainManager m_privateChain;
 
 	Connect m_connect;
+
+	SettingsDialog* m_settingsDialog = nullptr;
 };
 
 }
