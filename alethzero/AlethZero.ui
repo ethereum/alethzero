@@ -115,9 +115,6 @@
     <addaction name="reencryptAll"/>
     <addaction name="reencryptKey"/>
     <addaction name="killAccount"/>
-    <addaction name="separator"/>
-    <addaction name="separator"/>
-    <addaction name="settings"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -148,6 +145,8 @@
      <string>&amp;Config</string>
     </property>
     <addaction name="sentinel"/>
+	<addaction name="separator"/>
+	<addaction name="settings"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -767,14 +766,6 @@
   <action name="rewindChain">
    <property name="text">
     <string>&amp;Rewind Chain...</string>
-   </property>
-  </action>
-  <action name="hermitMode">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Hermit Mode</string>
    </property>
   </action>
   <action name="dumpBlockState">

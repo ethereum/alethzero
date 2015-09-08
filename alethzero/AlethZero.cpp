@@ -133,8 +133,6 @@ AlethZero::AlethZero():
 		initPlugin(i.second(this));
 	}
 
-	connect(this, SIGNAL(knownAddressesChanged(AccountNamer*)), SLOT(refreshAll()));
-	connect(this, SIGNAL(addressNamesChanged(AccountNamer*)), SLOT(refreshAll()));
 	connect(&m_aleth, &AlethFace::keysChanged, [&](){ refreshBalances(); });
 
 	readSettings(false, true);
@@ -243,7 +241,6 @@ void AlethZero::writeSettings()
 	});
 
 	s.setValue("upnp", ui->upnp->isChecked());
-	s.setValue("hermitMode", ui->hermitMode->isChecked());
 	s.setValue("forceMining", ui->forceMining->isChecked());
 	s.setValue("turboMining", ui->turboMining->isChecked());
 	s.setValue("paranoia", ui->paranoia->isChecked());
@@ -272,7 +269,6 @@ void AlethZero::readSettings(bool _skipGeometry, bool _onlyGeometry)
 
 	ui->upnp->setChecked(s.value("upnp", true).toBool());
 	ui->dropPeers->setChecked(false);
-	ui->hermitMode->setChecked(s.value("hermitMode", false).toBool());
 	ui->natSpec->setChecked(s.value("natSpec", true).toBool());
 	ui->showAll->setChecked(s.value("showAll", false).toBool());
 	NetworkSettings netSettings = netPrefs();
@@ -712,5 +708,6 @@ void AlethZero::addSettingsPage(int _index, QString const& _categoryName, std::f
 
 void AlethZero::on_settings_triggered()
 {
-	m_settingsDialog->exec();
+	if (m_settingsDialog->exec() == QDialog::Accepted)
+		writeSettings();
 }

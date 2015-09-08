@@ -42,9 +42,20 @@ class Cors: public QObject, public Plugin
 public:
 	Cors(ZeroFace* _m);
 	~Cors();
+	void setDomain(QString const& _domain);
+	void readSettings(QSettings const&) override;
+	void writeSettings(QSettings&) override;
+};
 
-private slots:
-	void showDialog();
+class CorsSettingsPage: public SettingsPage
+{
+public:
+	CorsSettingsPage();
+	void setDomain(QString const& _domain);
+	QString domain() const;
+
+private:
+	Ui::Cors* m_ui;
 };
 
 }

@@ -81,6 +81,7 @@ u256 dev::aleth::fromValueUnits(QComboBox* _units, QSpinBox* _value)
 
 void dev::aleth::initUnits(QComboBox* _b)
 {
+	_b->clear();
 	for (auto n = (unsigned)units().size(); n-- != 0; )
 		_b->addItem(QString::fromStdString(units()[n].second), n);
 }

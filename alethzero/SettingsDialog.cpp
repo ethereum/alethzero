@@ -176,6 +176,8 @@ SettingsDialog::~SettingsDialog()
 int SettingsDialog::exec()
 {
 	displayed();
+	for (int c = 0; c < m_model->rowCount(); ++c)
+		m_model->categories().at(c).widget->displayed();
 	return QDialog::exec();
 }
 
@@ -212,6 +214,8 @@ void SettingsDialog::reject()
 
 void SettingsDialog::apply()
 {
+	for (int c = 0; c < m_model->rowCount(); ++c)
+		m_model->categories().at(c).widget->applied();
 	applied();
 }
 

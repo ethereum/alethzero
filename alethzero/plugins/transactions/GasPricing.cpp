@@ -37,26 +37,29 @@ DEV_AZ_NOTE_PLUGIN(GasPricing);
 GasPricing::GasPricing(ZeroFace* _m):
 	Plugin(_m, "GasPricing")
 {
-	connect(addMenuItem("Gas Prices...", "menuConfig", true), SIGNAL(triggered()), SLOT(gasPrices()));
+	_m->addSettingsPage(2, "Gas Prices", [this]()
+	{
+		GasPricingPage* page = new GasPricingPage();
+		connect(page, &SettingsPage::displayed, [this, page]() { page->setPrices(bid(), ask()); });
+		connect(page, &SettingsPage::applied, [this, page]() { setPrices(page->bid(), page->ask()); });
+		return page;
+	});
 }
 
-void GasPricing::gasPrices()
+u256 GasPricing::bid() const
 {
-	QDialog d;
-	Ui_GasPricing gp;
-	gp.setupUi(&d);
-	d.setWindowTitle("Gas Pricing");
-	setValueUnits(gp.bidUnits, gp.bidValue, static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->bid());
-	setValueUnits(gp.askUnits, gp.askValue, static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->ask());
+	return static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->bid();
+}
 
-	if (d.exec() == QDialog::Accepted)
-	{
-		static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setBid(fromValueUnits(gp.bidUnits, gp.bidValue));
-		static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setAsk(fromValueUnits(gp.askUnits, gp.askValue));
-		// TODO: cooperation with Transact plugin/dialog.
-//		m_transact->resetGasPrice();
-		aleth()->noteSettingsChanged();
-	}
+u256 GasPricing::ask() const
+{
+	return static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->ask();
+}
+
+void GasPricing::setPrices(u256 const& _bid, u256 const& _ask)
+{
+	static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setBid(_bid);
+	static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->setAsk(_ask);
 }
 
 void GasPricing::readSettings(QSettings const& _s)
@@ -70,3 +73,26 @@ void GasPricing::writeSettings(QSettings& _s)
 	_s.setValue("askPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->ask())));
 	_s.setValue("bidPrice", QString::fromStdString(toString(static_cast<TrivialGasPricer*>(aleth()->ethereum()->gasPricer().get())->bid())));
 }
+
+GasPricingPage::GasPricingPage():
+	m_ui(new Ui::GasPricing())
+{
+	m_ui->setupUi(this);
+}
+
+u256 GasPricingPage::bid() const
+{
+	return fromValueUnits(m_ui->bidUnits, m_ui->bidValue);
+}
+
+u256 GasPricingPage::ask() const
+{
+	return fromValueUnits(m_ui->askUnits, m_ui->askValue);
+}
+
+void GasPricingPage::setPrices(u256 const& _bid, u256 const& _ask)
+{
+	setValueUnits(m_ui->bidUnits, m_ui->bidValue, _bid);
+	setValueUnits(m_ui->askUnits, m_ui->askValue, _ask);
+}
+
