@@ -20,6 +20,7 @@
  */
 
 #include "AlethOne.h"
+#include <QSettings>
 #include <QTimer>
 #include <QToolButton>
 #include <QButtonGroup>
@@ -41,6 +42,8 @@ using namespace one;
 AlethOne::AlethOne():
 	m_ui(new Ui::AlethOne)
 {
+	g_logVerbosity = 1;
+
 	setWindowFlags(Qt::Window);
 	m_ui->setupUi(this);
 	m_aleth.init(Aleth::Nothing, "AlethOne", "anon");
@@ -48,25 +51,12 @@ AlethOne::AlethOne():
 	auto g = new QButtonGroup(this);
 	g->setExclusive(true);
 	g->addButton(m_ui->noMining);
-	connect(m_ui->noMining, &QToolButton::clicked, [=]()
-	{
-		if (m_aleth)
-			m_aleth.ethereum()->stopMining();
-		m_slave.stop();
-	});
 
-	connect(m_ui->local, &QRadioButton::toggled, [=](bool on){
-		if (on)
-		{
-			if (!m_aleth.open(Aleth::Bootstrap))
-				m_ui->pool->setChecked(true);
-		}
-		else
-			m_aleth.close();
-	});
-
-	auto translate = [](QString s) { return s == "cpu" ? "CPU" : s == "opencl" ? "OpenCL" : s + " Miner"; };
+	auto translate = [](QString s) { return s == "cpu" ? "CPU" : s == "opencl" ? "GPU" : s + " Miner"; };
 	for (QString i: m_slave.sealers())
+#ifdef NDEBUG
+	if (i != "cpu")
+#endif
 	{
 		QToolButton* a = new QToolButton(this);
 		a->setText(translate(i));
@@ -85,83 +75,112 @@ AlethOne::AlethOne():
 				m_slave.setSealer(i);
 				m_slave.start();
 			}
+			refresh();
 		});
 		g->addButton(a);
 		m_ui->mine->addWidget(a);
 	}
 
-	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : "Frontier") + QString(" AlethOne v") + QString::fromStdString(niceVersion(dev::Version)) + "-" DEV_QUOTED(ETH_BUILD_TYPE) "-" DEV_QUOTED(ETH_BUILD_PLATFORM) "-" + QString(DEV_QUOTED(ETH_COMMIT_HASH)).mid(0, 6) + (ETH_CLEAN_REPO ? "" : "+"));
+	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : "Frontier") + QString(" AlethOne v") + QString::fromStdString(niceVersion(dev::Version)));
 	m_ui->beneficiary->setText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
 	m_ui->sync->setAleth(&m_aleth);
 
 	{
 		QTimer* t = new QTimer(this);
-		connect(t, &QTimer::timeout, [=](){
-			m_ui->peers->setValue(m_aleth ? m_aleth.web3()->peerCount() : 0);
-			bool s = m_aleth ? m_aleth.ethereum()->isSyncing() : false;
-			m_ui->stack->setCurrentIndex(s ? 0 : 1);
-			if (!s)
-			{
-				if (m_ui->noMining->isChecked())
-				{
-					m_ui->hashrate->setText("/");
-					m_ui->underHashrate->setText("Not mining");
-					m_ui->overHashrate->setText("Off");
-				}
-				else
-				{
-					bool m;
-					u256 r;
-					if (m_aleth)
-					{
-						m = m_aleth.ethereum()->isMining();
-						r = m_aleth.ethereum()->hashrate();
-					}
-					else
-					{
-						m = m_slave.isWorking();
-						r = m ? m_slave.hashrate() : 0;
-					}
-					m_ui->overHashrate->setText(translate(m_aleth ? QString::fromStdString(m_aleth.ethereum()->sealer()) : m_slave.sealer()));
-					if (r > 0)
-					{
-						QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
-						m_ui->hashrate->setText(ss[0]);
-						m_ui->underHashrate->setText(ss[1]);
-					}
-					else if (m)
-					{
-						m_ui->hashrate->setText("...");
-						m_ui->underHashrate->setText("Preparing...");
-					}
-					else
-					{
-						m_ui->hashrate->setText("...");
-						m_ui->underHashrate->setText("Waiting...");
-					}
-				}
-			}
-		});
+		connect(t, SIGNAL(timeout()), SLOT(refresh()));
 		t->start(1000);
 	}
 
-	m_aleth.installWatch(ChainChangedFilter, [&](LocalisedLogEntries const&){
-		log(QString("New block #%1").arg(m_aleth.ethereum()->number()));
-		u256 balance = 0;
-		auto accounts = m_aleth.keyManager().accounts();
-		for (auto const& a: accounts)
-			balance += m_aleth.ethereum()->balanceAt(a);
-		m_ui->balance->setText(QString("%1 across %2 accounts").arg(QString::fromStdString(formatBalance(balance))).arg(accounts.size()));
-	});
-
 	m_ui->stack->adjustSize();
-	m_ui->stack->setMinimumWidth(m_ui->stack->height() * 1.25);
-	m_ui->stack->setMaximumWidth(m_ui->stack->height() * 1.25);
+	m_ui->stack->setMinimumWidth(m_ui->stack->height() * 1.35);
+	m_ui->stack->setMaximumWidth(m_ui->stack->height() * 1.5);
+
+	readSettings();
 }
 
 AlethOne::~AlethOne()
 {
+	writeSettings();
 	delete m_ui;
+}
+
+void AlethOne::refresh()
+{
+	m_ui->peers->setValue(m_aleth ? m_aleth.web3()->peerCount() : 0);
+	if (m_aleth)
+		cwarn << m_aleth.web3()->peerCount();
+	bool s = m_aleth ? m_aleth.ethereum()->isSyncing() : false;
+	pair<uint64_t, unsigned> gp = EthashAux::fullGeneratingProgress();
+	m_ui->stack->setCurrentIndex(s ? 0 : 1);
+	if (!s)
+	{
+		if (m_ui->noMining->isChecked())
+		{
+			m_ui->hashrate->setText("/");
+			m_ui->underHashrate->setText("Not mining");
+		}
+		else
+		{
+			bool m;
+			u256 r;
+			if (m_aleth)
+			{
+				m = m_aleth.ethereum()->isMining();
+				r = m_aleth.ethereum()->hashrate();
+			}
+			else
+			{
+				m = m_slave.isWorking();
+				r = m ? m_slave.hashrate() : 0;
+			}
+			if (r > 0)
+			{
+				QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
+				m_ui->hashrate->setText(ss[0]);
+				m_ui->underHashrate->setText(ss[1]);
+			}
+			else if (gp.first != EthashAux::NotGenerating)
+			{
+				m_ui->hashrate->setText(QString("%1%").arg(gp.second));
+				m_ui->underHashrate->setText(QString("Preparing").arg(gp.first));
+			}
+			else if (m)
+			{
+				m_ui->hashrate->setText("...");
+				m_ui->underHashrate->setText("Preparing");
+			}
+			else
+			{
+				m_ui->hashrate->setText("...");
+				m_ui->underHashrate->setText("Waiting");
+			}
+		}
+	}
+}
+
+void AlethOne::readSettings()
+{
+	QSettings s("ethereum", "alethone");
+	if (s.value("mode", "solo").toString() == "solo")
+		m_ui->local->setChecked(true);
+	else
+		m_ui->pool->setChecked(true);
+	m_ui->url->setText(s.value("url", "http://127.0.0.1:8545").toString());
+}
+
+void AlethOne::writeSettings()
+{
+	QSettings s("ethereum", "alethone");
+	s.setValue("mode", m_ui->local->isChecked() ? "solo" : "pool");
+	s.setValue("url", m_ui->url->text());
+}
+
+void AlethOne::on_noMining_clicked()
+{
+	if (m_aleth)
+		m_aleth.ethereum()->stopMining();
+	m_slave.stop();
+	refresh();
 }
 
 void AlethOne::on_send_clicked()
@@ -170,9 +189,29 @@ void AlethOne::on_send_clicked()
 	sd.exec();
 }
 
+void AlethOne::on_local_toggled(bool _on)
+{
+	if (_on)
+	{
+		if (!m_aleth.open(Aleth::Bootstrap))
+			m_ui->pool->setChecked(true);
+		else
+			m_aleth.installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
+				log(QString("New block #%1").arg(this->m_aleth.ethereum()->number()));
+				u256 balance = 0;
+				auto accounts = this->m_aleth.keyManager().accounts();
+				for (auto const& a: accounts)
+					balance += this->m_aleth.ethereum()->balanceAt(a);
+				this->m_ui->balance->setText(QString("%1 across %2 accounts").arg(QString::fromStdString(formatBalance(balance))).arg(accounts.size()));
+			});
+	}
+	else
+		m_aleth.close();
+}
+
 void AlethOne::log(QString _s)
 {
 	QString s;
-	s = QDateTime::currentDateTime().toString() + ": " + _s;
+	s = QTime::currentTime().toString("hh:mm:ss") + " " + _s;
 	m_ui->log->appendPlainText(s);
 }

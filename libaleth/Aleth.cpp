@@ -269,7 +269,7 @@ pair<string, bool> Aleth::getPassword(string const& _prompt, string const& _titl
 	if (_flags & NeedConfirm)
 	{
 		connect(gp.entry, &QLineEdit::textChanged, [&](){ gp.ok->setEnabled(gp.confirm->text() == gp.entry->text()); });
-		connect(gp.confirm, &QLineEdit::textChanged, [&](){ auto m = gp.confirm->text() == gp.entry->text(); gp.ok->setEnabled(m); gp.error->setText(m ? "Passphrases must match." : ""); });
+		connect(gp.confirm, &QLineEdit::textChanged, [&](){ auto m = gp.confirm->text() == gp.entry->text(); gp.ok->setEnabled(m); gp.error->setText(m ? " " : "Passphrases must match."); gp.error->update(); });
 	}
 
 	while (true)
