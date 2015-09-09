@@ -27,7 +27,7 @@
 #include <libdevcore/RLP.h>
 #include <libethcore/Common.h>
 #include <libethereum/Transaction.h>
-#include "AlethFace.h"
+#include <libaleth/AlethFace.h>
 
 namespace Ui { class TransactDialog; }
 
