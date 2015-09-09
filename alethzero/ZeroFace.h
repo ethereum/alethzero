@@ -46,6 +46,7 @@ namespace zero
 
 class Plugin;
 class ZeroFace;
+class SettingsPage;
 
 using PluginFactory = std::function<Plugin*(ZeroFace*)>;
 
@@ -70,6 +71,7 @@ public:
 	void adoptPlugin(Plugin* _p);
 	void killPlugins();
 	void noteAllChange();
+	virtual void addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory) = 0;
 
 	virtual AlethFace const* aleth() const = 0;
 	virtual AlethFace* aleth() = 0;

@@ -78,6 +78,14 @@ private:
 	QDockWidget* m_dock = nullptr;
 };
 
+class SettingsPage: public QWidget
+{
+	Q_OBJECT
+signals:
+	void displayed();
+	void applied();
+};
+
 class PluginRegistrarBase
 {
 public:
