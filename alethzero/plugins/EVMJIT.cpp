@@ -52,6 +52,7 @@ EVMJIT::EVMJIT(ZeroFace* _z):
 	for (pair<QString, VMKind> const& k: kinds)
 	{
 		QAction* a = addMenuItem(k.first, "menuSpecial");
+		a->setCheckable(true);
 		connect(a, &QAction::triggered, [=]() { VMFactory::setKind(k.second); });
 		m_group->addAction(a);
 #if ETH_EVMJIT
