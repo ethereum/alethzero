@@ -22,9 +22,9 @@
 #include "JsConsole.h"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <QWebEngineView>
-#include "JsConsoleWidget.h"
-#include "WebThreeServer.h"
+#include <libaleth/WebThreeServer.h>
 #include <libaleth/AlethFace.h>
+#include "JsConsoleWidget.h"
 #include "ZeroFace.h"
 #include "AlethZeroResources.hpp"
 using namespace std;

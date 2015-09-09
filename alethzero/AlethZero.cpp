@@ -34,10 +34,9 @@
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include <libethereum/EthereumHost.h>
-#include <libweb3jsonrpc/SafeHttpServer.h>
 #include <libaleth/SyncView.h>
-#include "AccountHolder.h"
-#include "WebThreeServer.h"
+#include <libaleth/WebThreeServer.h>
+#include "Connect.h"
 #include "BuildInfo.h"
 #include "SettingsDialog.h"
 #include "NetworkSettings.h"
@@ -75,6 +74,7 @@ AlethZero::AlethZero():
 
 	connect(&m_aleth, SIGNAL(beneficiaryChanged()), SLOT(onBeneficiaryChanged()));
 	m_aleth.init(Aleth::OpenOnly, "AlethZero", "anon");
+	m_rpcHost.init(&m_aleth);
 
 	if (c_network == eth::Network::Olympic)
 		setWindowTitle("AlethZero Olympic");
@@ -82,10 +82,6 @@ AlethZero::AlethZero():
 		setWindowTitle("AlethZero Frontier");
 
 	m_ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(aleth()->ethereum()->sealEngine()->name())).arg(aleth()->ethereum()->sealEngine()->revision()).arg(dev::Version));
-
-	m_httpConnector.reset(new dev::SafeHttpServer(SensibleHttpPort, "", "", dev::SensibleHttpThreads));
-	m_server.reset(new WebThreeServer(*m_httpConnector, this));
-	m_server->StartListening();
 
 	createSettingsPages();
 	readSettings(true, false);
@@ -117,8 +113,6 @@ AlethZero::AlethZero():
 
 AlethZero::~AlethZero()
 {
-	m_httpConnector->StopListening();
-
 	// save all settings here so we don't have to explicitly finalise plugins.
 	// NOTE: as soon as plugin finalisation means anything more than saving settings, this will
 	// need to be rethought into something more like:

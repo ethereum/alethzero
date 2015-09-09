@@ -14,48 +14,42 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file WebThreeServer.h
+/** @file RPCHost.h
  * @author Gav Wood <i@gavwood.com>
- * @date 2014
+ * @date 2015
  */
 
-#include <queue>
-#include <QtCore/QObject>
-#include <libdevcore/Guards.h>
-#include <libethcore/CommonJS.h>
-#include <libdevcrypto/Common.h>
-#include <libweb3jsonrpc/WebThreeStubServer.h>
-#include "AccountHolder.h"
+#pragma once
+
+#include <libdevcore/Common.h>
 
 namespace dev
 {
+
+class SafeHttpServer;
+
 namespace aleth
 {
-namespace zero
+
+class AlethFace;
+class WebThreeServer;
+
+class RPCHost
 {
-
-class ZeroFace;
-class AccountHolder;
-
-class WebThreeServer: public QObject, public WebThreeStubServer
-{
-	Q_OBJECT
-
 public:
-	WebThreeServer(jsonrpc::AbstractServerConnector& _conn, ZeroFace* _zero);
+	RPCHost() = default;
+	RPCHost(AlethFace* _aleth) { init(_aleth); }
+	~RPCHost();
 
-	std::shared_ptr<dev::aleth::zero::AccountHolder> ethAccounts() const;
+	void init(AlethFace* _aleth);
 
-	virtual std::string shh_newIdentity() override;
-
-signals:
-	void onNewId(QString _s);
+	WebThreeServer* web3Server() const { return m_server.get(); }
+	SafeHttpServer* web3ServerConnector() const { return m_httpConnector.get(); }
 
 private:
-	ZeroFace* m_zero;
+	std::shared_ptr<SafeHttpServer> m_httpConnector;
+	std::shared_ptr<WebThreeServer> m_server;
 };
 
 }
 }
-}
-

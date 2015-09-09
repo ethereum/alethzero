@@ -23,21 +23,17 @@
 #include <QMessageBox>
 #include <QAbstractButton>
 #include <libwebthree/WebThree.h>
-#include "QNatspec.h"
-#include <libaleth/AlethFace.h>
-#include "ZeroFace.h"
+#include "AlethFace.h"
 using namespace std;
 using namespace dev;
 using namespace eth;
 using namespace aleth;
-using namespace zero;
 
 WebThreeServer::WebThreeServer(
 	jsonrpc::AbstractServerConnector& _conn,
-	ZeroFace* _zero
+	AlethFace* _aleth
 ):
-	WebThreeStubServer(_conn, *_zero->aleth()->web3(), make_shared<zero::AccountHolder>(_zero), vector<KeyPair>{}, _zero->aleth()->keyManager(), *static_cast<TrivialGasPricer*>(_zero->aleth()->ethereum()->gasPricer().get())),
-	m_zero(_zero)
+	WebThreeStubServer(_conn, *_aleth->web3(), make_shared<AccountHolder>(_aleth), vector<KeyPair>{}, _aleth->keyManager(), *static_cast<TrivialGasPricer*>(_aleth->ethereum()->gasPricer().get()))
 {
 }
 
@@ -48,7 +44,7 @@ string WebThreeServer::shh_newIdentity()
 	return toJS(kp.pub());
 }
 
-std::shared_ptr<dev::aleth::zero::AccountHolder> WebThreeServer::ethAccounts() const
+std::shared_ptr<dev::aleth::AccountHolder> WebThreeServer::ethAccounts() const
 {
-	return static_pointer_cast<dev::aleth::zero::AccountHolder>(WebThreeStubServerBase::ethAccounts());
+	return static_pointer_cast<dev::aleth::AccountHolder>(WebThreeStubServerBase::ethAccounts());
 }

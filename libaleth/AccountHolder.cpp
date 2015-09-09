@@ -25,23 +25,21 @@
 #include <libdevcore/Log.h>
 #include <libethcore/KeyManager.h>
 #include <libwebthree/WebThree.h>
-#include "QNatspec.h"
-#include <libaleth/AlethFace.h>
-#include "ZeroFace.h"
+//#include "QNatspec.h"	// TODO: removed until this can be made independent of QWebEngine.
+#include "AlethFace.h"
 using namespace std;
 using namespace dev;
 using namespace eth;
 using namespace aleth;
-using namespace zero;
 
-zero::AccountHolder::AccountHolder(ZeroFace* _zero):
-	eth::AccountHolder([=](){ return _zero->aleth()->ethereum(); }),
-	m_zero(_zero)
+aleth::AccountHolder::AccountHolder(AlethFace* _aleth):
+	eth::AccountHolder([=](){ return _aleth->ethereum(); }),
+	m_aleth(_aleth)
 {
 	startTimer(500);
 }
 
-bool zero::AccountHolder::showAuthenticationPopup(string const& _title, string const& _text)
+bool aleth::AccountHolder::showAuthenticationPopup(string const& _title, string const& _text)
 {
 	QMessageBox userInput;
 	userInput.setText(QString::fromStdString(_title));
@@ -53,14 +51,14 @@ bool zero::AccountHolder::showAuthenticationPopup(string const& _title, string c
 	return userInput.exec() == QMessageBox::Ok;
 }
 
-h256 zero::AccountHolder::authenticate(TransactionSkeleton const& _t)
+h256 aleth::AccountHolder::authenticate(TransactionSkeleton const& _t)
 {
 	Guard l(x_queued);
 	m_queued.push(_t);
 	return h256();
 }
 
-void zero::AccountHolder::doValidations()
+void aleth::AccountHolder::doValidations()
 {
 	Guard l(x_queued);
 	while (!m_queued.empty())
@@ -84,17 +82,17 @@ void zero::AccountHolder::doValidations()
 			queueTransaction(t);
 		else
 			// sign and submit.
-			if (Secret s = m_zero->aleth()->retrieveSecret(t.from))
-				m_zero->aleth()->ethereum()->submitTransaction(t, s);
+			if (Secret s = m_aleth->retrieveSecret(t.from))
+				m_aleth->ethereum()->submitTransaction(t, s);
 	}
 }
 
-AddressHash zero::AccountHolder::realAccounts() const
+AddressHash aleth::AccountHolder::realAccounts() const
 {
-	return m_zero->aleth()->keyManager().accountsHash();
+	return m_aleth->keyManager().accountsHash();
 }
 
-bool zero::AccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _toProxy)
+bool aleth::AccountHolder::validateTransaction(TransactionSkeleton const& _t, bool _toProxy)
 {
 	if (!m_isEnabled)
 		return true;
@@ -102,20 +100,20 @@ bool zero::AccountHolder::validateTransaction(TransactionSkeleton const& _t, boo
 	return showAuthenticationPopup("Transaction", _t.userReadable(_toProxy,
 		[&](TransactionSkeleton const& _t) -> pair<bool, string>
 		{
-			h256 contractCodeHash = m_zero->aleth()->ethereum()->postState().codeHash(_t.to);
+			h256 contractCodeHash = m_aleth->ethereum()->postState().codeHash(_t.to);
 			if (contractCodeHash == EmptySHA3)
 				return make_pair(false, std::string());
-			string userNotice = m_zero->aleth()->natSpec().userNotice(contractCodeHash, _t.data);
-			QNatspecExpressionEvaluator evaluator;
-			userNotice = evaluator.evalExpression(userNotice);
+			string userNotice = m_aleth->natSpec().userNotice(contractCodeHash, _t.data);
+/*			QNatspecExpressionEvaluator evaluator;
+			userNotice = evaluator.evalExpression(userNotice);*/ // TODO: need a virtual for this to avoid linking to QWebEngine's JS engine.Z
 			return std::make_pair(true, userNotice);
 		},
-		[&](Address const& _a) -> string { return m_zero->aleth()->toName(_a); }
+		[&](Address const& _a) -> string { return m_aleth->toName(_a); }
 	));
 }
 
 
-void zero::AccountHolder::timerEvent(QTimerEvent*)
+void aleth::AccountHolder::timerEvent(QTimerEvent*)
 {
 	doValidations();
 }

@@ -30,17 +30,15 @@ namespace dev
 {
 namespace aleth
 {
-namespace zero
-{
 
-class ZeroFace;
+class AlethFace;
 
 class AccountHolder: public QObject, public eth::AccountHolder
 {
 	Q_OBJECT
 
 public:
-	AccountHolder(ZeroFace* _zero);
+	AccountHolder(AlethFace* _aleth);
 
 	void setEnabled(bool _e) { m_isEnabled = _e; }
 	bool isEnabled() const { return m_isEnabled; }
@@ -66,9 +64,8 @@ private:
 	std::queue<eth::TransactionSkeleton> m_queued;
 	Mutex x_queued;
 
-	ZeroFace* m_zero;
+	AlethFace* m_aleth;
 };
 
-}
 }
 }

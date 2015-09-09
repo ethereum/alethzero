@@ -40,6 +40,7 @@ namespace aleth
 {
 
 class AlethFace;
+class WebThreeServer;
 
 namespace zero
 {
@@ -49,8 +50,6 @@ class ZeroFace;
 class SettingsPage;
 
 using PluginFactory = std::function<Plugin*(ZeroFace*)>;
-
-class WebThreeServer;
 
 class ZeroFace: public QMainWindow
 {
@@ -77,7 +76,7 @@ public:
 	virtual AlethFace* aleth() = 0;
 
 	virtual WebThreeServer* web3Server() const = 0;
-	virtual dev::SafeHttpServer* web3ServerConnector() const = 0;
+	virtual SafeHttpServer* web3ServerConnector() const = 0;
 
 	virtual void allStop() = 0;
 	virtual void carryOn() = 0;

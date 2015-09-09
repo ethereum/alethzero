@@ -41,8 +41,8 @@
 #include <libaleth/NatspecHandler.h>
 #include <libaleth/Common.h>
 #include <libaleth/Aleth.h>
+#include <libaleth/RPCHost.h>
 #include "ZeroFace.h"
-#include "Connect.h"
 #include "Plugin.h"
 
 class QListWidgetItem;
@@ -52,8 +52,6 @@ namespace Ui { class Main; }
 
 namespace dev
 {
-
-class SafeHttpServer;
 
 namespace eth
 {
@@ -66,7 +64,6 @@ namespace aleth
 namespace zero
 {
 
-class WebThreeServer;
 class SettingsDialog;
 class NetworkSettings;
 
@@ -78,8 +75,8 @@ public:
 	AlethZero();
 	~AlethZero();
 
-	WebThreeServer* web3Server() const override { return m_server.get(); }
-	dev::SafeHttpServer* web3ServerConnector() const override { return m_httpConnector.get(); }
+	WebThreeServer* web3Server() const override { return m_rpcHost.web3Server(); }
+	SafeHttpServer* web3ServerConnector() const override { return m_rpcHost.web3ServerConnector(); }
 
 	AlethFace const* aleth() const { return &m_aleth; }
 	AlethFace* aleth() { return &m_aleth; }
@@ -129,33 +126,39 @@ private:
 	void initPlugin(Plugin* _p);
 	void finalisePlugin(Plugin* _p);
 	void unloadPlugin(std::string const& _name);
+
 	void addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory) override;
 
 	void createSettingsPages();
-
 	void setNetPrefs(NetworkSettings const& _settings);
 	NetworkSettings netPrefs() const;
 
 	void readSettings(bool _skipGeometry = false, bool _onlyGeometry = false);
 	void writeSettings();
 
+	// Probably unnecessary once everything is pluginified.
 	void installWatches();
 
+	// TODO remove once we have a separate network activity panel/page
 	void refreshNetwork();
+
+	// TODO should become a plugin
 	void refreshMining();
+
+	// TODO should become a plugin
 	void refreshBlockCount();
+
+	// TODO should become a plugin
 	void refreshBalances();
 
+	// TODO remove once all account management is removed.
 	std::string getPassword(std::string const& _title, std::string const& _for, std::string* _hint = nullptr, bool* _ok = nullptr);
 
 	std::unique_ptr<Ui::Main> m_ui;
-
-	std::unique_ptr<dev::SafeHttpServer> m_httpConnector;	// TODO: move into Aleth, eventually.
-	std::unique_ptr<WebThreeServer> m_server;	// TODO: move into Aleth, eventually.
+	SettingsDialog* m_settingsDialog = nullptr;
 
 	Aleth m_aleth;
-
-	SettingsDialog* m_settingsDialog = nullptr;
+	RPCHost m_rpcHost;
 };
 
 }

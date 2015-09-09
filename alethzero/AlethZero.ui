@@ -120,6 +120,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="about"/>
    </widget>
    <widget class="QMenu" name="menuSpecial">
     <property name="title">
@@ -481,6 +482,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+P, F10</string>
+   </property>
+  </action>
+  <action name="about">
+   <property name="text">
+    <string>&amp;About...</string>
    </property>
   </action>
  </widget>

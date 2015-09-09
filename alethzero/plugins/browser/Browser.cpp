@@ -21,15 +21,15 @@
 
 #include "Browser.h"
 #pragma GCC diagnostic ignored "-Wpedantic"
+#include <QFileDialog>
 #include <QtWebEngine/QtWebEngine>
 #include <QtWebEngineWidgets/QWebEngineView>
 #include <QtWebEngineWidgets/QWebEngineCallback>
 #include <QtWebEngineWidgets/QWebEngineSettings>
-#include <QFileDialog>
+#include <libaleth/WebThreeServer.h>
+#include <libaleth/AlethFace.h>
 #include "DappHost.h"
 #include "DappLoader.h"
-#include "WebThreeServer.h"
-#include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "ui_Browser.h"
 using namespace std;
