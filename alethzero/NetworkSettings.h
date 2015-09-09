@@ -14,19 +14,18 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file Cors.h
- * @author Marek Kotewicz <marek@ethdev.com>
+
+/** @file NetworkSettings.h
+ * @author Arkadiy Paronyan <arkadiy@ethdev.com>
  * @date 2015
  */
 
 #pragma once
 
 #include "Plugin.h"
+#include <libp2p/Network.h>
 
-namespace Ui
-{
-class Cors;
-}
+namespace Ui { class NetworkSettings; }
 
 namespace dev
 {
@@ -35,27 +34,27 @@ namespace aleth
 namespace zero
 {
 
-class Cors: public QObject, public Plugin
+struct NetworkSettings
 {
-	Q_OBJECT
+	p2p::NetworkPreferences p2pSettings;
+	QString clientName;
+	bool hermitMode;
+	bool dropPeers;
+	int idealPeers;
 
-public:
-	Cors(ZeroFace* _m);
-	~Cors();
-	void setDomain(QString const& _domain);
-	void readSettings(QSettings const&) override;
-	void writeSettings(QSettings&) override;
+	void write(QSettings& _settings) const;
+	void read(QSettings const& _settings);
 };
 
-class CorsSettingsPage: public SettingsPage
+class NetworkSettingsPage: public SettingsPage
 {
 public:
-	CorsSettingsPage();
-	void setDomain(QString const& _domain);
-	QString domain() const;
+	NetworkSettingsPage();
+	NetworkSettings prefs() const;
+	void setPrefs(NetworkSettings const& _settings);
 
 private:
-	Ui::Cors* m_ui;
+	Ui::NetworkSettings* m_ui;
 };
 
 }

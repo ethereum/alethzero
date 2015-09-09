@@ -23,6 +23,8 @@
 
 #include "Plugin.h"
 
+namespace Ui { class GasPricing; }
+
 namespace dev
 {
 namespace aleth
@@ -37,12 +39,24 @@ class GasPricing: public QObject, public Plugin
 public:
 	GasPricing(ZeroFace* _m);
 
-private slots:
-	void gasPrices();
-
 private:
+	void setPrices(u256 const& _bid, u256 const& _ask);
 	void readSettings(QSettings const&) override;
 	void writeSettings(QSettings&) override;
+	u256 bid() const;
+	u256 ask() const;
+};
+
+class GasPricingPage: public SettingsPage
+{
+public:
+	GasPricingPage();
+	void setPrices(u256 const& _bid, u256 const& _ask);
+	u256 bid() const;
+	u256 ask() const;
+
+private:
+	Ui::GasPricing* m_ui;
 };
 
 }

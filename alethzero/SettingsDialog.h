@@ -14,19 +14,19 @@
 	You should have received a copy of the GNU General Public License
 	along with cpp-ethereum.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** @file Cors.h
- * @author Marek Kotewicz <marek@ethdev.com>
+/** @file SettingDialog.h
+ * @author Gav Wood <i@gavwood.com>
  * @date 2015
  */
 
 #pragma once
 
-#include "Plugin.h"
+#include <functional>
+#include <QDialog>
 
-namespace Ui
-{
-class Cors;
-}
+class QSettings;
+
+namespace Ui { class SettingsDialog; }
 
 namespace dev
 {
@@ -35,27 +35,35 @@ namespace aleth
 namespace zero
 {
 
-class Cors: public QObject, public Plugin
+class Category;
+class CategoryModel;
+class SettingsPage;
+class MainFace;
+
+class SettingsDialog : public QDialog
 {
 	Q_OBJECT
 
 public:
-	Cors(ZeroFace* _m);
-	~Cors();
-	void setDomain(QString const& _domain);
-	void readSettings(QSettings const&) override;
-	void writeSettings(QSettings&) override;
-};
+	void addPage(int _index, QString const& _title, std::function<SettingsPage*()> const& _factory);
+	SettingsDialog(QWidget* _parent);
+	~SettingsDialog();
+	int exec() override;
 
-class CorsSettingsPage: public SettingsPage
-{
-public:
-	CorsSettingsPage();
-	void setDomain(QString const& _domain);
-	QString domain() const;
+signals:
+	void applied();
+	void displayed();
 
 private:
-	Ui::Cors* m_ui;
+	void apply();
+	void accept();
+	void reject();
+	void currentChanged(QModelIndex const& _current);
+	void showCategory(int _index);
+
+	CategoryModel* m_model;
+	Ui::SettingsDialog* m_ui;
+	int m_currentCategory = 0;
 };
 
 }
