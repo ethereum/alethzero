@@ -51,12 +51,6 @@ AlethOne::AlethOne():
 	auto g = new QButtonGroup(this);
 	g->setExclusive(true);
 	g->addButton(m_ui->noMining);
-	connect(m_ui->noMining, &QToolButton::clicked, [=]()
-	{
-		if (m_aleth)
-			m_aleth.ethereum()->stopMining();
-		m_slave.stop();
-	});
 
 	auto translate = [](QString s) { return s == "cpu" ? "CPU" : s == "opencl" ? "GPU" : s + " Miner"; };
 	for (QString i: m_slave.sealers())
@@ -81,6 +75,7 @@ AlethOne::AlethOne():
 				m_slave.setSealer(i);
 				m_slave.start();
 			}
+			refresh();
 		});
 		g->addButton(a);
 		m_ui->mine->addWidget(a);
@@ -92,64 +87,13 @@ AlethOne::AlethOne():
 
 	{
 		QTimer* t = new QTimer(this);
-		connect(t, &QTimer::timeout, [=](){
-			m_ui->peers->setValue(m_aleth ? m_aleth.web3()->peerCount() : 0);
-			if (m_aleth)
-				cwarn << m_aleth.web3()->peerCount();
-			bool s = m_aleth ? m_aleth.ethereum()->isSyncing() : false;
-			pair<uint64_t, unsigned> gp = EthashAux::fullGeneratingProgress();
-			m_ui->stack->setCurrentIndex(s ? 0 : 1);
-			if (!s)
-			{
-				if (m_ui->noMining->isChecked())
-				{
-					m_ui->hashrate->setText("/");
-					m_ui->underHashrate->setText("Not mining");
-				}
-				else
-				{
-					bool m;
-					u256 r;
-					if (m_aleth)
-					{
-						m = m_aleth.ethereum()->isMining();
-						r = m_aleth.ethereum()->hashrate();
-					}
-					else
-					{
-						m = m_slave.isWorking();
-						r = m ? m_slave.hashrate() : 0;
-					}
-					if (r > 0)
-					{
-						QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
-						m_ui->hashrate->setText(ss[0]);
-						m_ui->underHashrate->setText(ss[1]);
-					}
-					else if (gp.first != EthashAux::NotGenerating)
-					{
-						m_ui->hashrate->setText(QString("%1%").arg(gp.second));
-						m_ui->underHashrate->setText(QString("Preparing").arg(gp.first));
-					}
-					else if (m)
-					{
-						m_ui->hashrate->setText("...");
-						m_ui->underHashrate->setText("Preparing");
-					}
-					else
-					{
-						m_ui->hashrate->setText("...");
-						m_ui->underHashrate->setText("Waiting");
-					}
-				}
-			}
-		});
+		connect(t, SIGNAL(timeout()), SLOT(refresh()));
 		t->start(1000);
 	}
 
 	m_ui->stack->adjustSize();
-	m_ui->stack->setMinimumWidth(m_ui->stack->height() * 1.25);
-	m_ui->stack->setMaximumWidth(m_ui->stack->height() * 1.25);
+	m_ui->stack->setMinimumWidth(m_ui->stack->height() * 1.35);
+	m_ui->stack->setMaximumWidth(m_ui->stack->height() * 1.5);
 
 	readSettings();
 }
@@ -158,6 +102,60 @@ AlethOne::~AlethOne()
 {
 	writeSettings();
 	delete m_ui;
+}
+
+void AlethOne::refresh()
+{
+	m_ui->peers->setValue(m_aleth ? m_aleth.web3()->peerCount() : 0);
+	if (m_aleth)
+		cwarn << m_aleth.web3()->peerCount();
+	bool s = m_aleth ? m_aleth.ethereum()->isSyncing() : false;
+	pair<uint64_t, unsigned> gp = EthashAux::fullGeneratingProgress();
+	m_ui->stack->setCurrentIndex(s ? 0 : 1);
+	if (!s)
+	{
+		if (m_ui->noMining->isChecked())
+		{
+			m_ui->hashrate->setText("/");
+			m_ui->underHashrate->setText("Not mining");
+		}
+		else
+		{
+			bool m;
+			u256 r;
+			if (m_aleth)
+			{
+				m = m_aleth.ethereum()->isMining();
+				r = m_aleth.ethereum()->hashrate();
+			}
+			else
+			{
+				m = m_slave.isWorking();
+				r = m ? m_slave.hashrate() : 0;
+			}
+			if (r > 0)
+			{
+				QStringList ss = QString::fromStdString(inUnits(r, { "hash/s", "Khash/s", "Mhash/s", "Ghash/s" })).split(" ");
+				m_ui->hashrate->setText(ss[0]);
+				m_ui->underHashrate->setText(ss[1]);
+			}
+			else if (gp.first != EthashAux::NotGenerating)
+			{
+				m_ui->hashrate->setText(QString("%1%").arg(gp.second));
+				m_ui->underHashrate->setText(QString("Preparing").arg(gp.first));
+			}
+			else if (m)
+			{
+				m_ui->hashrate->setText("...");
+				m_ui->underHashrate->setText("Preparing");
+			}
+			else
+			{
+				m_ui->hashrate->setText("...");
+				m_ui->underHashrate->setText("Waiting");
+			}
+		}
+	}
 }
 
 void AlethOne::readSettings()
@@ -175,6 +173,14 @@ void AlethOne::writeSettings()
 	QSettings s("ethereum", "alethone");
 	s.setValue("mode", m_ui->local->isChecked() ? "solo" : "pool");
 	s.setValue("url", m_ui->url->text());
+}
+
+void AlethOne::on_noMining_clicked()
+{
+	if (m_aleth)
+		m_aleth.ethereum()->stopMining();
+	m_slave.stop();
+	refresh();
 }
 
 void AlethOne::on_send_clicked()
