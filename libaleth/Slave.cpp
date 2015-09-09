@@ -55,7 +55,7 @@ void SlaveAux::start()
 	{
 		m_engine->farm().setWork(EthashProofOfWork::WorkPackage());
 		m_engine->farm().start(m_engine->sealer());
-		QTimer::singleShot(0, this, [&](){
+		QTimer::singleShot(0, this, [=](){
 			this->m_workTimer = startTimer(500);
 			this->m_rateTimer = startTimer(2000);
 		});
@@ -67,8 +67,10 @@ void SlaveAux::stop()
 	if (m_engine->farm().isMining())
 	{
 		m_engine->farm().stop();
-		killTimer(m_rateTimer);
-		killTimer(m_workTimer);
+		QTimer::singleShot(0, this, [=](){
+			killTimer(m_rateTimer);
+			killTimer(m_workTimer);
+		});
 	}
 }
 
