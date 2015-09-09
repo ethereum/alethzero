@@ -151,8 +151,6 @@ private:
 	std::unique_ptr<WebThreeServer> m_server;	// TODO: move into Aleth, eventually.
 
 	Aleth m_aleth;
-
-	Connect m_connect;
 };
 
 }

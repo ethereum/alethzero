@@ -529,6 +529,7 @@ void AlethZero::on_connect_triggered()
 		on_net_triggered();
 	}
 
+	Connect m_connect(this);
 	if (m_connect.exec() == QDialog::Accepted)
 	{
 		m_connect.reset();
