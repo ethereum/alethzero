@@ -91,7 +91,7 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 		createKeyManager();
 
 	if (_onInit >= OpenOnly)
-		open();
+		open(_onInit);
 }
 
 bool Aleth::open(OnInit _connect)

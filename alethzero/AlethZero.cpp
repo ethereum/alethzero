@@ -74,7 +74,7 @@ AlethZero::AlethZero():
 	statusBar()->addPermanentWidget(m_ui->blockCount);
 
 	connect(&m_aleth, SIGNAL(beneficiaryChanged()), SLOT(onBeneficiaryChanged()));
-	m_aleth.init();
+	m_aleth.init(Aleth::OpenOnly, "AlethZero", "anon");
 
 	if (c_network == eth::Network::Olympic)
 		setWindowTitle("AlethZero Olympic");
