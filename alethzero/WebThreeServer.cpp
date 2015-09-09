@@ -23,7 +23,7 @@
 #include <QMessageBox>
 #include <QAbstractButton>
 #include <libwebthree/WebThree.h>
-#include <libaleth/QNatspec.h>
+#include "QNatspec.h"
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 using namespace std;

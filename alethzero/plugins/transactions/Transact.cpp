@@ -25,7 +25,7 @@
 #include <libethereum/Client.h>
 #include <libethcore/KeyManager.h>
 #include <libaleth/AlethFace.h>
-#include <libaleth/TransactDialog.h>
+#include "TransactDialog.h"
 #include "ZeroFace.h"
 using namespace std;
 using namespace dev;

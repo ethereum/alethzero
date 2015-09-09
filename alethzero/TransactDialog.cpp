@@ -46,7 +46,7 @@
 #include <libserpent/util.h>
 #endif
 #include "QNatspec.h"
-#include "Debugger.h"
+#include <libaleth/Debugger.h>
 #include "ui_TransactDialog.h"
 using namespace std;
 using namespace dev;
