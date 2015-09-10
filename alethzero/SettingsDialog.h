@@ -35,7 +35,7 @@ namespace aleth
 namespace zero
 {
 
-class Category;
+struct Category;
 class CategoryModel;
 class SettingsPage;
 class MainFace;
@@ -56,8 +56,8 @@ signals:
 
 private:
 	void apply();
-	void accept();
-	void reject();
+	void accept() override;
+	void reject() override;
 	void currentChanged(QModelIndex const& _current);
 	void showCategory(int _index);
 
