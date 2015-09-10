@@ -90,7 +90,7 @@ pair<Address, bytes> AlethFace::readAddress(std::string const& _n) const
 	try {
 		return ICAP::decoded(n).address([&](Address const& a, bytes const& b) -> bytes
 		{
-			return ethereum()->call(a, b).output;
+			return isOpen() ? ethereum()->call(a, b).output : bytes();
 		}, getICAPReg());
 	}
 	catch (...) {}

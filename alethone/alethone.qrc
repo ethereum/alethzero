@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>AlethOne.png</file>
+        <file>withdraw.png</file>
+        <file>power-off.png</file>
+        <file>power-on.png</file>
     </qresource>
 </RCC>
