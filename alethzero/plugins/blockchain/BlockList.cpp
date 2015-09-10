@@ -414,6 +414,8 @@ void BlockList::dumpState(bool _post)
 					(h == PendingBlockHash ? ethereum()->state(txi) : ethereum()->state(txi, h)).streamJSON(f);
 			}
 		}
+#else
+	(void)_post;
 #endif
 }
 
