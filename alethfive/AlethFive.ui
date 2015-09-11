@@ -154,7 +154,7 @@ QPushButton#mining:checked{
       <item>
        <widget class="QLineEdit" name="url">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+         <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
@@ -168,6 +168,9 @@ QPushButton#mining:checked{
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="popupMode">
+         <enum>QToolButton::InstantPopup</enum>
         </property>
         <property name="arrowType">
          <enum>Qt::DownArrow</enum>

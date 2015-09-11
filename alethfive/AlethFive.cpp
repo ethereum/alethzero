@@ -24,6 +24,7 @@
 #include <QSettings>
 #include <QTimer>
 #include <QTime>
+#include <QMenu>
 #include <QClipboard>
 #include <QToolButton>
 #include <QButtonGroup>
@@ -62,6 +63,10 @@ AlethFive::AlethFive():
 		if (!m_dappHost->servesUrl(_url))
 			m_ui->url->setText(_url.toString());
 	});
+
+	QMenu* popupMenu = new QMenu(this);
+	popupMenu->addAction("Exit", qApp, SLOT(quit()));
+	m_ui->menu->setMenu(popupMenu);
 
 	readSettings();
 	refresh();
