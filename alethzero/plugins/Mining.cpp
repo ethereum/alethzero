@@ -41,7 +41,7 @@ Mining::Mining(ZeroFace* _m):
 {
 	QAction* mine = addMenuItem("Mine", "menuMining", false, "&Mining");
 	mine->setCheckable(true);
-	connect(mine, &QAction::triggered, [&](){
+	connect(mine, &QAction::triggered, [=](){
 		if (ethereum()->isMining() != mine->isChecked())
 		{
 			if (mine->isChecked())
