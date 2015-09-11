@@ -9,7 +9,7 @@ include(EthPolicy)
 eth_policy()
 
 # project name and version should be set after cmake_policy CMP0048
-set(PROJECT_VERSION "0.9.43")
+set(PROJECT_VERSION "0.9.92")
 project(alethzero VERSION ${PROJECT_VERSION})
 
 # Let's find our dependencies
@@ -28,6 +28,7 @@ include(EthUtils)
 find_package(Qt5Widgets)
 
 add_subdirectory(libaleth)
-add_subdirectory(alethzero)
+add_subdirectory(alethfive)
 add_subdirectory(alethone)
+add_subdirectory(alethzero)
 

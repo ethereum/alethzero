@@ -37,7 +37,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(ExportState);
+ZERO_NOTE_PLUGIN(ExportState);
 
 ExportState::ExportState(ZeroFace* _m):
 	Plugin(_m, "Export State")

@@ -35,7 +35,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(EVMJIT);
+ZERO_NOTE_PLUGIN(EVMJIT);
 
 EVMJIT::EVMJIT(ZeroFace* _z):
 	Plugin(_z, "EVMJIT")

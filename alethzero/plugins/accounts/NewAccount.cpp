@@ -44,7 +44,7 @@ bool beginsWith(Address _a, bytes const& _b)
 	return true;
 }
 
-DEV_AZ_NOTE_PLUGIN(NewAccount);
+ZERO_NOTE_PLUGIN(NewAccount);
 
 NewAccount::NewAccount(ZeroFace* _m):
 	Plugin(_m, "NewAccount")

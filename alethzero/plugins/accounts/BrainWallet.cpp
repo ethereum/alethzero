@@ -37,7 +37,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(BrainWallet);
+ZERO_NOTE_PLUGIN(BrainWallet);
 
 BrainWallet::BrainWallet(ZeroFace* _m):
 	Plugin(_m, "BrainWallet")

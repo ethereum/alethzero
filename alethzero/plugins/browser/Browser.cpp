@@ -28,8 +28,8 @@
 #include <QtWebEngineWidgets/QWebEngineSettings>
 #include <libaleth/WebThreeServer.h>
 #include <libaleth/AlethFace.h>
-#include "DappHost.h"
-#include "DappLoader.h"
+#include <libaleth/DappHost.h>
+#include <libaleth/DappLoader.h>
 #include "ZeroFace.h"
 #include "ui_Browser.h"
 using namespace std;
@@ -38,7 +38,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(Browser);
+ZERO_NOTE_PLUGIN(Browser);
 
 Browser::Browser(ZeroFace* _m):
 	Plugin(_m, "Web view"),
@@ -59,7 +59,7 @@ Browser::Browser(ZeroFace* _m):
 
 	connect(m_ui->webView, &QWebEngineView::titleChanged, [=]()
 	{
-		m_ui->tabWidget->setTabText(0, m_ui->webView->title());
+//		m_ui->tabWidget->setTabText(0, m_ui->webView->title());
 	});
 	connect(m_ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& _url)
 	{
@@ -90,7 +90,6 @@ void Browser::writeSettings(QSettings& _s)
 {
 	_s.setValue("url", m_ui->urlEdit->text());
 }
-
 
 void Browser::reloadUrl()
 {

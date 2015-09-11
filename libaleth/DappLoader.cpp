@@ -34,7 +34,7 @@
 #include <libethereum/Client.h>
 #include <libwebthree/WebThree.h>
 #include "DappLoader.h"
-#include "AlethZeroResources.hpp"
+#include "AlethResources.hpp"
 using namespace dev;
 using namespace crypto;
 using namespace eth;
@@ -108,7 +108,7 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 	{
 		//inject web3 js
 		QByteArray content = "<script>\n";
-		content.append(web3Content());
+		content.append(jsCode());
 		content.append(("web3.admin.setSessionKey('" + m_sessionKey + "');").c_str());
 		content.append("</script>\n");
 		content.append(_reply->readAll());
@@ -153,7 +153,6 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 		qWarning() << tr("Error downloading DApp: ") << boost::current_exception_diagnostic_information().c_str();
 		emit dappError();
 	}
-
 }
 
 void DappLoader::loadDapp(RLP const& _rlp)
@@ -171,7 +170,7 @@ void DappLoader::loadDapp(RLP const& _rlp)
 			if (entry->path == "/deployment.js")
 			{
 				//inject web3 code
-				bytes b(web3Content().data(), web3Content().data() + web3Content().size());
+				bytes b(jsCode().data(), jsCode().data() + jsCode().size());
 				b.insert(b.end(), content.begin(), content.end());
 				dapp.content[hash] = b;
 			}
@@ -184,23 +183,11 @@ void DappLoader::loadDapp(RLP const& _rlp)
 	emit dappReady(dapp);
 }
 
-QByteArray const& DappLoader::web3Content()
+QByteArray const& DappLoader::jsCode() const
 {
-	if (m_web3Js.isEmpty())
-	{
-		AlethZeroResources resources;
-
-		QString code;
-
-		code += QString::fromStdString(resources.loadResourceAsString("web3"));
-		code += "\n";
-		code += QString::fromStdString(resources.loadResourceAsString("setup"));
-		code += "\n";
-		code += QString::fromStdString(resources.loadResourceAsString("admin"));
-		code += "\n";
-		m_web3Js = code.toLatin1();
-	}
-	return m_web3Js;
+	if (m_web3JsCache.isEmpty())
+		m_web3JsCache = makeJSCode().toLatin1();
+	return m_web3JsCache;
 }
 
 Manifest DappLoader::loadManifest(std::string const& _manifest)
@@ -261,5 +248,18 @@ void DappLoader::loadPage(QString const& _uri)
 	QNetworkRequest request(uri);
 	m_pageUrls.insert(uri);
 	m_net.get(request);
+}
+
+QString DappLoader::makeJSCode()
+{
+	AlethResources resources;
+	QString content;
+	content += QString::fromStdString(resources.loadResourceAsString("web3"));
+	content += "\n";
+	content += QString::fromStdString(resources.loadResourceAsString("setup"));
+	content += "\n";
+	content += QString::fromStdString(resources.loadResourceAsString("admin"));
+	content += "\n";
+	return content;
 }
 

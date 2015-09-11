@@ -33,7 +33,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(Transact);
+ZERO_NOTE_PLUGIN(Transact);
 
 Transact::Transact(ZeroFace* _m):
 	Plugin(_m, "Transact")

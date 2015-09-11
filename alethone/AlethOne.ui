@@ -76,7 +76,7 @@ padding: 10px;
 border-radius: 10px;
 border: 1px solid #b4b4b4;
 border-bottom: 1.4px solid #888;
-border-top: 1px solid #bbbbbb;
+border-top: 1px solid #c4c4c4;
 }
 QToolButton{
 border-radius: 4px;

@@ -44,7 +44,7 @@ namespace zero
 
 class ZeroFace;
 
-#define DEV_AZ_NOTE_PLUGIN(ClassName) static DEV_UNUSED ::dev::aleth::zero::PluginRegistrar<ClassName> s_notePlugin(#ClassName)
+#define ZERO_NOTE_PLUGIN(ClassName) static DEV_UNUSED ::dev::aleth::zero::PluginRegistrar<ClassName> s_notePlugin(#ClassName)
 
 class Plugin
 {

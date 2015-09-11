@@ -36,7 +36,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(Whisper);
+ZERO_NOTE_PLUGIN(Whisper);
 
 static Public stringToPublic(QString const& _a)
 {

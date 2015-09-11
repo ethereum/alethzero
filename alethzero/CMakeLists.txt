@@ -10,14 +10,12 @@ else()
 	set(ETH_DIR "${CMAKE_CURRENT_LIST_DIR}/../cpp-ethereum"         CACHE PATH "The path to the cpp-ethereum directory")
 endif()
 
-eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}/..")
-
 eth_name(EXECUTABLE AlethZero)
 
 # eth_add_executable is defined in cmake/EthExecutableHelper.cmake
 eth_add_executable(${EXECUTABLE}
 	ICON alethzero
-	UI_RESOURCES ${UI_RESOURCES} alethzero.icns ${JSRES}
+	UI_RESOURCES ${UI_RESOURCES} alethzero.icns
 	WIN_RESOURCES alethzero.rc
 )
 

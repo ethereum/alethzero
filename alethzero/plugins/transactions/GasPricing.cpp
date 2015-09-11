@@ -32,7 +32,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(GasPricing);
+ZERO_NOTE_PLUGIN(GasPricing);
 
 GasPricing::GasPricing(ZeroFace* _m):
 	Plugin(_m, "GasPricing")

@@ -36,7 +36,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(ImportKey);
+ZERO_NOTE_PLUGIN(ImportKey);
 
 ImportKey::ImportKey(ZeroFace* _m):
 	Plugin(_m, "ImportKey")

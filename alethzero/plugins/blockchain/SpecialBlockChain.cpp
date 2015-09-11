@@ -30,7 +30,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(SpecialBlockChain);
+ZERO_NOTE_PLUGIN(SpecialBlockChain);
 
 SpecialBlockChain::SpecialBlockChain(ZeroFace* _z):
 	Plugin(_z, "SpecialBlockChain")

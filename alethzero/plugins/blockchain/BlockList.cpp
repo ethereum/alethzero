@@ -37,7 +37,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(BlockList);
+ZERO_NOTE_PLUGIN(BlockList);
 
 BlockList::BlockList(ZeroFace* _m):
 	Plugin(_m, "Blockchain"),

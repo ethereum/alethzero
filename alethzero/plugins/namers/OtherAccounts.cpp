@@ -33,7 +33,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(OtherAccounts);
+ZERO_NOTE_PLUGIN(OtherAccounts);
 
 OtherAccounts::OtherAccounts(ZeroFace* _m):
 	AccountNamerPlugin(_m, "OtherAccounts")

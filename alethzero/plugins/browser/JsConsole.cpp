@@ -24,16 +24,16 @@
 #include <QWebEngineView>
 #include <libaleth/WebThreeServer.h>
 #include <libaleth/AlethFace.h>
+#include <libaleth/DappLoader.h>
 #include "JsConsoleWidget.h"
 #include "ZeroFace.h"
-#include "AlethZeroResources.hpp"
 using namespace std;
 using namespace dev;
 using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(JsConsole);
+ZERO_NOTE_PLUGIN(JsConsole);
 
 namespace dev { namespace aleth { QString contentsOfQResource(std::string const& res); } }
 
@@ -47,14 +47,8 @@ JsConsole::JsConsole(ZeroFace* _m):
 	dock(Qt::BottomDockWidgetArea, "JavaScript Console")->setWidget(jsConsole);
 	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
 
-	AlethZeroResources resources;
-
 	QString content = "<script>\n";
-	content += QString::fromStdString(resources.loadResourceAsString("web3"));
-	content += "\n";
-	content += QString::fromStdString(resources.loadResourceAsString("setup"));
-	content += "\n";
-	content += QString::fromStdString(resources.loadResourceAsString("admin"));
+	content += DappLoader::makeJSCode();
 	content += "\nweb3.admin.setSessionKey('" + QString::fromStdString(adminSessionKey) + "');";
 	content += "</script>\n";
 	webView->setHtml(content);

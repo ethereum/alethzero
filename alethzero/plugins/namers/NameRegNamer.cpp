@@ -32,7 +32,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(NameRegNamer);
+ZERO_NOTE_PLUGIN(NameRegNamer);
 
 NameRegNamer::NameRegNamer(ZeroFace* _m):
 	AccountNamerPlugin(_m, "NameRegNamer")

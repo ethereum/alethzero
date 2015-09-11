@@ -31,7 +31,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(Sentinel);
+ZERO_NOTE_PLUGIN(Sentinel);
 
 Sentinel::Sentinel(ZeroFace* _z):
 	Plugin(_z, "Sentinel")

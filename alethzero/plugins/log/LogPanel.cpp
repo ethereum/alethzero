@@ -41,7 +41,7 @@ static QString filterOutTerminal(QString _s)
 	return _s.replace(QRegExp("\x1b\\[(\\d;)?\\d+m"), "");
 }
 
-DEV_AZ_NOTE_PLUGIN(LogPanel);
+ZERO_NOTE_PLUGIN(LogPanel);
 
 LogPanel::LogPanel(ZeroFace* _m):
 	Plugin(_m, "LogPanel"),

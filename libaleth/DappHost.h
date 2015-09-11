@@ -42,8 +42,10 @@ public:
 	/// @param _port Network pork to listen for incoming connections
 	/// @param _threads Max number of threads to process requests
 	DappHost(int _port, int _threads = 10);
+
 	virtual ~DappHost();
-	/// Load and host a dapp. Previsous dapp in discarded. Synchronous
+
+	/// Load and host a dapp. Previous dapp in discarded. Synchronous.
 	QUrl hostDapp(Dapp&& _dapp);
 
 	/// @returns true if the given url is served from this DappHost.

@@ -31,7 +31,7 @@ using namespace eth;
 using namespace aleth;
 using namespace zero;
 
-DEV_AZ_NOTE_PLUGIN(Cors);
+ZERO_NOTE_PLUGIN(Cors);
 
 Cors::Cors(ZeroFace* _m):
 	Plugin(_m, "Cors")
