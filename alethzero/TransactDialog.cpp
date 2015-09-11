@@ -264,11 +264,15 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 		try
 		{
 //				compiler.addSources(dev::solidity::StandardSources);
-			data = compiler.compile(_user, _opt);
+			LinkerObject const& obj = compiler.compile(_user, _opt);
 			solidity = "<h4>Solidity</h4>";
 			solidity += "<pre>var " + compiler.defaultContractName() + " = web3.eth.contract(" + QString::fromStdString(compiler.interface()).replace(QRegExp("\\s"), "").toHtmlEscaped().toStdString() + ");</pre>";
 			solidity += "<pre>" + QString::fromStdString(compiler.solidityInterface()).toHtmlEscaped().toStdString() + "</pre>";
 			solidity += "<pre>" + QString::fromStdString(getFunctionHashes(compiler, "")).toHtmlEscaped().toStdString() + "</pre>";
+			if (obj.linkReferences.empty())
+				data = obj.bytecode;
+			else
+				errors.push_back("Solidity: Compilation resulted in unlinked object.");
 		}
 		catch (dev::Exception const& exception)
 		{
@@ -581,11 +585,16 @@ void TransactDialog::on_send_clicked()
 			try
 			{
 				dev::solidity::CompilerStack compiler(true);
-				m_data = compiler.compile(src, m_ui->optimize->isChecked());
-				for (string const& s: compiler.contractNames())
+				LinkerObject obj = compiler.compile(src, m_ui->optimize->isChecked());
+				if (obj.linkReferences.empty())
 				{
-					h256 contractHash = compiler.contractCodeHash(s);
-					m_natSpecDB->add(contractHash, compiler.metadata(s, dev::solidity::DocumentationType::NatspecUser));
+					m_data = obj.bytecode;
+					for (string const& s: compiler.contractNames())
+					{
+						h256 contractHash = compiler.contractCodeHash(s);
+						if (contractHash != h256())
+							m_natSpecDB->add(contractHash, compiler.metadata(s, dev::solidity::DocumentationType::NatspecUser));
+					}
 				}
 			}
 			catch (...) {}
