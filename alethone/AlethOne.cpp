@@ -179,7 +179,7 @@ void AlethOne::on_mining_toggled(bool _on)
 	if (_on)
 	{
 #ifdef NDEBUG
-		char const* sealer = "gpu";
+		char const* sealer = "opencl";
 #else
 		char const* sealer = "cpu";
 #endif

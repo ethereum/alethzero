@@ -24,6 +24,10 @@ include(EthExecutableHelper)
 # Include utils
 include(EthUtils)
 
+include(EthOptions)
+configure_project()
+print_config()
+
 # required for qt5_wrap_ui below, TODO: remove this
 find_package(Qt5Widgets)
 
