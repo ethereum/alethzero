@@ -57,12 +57,14 @@ AlethFive::AlethFive():
 	m_dappLoader->setSessionKey(m_rpcHost.web3Server()->newSession(SessionPermissions{{Privilege::Admin}}));
 	connect(m_dappLoader, &DappLoader::dappReady, this, &AlethFive::dappLoaded);
 	connect(m_dappLoader, &DappLoader::pageReady, this, &AlethFive::pageLoaded);
-	connect(m_ui->url, &QLineEdit::returnPressed, this, &AlethFive::reloadUrl);
 	connect(m_ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& _url)
 	{
 		if (!m_dappHost->servesUrl(_url))
 			m_ui->url->setText(_url.toString());
 	});
+
+	m_backMenu = new QMenu(this);
+	m_ui->back->setMenu(m_backMenu);
 
 	QMenu* popupMenu = new QMenu(this);
 	popupMenu->addAction("Exit", qApp, SLOT(quit()));
@@ -94,16 +96,34 @@ void AlethFive::writeSettings()
 	s.setValue("url", m_ui->url->text());
 }
 
-void AlethFive::reloadUrl()
+void AlethFive::rebuildBack()
 {
-	QString s = m_ui->url->text();
-	QUrl url(s);
+	m_backMenu->clear();
+	for (int i = m_history.size() - 2; i >= 0; --i)
+		connect(m_backMenu->addAction(m_history[i].first), &QAction::triggered, [=]()
+		{
+			navigateTo(m_history[i].second);
+			m_history = m_history.mid(0, i);
+			rebuildBack();
+		});
+}
+
+void AlethFive::on_url_returnPressed()
+{
+	navigateTo(m_ui->url->text());
+	m_history += QPair<QString, QString>(m_ui->url->text(), m_ui->url->text());
+	rebuildBack();
+}
+
+void AlethFive::navigateTo(QString _url)
+{
+	QUrl url(_url);
 	if (url.scheme().isEmpty() || url.scheme() == "eth" || url.path().endsWith(".dapp"))
 	{
 		try
 		{
 			//try do resolve dapp url
-			m_dappLoader->loadDapp(s);
+			m_dappLoader->loadDapp(_url);
 			return;
 		}
 		catch (...)

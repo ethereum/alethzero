@@ -49,17 +49,23 @@ public:
 private slots:
 	void dappLoaded(Dapp& _dapp);
 	void pageLoaded(QByteArray _content, QString _mimeType, QUrl _uri);
-	void reloadUrl();
+	void navigateTo(QString _url);
+
+	void on_url_returnPressed();
 
 private:
 	void refresh();
+	void rebuildBack();
 
 	void readSettings();
 	void writeSettings();
 
 	Ui::AlethFive* m_ui;
+	QMenu* m_backMenu;
 	Aleth m_aleth;
 	RPCHost m_rpcHost;
+
+	QList<QPair<QString, QString>> m_history;
 
 	std::unique_ptr<DappHost> m_dappHost;
 	DappLoader* m_dappLoader = nullptr;
