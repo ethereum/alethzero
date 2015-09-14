@@ -70,7 +70,7 @@ void InjectTransactions::doInject(QString _txHex)
 	try
 	{
 		bytes b = fromHex(_txHex.toStdString(), WhenError::Throw);
-		aleth()->ethereum()->injectTransaction(b);
+		aleth()->ethereum()->sendRawTransaction(b);
 	}
 	catch (BadHexCharacter& _e)
 	{
