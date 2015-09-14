@@ -49,16 +49,6 @@ static Public stringToPublic(QString const& _a)
 		return Public();
 }
 
-static bytes stringToBytes(string const& _s)
-{
-	bytes b;
-	b.reserve(_s.size());
-	for (char c: _s)
-		b.push_back(static_cast<unsigned char>(c));
-
-	return move(b);
-}
-
 static shh::Topics topicFromText(QString _s)
 {
 	shh::BuildTopic ret;
@@ -182,7 +172,7 @@ void Whisper::on_post_clicked()
 {
 	shh::Message m;
 	m.setTo(stringToPublic(m_ui->shhTo->currentText()));
-	m.setPayload(stringToBytes(m_ui->shhData->toPlainText().toStdString()));
+	m.setPayload(bytesConstRef(m_ui->shhData->toPlainText().toStdString()).toBytes());
 
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
 	Secret from;
