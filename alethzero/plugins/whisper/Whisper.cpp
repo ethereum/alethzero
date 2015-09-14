@@ -49,6 +49,16 @@ static Public stringToPublic(QString const& _a)
 		return Public();
 }
 
+static bytes stringToBytes(string const& _s)
+{
+	bytes b;
+	b.reserve(_s.size());
+	for (char c: _s)
+		b.push_back(static_cast<unsigned char>(c));
+
+	return move(b);
+}
+
 static shh::Topics topicFromText(QString _s)
 {
 	shh::BuildTopic ret;
@@ -111,6 +121,7 @@ Whisper::Whisper(ZeroFace* _m):
 	m_ui->setupUi(dock()->widget());
 	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
 	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
+	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(on_post_clicked()));
 }
 
 void Whisper::readSettings(QSettings const& _s)
@@ -169,13 +180,16 @@ void Whisper::on_newIdentity_triggered()
 
 void Whisper::on_post_clicked()
 {
-	return;
 	shh::Message m;
 	m.setTo(stringToPublic(m_ui->shhTo->currentText()));
-	m.setPayload(parseData(m_ui->shhData->toPlainText().toStdString()));
+	m.setPayload(stringToBytes(m_ui->shhData->toPlainText().toStdString()));
+
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
 	Secret from;
 	if (zero()->web3Server()->ids().count(f))
 		from = zero()->web3Server()->ids().at(f);
-	web3()->whisper()->inject(m.seal(from, topicFromText(m_ui->shhTopic->toPlainText()), m_ui->shhTtl->value(), m_ui->shhWork->value()));
+
+	shh::BuildTopic topic(m_ui->shhTopic->toPlainText().toStdString().c_str());
+	web3()->whisper()->inject(m.seal(from, topic, m_ui->shhTtl->value(), m_ui->shhWork->value()));
+	m_ui->shhData->clear();
 }
