@@ -172,14 +172,14 @@ void Whisper::on_post_clicked()
 {
 	shh::Message m;
 	m.setTo(stringToPublic(m_ui->shhTo->currentText()));
-	m.setPayload(bytesConstRef(m_ui->shhData->toPlainText().toStdString()).toBytes());
+	m.setPayload(asBytes(m_ui->shhData->toPlainText().toStdString()));
 
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
 	Secret from;
 	if (zero()->web3Server()->ids().count(f))
 		from = zero()->web3Server()->ids().at(f);
 
-	shh::BuildTopic topic(m_ui->shhTopic->toPlainText().toStdString().c_str());
+	shh::BuildTopic topic(m_ui->shhTopic->toPlainText().toStdString());
 	web3()->whisper()->inject(m.seal(from, topic, m_ui->shhTtl->value(), m_ui->shhWork->value()));
 	m_ui->shhData->clear();
 }
