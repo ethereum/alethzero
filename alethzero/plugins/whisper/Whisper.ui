@@ -30,6 +30,9 @@
        <property name="text">
         <string>Work to Prove</string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignRight|Qt::AlignVCenter</set>
+       </property>
       </widget>
      </item>
      <item row="5" column="1" colspan="4">
@@ -41,7 +44,7 @@
         </sizepolicy>
        </property>
        <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+        <enum>QFrame::StyledPanel</enum>
        </property>
        <property name="lineWidth">
         <number>0</number>
@@ -57,7 +60,7 @@
         </sizepolicy>
        </property>
        <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+        <enum>QFrame::StyledPanel</enum>
        </property>
        <property name="lineWidth">
         <number>0</number>
