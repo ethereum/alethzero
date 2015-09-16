@@ -98,7 +98,7 @@ QVariant CategoryModel::data(QModelIndex const& _index, int role) const
 
 void CategoryModel::addPage(int _index, QString const& _title, SettingsPage* _widget)
 {
-	beginInsertRows(QModelIndex(), rowCount(), 1);
+	beginInsertRows(QModelIndex(), rowCount(), rowCount() + 1);
 	Category cat;
 	cat.index = _index;
 	cat.displayName = _title;
