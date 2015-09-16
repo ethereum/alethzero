@@ -23,6 +23,7 @@
 
 #include <QListWidget>
 #include <QPlainTextEdit>
+#include <libdevcrypto/Common.h>
 #include "Plugin.h"
 
 namespace Ui
@@ -37,6 +38,24 @@ namespace aleth
 namespace zero
 {
 
+struct AccountData
+{
+	Address address;
+	QString name;
+
+	/// true if the address is the address of contract
+	bool isContract;
+
+	/// [account only] true if DAPPS should see this address
+	bool isVisible;
+
+	/// true if contract needs saving
+	bool isEdited;
+
+	/// true if contract needs to be deleted
+	bool isDeleted;
+};
+
 class AllAccounts: public QObject, public Plugin
 {
 	Q_OBJECT
@@ -49,13 +68,17 @@ private slots:
 	void on_accounts_currentItemChanged();
 	void on_accounts_doubleClicked();
 
-	void onAllChange();
+	void create();
 	void refresh();
+	void filterAndUpdateUi();
+	void save();
 
 private:
 	void installWatches();
 
 	Ui::AllAccounts* m_ui;
+	Address m_default;
+	std::map<Address, AccountData> m_accounts;
 };
 
 }
