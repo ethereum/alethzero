@@ -22,6 +22,7 @@
 #include "AllAccounts.h"
 #include <sstream>
 #include <QClipboard>
+#include <QInputDialog>
 #include <libdevcore/Log.h>
 #include <libdevcore/SHA3.h>
 #include <libevmcore/Instruction.h>
@@ -45,7 +46,8 @@ static inline QString deletedButtonName(AccountData const& _account)
 
 static inline QString displayName(AccountData const& _account)
 {
-	return _account.isDeleted ? _account.name + " [Deleted]" : _account.name;
+	return _account.name + (_account.isDeleted ? " [Deleted]" : "")
+	+ (_account.isDefault ? " [Default]" : "");
 }
 
 ZERO_NOTE_PLUGIN(AllAccounts);
@@ -66,7 +68,6 @@ void AllAccounts::installWatches()
 	aleth()->installWatch(PendingChangedFilter, [=](LocalisedLogEntries const&){ onAllChange(); });
 
 	connect(m_ui->accounts, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), SLOT(on_accounts_currentItemChanged()));
-	connect(m_ui->accounts, SIGNAL(doubleClicked(QModelIndex)), SLOT(on_accounts_doubleClicked()));
 
 	connect(m_ui->showBasic, &QCheckBox::toggled, [this]() { refresh(); });
 	connect(m_ui->showContracts, &QCheckBox::toggled, [this]() { refresh(); });
@@ -92,10 +93,6 @@ void AllAccounts::create()
 
 	installWatches();
 	m_ui->detailsView->setVisible(false);
-	QPixmap pixmap("/Users/marek/projects/umbrella/webthree-umbrella/mix/qml/img/clipboard_copy.png");
-	m_ui->addressCopy->setIcon(pixmap);
-	m_ui->ICAPCopy->setIcon(pixmap);
-	m_ui->codeCopy->setIcon(pixmap);
 
 	refresh();
 
@@ -113,7 +110,13 @@ void AllAccounts::save()
 		if (account.second.isDeleted)
 		{
 			aleth()->keyManager().kill(account.first);
-			deletedBeneficiary |= aleth()->beneficiary() == account.first;
+			deletedBeneficiary |= account.second.isDefault;
+		} else if (account.second.isEdited)
+		{
+			if (account.second.isDefault)
+				aleth()->setBeneficiary(account.first);
+
+			aleth()->keyManager().changeName(account.first, account.second.name.toStdString());
 		}
 	}
 
@@ -122,6 +125,7 @@ void AllAccounts::save()
 	if (deletedBeneficiary)
 		aleth()->setBeneficiary(aleth()->keyManager().accounts().front());
 	aleth()->noteKeysChanged();
+	aleth()->beneficiaryChanged();
 }
 
 void AllAccounts::refresh()
@@ -157,7 +161,7 @@ void AllAccounts::refresh()
 		data.address = i;
 		data.name = QString::fromStdString(aleth()->toName(i));
 		data.isContract = isContract;
-		data.isVisible = true; // TODO: fix this
+		data.isDefault = aleth()->beneficiary() == i;
 		newAccounts[i] = data;
 	}
 	m_accounts = newAccounts;
@@ -175,9 +179,9 @@ void AllAccounts::filterAndUpdateUi()
 			continue;
 
 		QListWidgetItem* li = new QListWidgetItem(displayName(account.second), m_ui->accounts);
-		li->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 		li->setData(Qt::UserRole, QByteArray((char const*)account.first.data(), Address::size));
-		li->setCheckState(account.second.isVisible ? Qt::Checked : Qt::Unchecked);
+//		li->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+//		li->setCheckState(account.second.isVisible ? Qt::Checked : Qt::Unchecked);
 	}
 	m_ui->accounts->sortItems();
 }
@@ -191,46 +195,76 @@ void AllAccounts::on_accounts_currentItemChanged()
 		auto hba = item->data(Qt::UserRole).toByteArray();
 		assert(hba.size() == 20);
 		auto address = h160((byte const*)hba.data(), h160::ConstructFromPointer);
-		try
+		
+		m_ui->deleteButton->disconnect();
+		m_ui->nameValue->disconnect();
+		m_ui->defaultValue->disconnect();
+		
+		AccountData account = m_accounts.at(address);
+		
+		m_ui->codeLabel->setVisible(account.isContract);
+		m_ui->codeValue->setVisible(account.isContract);
+		m_ui->codeCopy->setVisible(account.isContract);
+		m_ui->defaultLabel->setVisible(!account.isContract);
+		m_ui->defaultValue->setVisible(!account.isContract);
+		
+		m_ui->nameValue->setText(account.name);
+		m_ui->addressValue->setText(QString::fromStdString(toHex(address.ref())));
+		m_ui->ICAPValue->setText(QString::fromStdString(ICAP(address).encoded()));
+		m_ui->balanceValue->setText(QString::fromStdString(formatBalance(ethereum()->balanceAt(address))));
+		m_ui->codeValue->setText(QString::fromStdString(toHex(ethereum()->codeAt(address))));
+		m_ui->defaultValue->setChecked(account.isDefault);
+		m_ui->deleteButton->setText(deletedButtonName(account));
+		
+		connect(m_ui->deleteButton, &QPushButton::clicked, [this, address, item] ()
 		{
-			AccountData account = m_accounts.at(address);
-
-			m_ui->codeLabel->setVisible(account.isContract);
-			m_ui->codeValue->setVisible(account.isContract);
-			m_ui->codeCopy->setVisible(account.isContract);
-			m_ui->defaultLabel->setVisible(!account.isContract);
-			m_ui->defaultValue->setVisible(!account.isContract);
-
-			m_ui->nameValue->setText(account.name);
-			m_ui->addressValue->setText(QString::fromStdString(toHex(address.ref())));
-			m_ui->ICAPValue->setText(QString::fromStdString(ICAP(address).encoded()));
-			m_ui->balanceValue->setText(QString::fromStdString(formatBalance(ethereum()->balanceAt(address))));
-			m_ui->codeValue->setText(QString::fromStdString(toHex(ethereum()->codeAt(address))));
-			m_ui->deleteButton->setText(deletedButtonName(account));
-
-			m_ui->deleteButton->disconnect();
-			connect(m_ui->deleteButton, &QPushButton::clicked, [this, address, item] ()
+			AccountData a = m_accounts.at(address);
+			if (!a.isDeleted)
 			{
-				AccountData a = m_accounts.at(address);
-				a.isDeleted = !a.isDeleted;
-				m_ui->deleteButton->setText(deletedButtonName(a));
-				m_accounts[address] = a;
-				item->setText(displayName(a));
-			});
-		}
-		catch (dev::InvalidTrie)
+				QString message = QString::fromStdString("Account " + aleth()->keyManager().accountName(address) + " (" + aleth()->toReadable(address) + ") has " + formatBalance(aleth()->ethereum()->balanceAt(address)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n" "Are you sure you want to continue? \r\n If so, type 'YES' to confirm.");
+			
+				QString s = QInputDialog::getText(m_ui->detailsView, QString::fromStdString("Kill Account " + aleth()->keyManager().accountName(address) + "?!"), message, QLineEdit::Normal, "NO");
+				if (s != "YES")
+					return;
+			}
+	
+			a.isDeleted = !a.isDeleted;
+			m_ui->deleteButton->setText(deletedButtonName(a));
+			m_accounts[address] = a;
+			item->setText(displayName(a));
+		});
+		
+		connect(m_ui->nameValue, &QLineEdit::textChanged, [this, address, item] ()
 		{
-			//			m_ui->accountInfo->appendHtml("Corrupted trie.");
-		}
-	}
-}
+			AccountData a = m_accounts.at(address);
+			a.name = m_ui->nameValue->text();
+			a.isEdited = true;
+			m_ui->deleteButton->setText(deletedButtonName(a));
+			m_accounts[address] = a;
+			item->setText(displayName(a));
+		});
+		
+		connect(m_ui->defaultValue, &QCheckBox::stateChanged, [this, address, item] (bool _checked)
+		{
+			// reset all values
+			for (int i = 0; i < m_ui->accounts->count(); i++)
+			{
+				auto li = m_ui->accounts->item(i);
+				auto d = li->data(Qt::UserRole).toByteArray();
+				auto add = h160((byte const*)d.data(), h160::ConstructFromPointer);
+				
+				AccountData a = m_accounts.at(add);
+				a.isEdited = true;
+				a.isDefault = false;
+				m_accounts[add] = a;
+				li->setText(displayName(a));
+			}
 
-void AllAccounts::on_accounts_doubleClicked()
-{
-	if (m_ui->accounts->count())
-	{
-		auto hba = m_ui->accounts->currentItem()->data(Qt::UserRole).toByteArray();
-		auto h = Address((byte const*)hba.data(), Address::ConstructFromPointer);
-		qApp->clipboard()->setText(QString::fromStdString(toHex(h.asArray())));
+			AccountData a = m_accounts.at(address);
+			a.isEdited = true;
+			a.isDefault = _checked;
+			m_accounts[address] = a;
+			item->setText(displayName(a));
+		});
 	}
 }

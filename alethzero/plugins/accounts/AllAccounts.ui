@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>670</width>
+    <width>840</width>
     <height>444</height>
    </rect>
   </property>
@@ -205,19 +205,15 @@
        <widget class="QPushButton" name="addressCopy">
         <property name="maximumSize">
          <size>
-          <width>16</width>
-          <height>16</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="toolTip">
          <string>Copy Address To Clipboard</string>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../../../../mix/res.qrc">
-          <normaloff>:/qml/img/clipboard_copy.png</normaloff>:/qml/img/clipboard_copy.png</iconset>
+         <string>Copy</string>
         </property>
         <property name="iconSize">
          <size>
@@ -226,7 +222,7 @@
          </size>
         </property>
         <property name="flat">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -304,19 +300,15 @@
        <widget class="QPushButton" name="codeCopy">
         <property name="maximumSize">
          <size>
-          <width>16</width>
-          <height>16</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../../../../mix/res.qrc">
-          <normaloff>:/qml/img/clipboard_copy.png</normaloff>:/qml/img/clipboard_copy.png</iconset>
+         <string>Copy</string>
         </property>
         <property name="flat">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -332,13 +324,6 @@
          </size>
         </property>
        </spacer>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="nameValue">
-        <property name="text">
-         <string>TextLabel</string>
-        </property>
-       </widget>
       </item>
       <item row="1" column="1">
        <widget class="QLabel" name="addressValue">
@@ -375,22 +360,28 @@
        <widget class="QPushButton" name="ICAPCopy">
         <property name="maximumSize">
          <size>
-          <width>16</width>
-          <height>16</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="toolTip">
          <string>Copy ICAP to Clipboard</string>
         </property>
         <property name="text">
-         <string/>
-        </property>
-        <property name="icon">
-         <iconset resource="../../../../mix/res.qrc">
-          <normaloff>:/qml/img/clipboard_copy.png</normaloff>:/qml/img/clipboard_copy.png</iconset>
+         <string>Copy</string>
         </property>
         <property name="flat">
-         <bool>true</bool>
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="nameValue">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>16777215</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -399,9 +390,7 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="../../../../mix/res.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>cancel</sender>

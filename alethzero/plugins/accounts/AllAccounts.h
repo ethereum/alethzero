@@ -49,11 +49,14 @@ struct AccountData
 	/// [account only] true if DAPPS should see this address
 	bool isVisible;
 
-	/// true if contract needs saving
+	/// true if account needs saving
 	bool isEdited;
 
-	/// true if contract needs to be deleted
+	/// true if account needs to be deleted
 	bool isDeleted;
+	
+	/// true if account is default
+	bool isDefault;
 };
 
 class AllAccounts: public QObject, public Plugin
@@ -66,7 +69,6 @@ public:
 
 private slots:
 	void on_accounts_currentItemChanged();
-	void on_accounts_doubleClicked();
 
 	void create();
 	void refresh();
