@@ -207,6 +207,7 @@ void AllAccounts::on_accounts_currentItemChanged()
 		m_ui->codeCopy->setVisible(account.isContract);
 		m_ui->defaultLabel->setVisible(!account.isContract);
 		m_ui->defaultValue->setVisible(!account.isContract);
+		m_ui->deleteButton->setVisible(!account.isContract);
 		
 		m_ui->nameValue->setText(account.name);
 		m_ui->addressValue->setText(QString::fromStdString(toHex(address.ref())));
