@@ -26,7 +26,7 @@
 #include <libdevcore/SHA3.h>
 #include <libevmcore/Instruction.h>
 #include <libethereum/Client.h>
-#include "ConfigInfo.h"
+#include "ethereum/ConfigInfo.h"
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "ui_AllAccounts.h"
