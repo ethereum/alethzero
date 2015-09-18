@@ -29,7 +29,7 @@
 #include <libethcore/ICAP.h>
 #include <libethcore/KeyManager.h>
 #include <libethereum/Client.h>
-#include "ConfigInfo.h"
+#include "ethereum/ConfigInfo.h"
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "ui_AllAccounts.h"
@@ -162,6 +162,7 @@ void AllAccounts::refresh()
 		data.name = QString::fromStdString(aleth()->toName(i));
 		data.isContract = isContract;
 		data.isDefault = aleth()->beneficiary() == i;
+		data.isDeleted = false;
 		newAccounts[i] = data;
 	}
 	m_accounts = newAccounts;

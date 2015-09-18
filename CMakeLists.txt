@@ -9,7 +9,7 @@ include(EthPolicy)
 eth_policy()
 
 # project name and version should be set after cmake_policy CMP0048
-set(PROJECT_VERSION "0.9.92")
+set(PROJECT_VERSION "0.9.93")
 project(alethzero VERSION ${PROJECT_VERSION})
 
 # Let's find our dependencies
@@ -25,8 +25,7 @@ include(EthExecutableHelper)
 include(EthUtils)
 
 include(EthOptions)
-configure_project()
-print_config()
+configure_project(SOLIDITY)
 
 # required for qt5_wrap_ui below, TODO: remove this
 find_package(Qt5Widgets)
