@@ -25,6 +25,7 @@
 #include <QString>
 #include <QPair>
 #include <QList>
+#include <QSet>
 #include "Plugin.h"
 
 namespace Ui
@@ -45,12 +46,17 @@ class WhisperPeers: public QObject, public Plugin
 
 public:
 	WhisperPeers(ZeroFace* _m);
+	void noteTopic(QString const _topic);
+	void forgetTopics();
 
 private:
 	void timerEvent(QTimerEvent*) override;
 	void refreshWhispers();
+	void setDefaultTopics();
+	unsigned getTarget(QString const& _topic);
 
 	Ui::WhisperPeers* m_ui;
+	QSet<QString> m_knownTopics;
 };
 
 }

@@ -2,7 +2,7 @@
 <ui version="4.0">
  <class>WhisperPeers</class>
    <widget class="QWidget" name="whisperPeersWidget">
-    <layout class="QHBoxLayout" name="whisperPeersLayout">
+    <layout class="QVBoxLayout" name="whisperPeersLayout">
      <property name="spacing">
       <number>0</number>
      </property>
@@ -19,9 +19,16 @@
       <number>0</number>
      </property>
      <item>
+      <widget class="QComboBox" name="topics">
+       <property name="editable">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QListWidget" name="whispers">
        <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+        <enum>QFrame::StyledPanel</enum>
        </property>
       </widget>
      </item>
