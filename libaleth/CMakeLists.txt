@@ -5,6 +5,10 @@ aux_source_directory(. SRC_LIST)
 file(GLOB HEADERS "*.h")
 file(GLOB UI_RESOURCES "*.ui")
 
+# This is a hack until someone proposes a better solution. When building split repos
+# ETH_DIR has not been set yet but is nonetheless used in the eth_add_resources() call.
+# TODO: fix properly
+set(ETH_DIR "${ETH_CMAKE_DIR}/../../libethereum" CACHE PATH "The path to the ethereum directory")
 eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}/..")
 
 set(EXECUTABLE aleth)
