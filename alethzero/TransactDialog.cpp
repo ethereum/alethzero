@@ -263,16 +263,27 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 		dev::solidity::CompilerStack compiler(true);
 		try
 		{
-//				compiler.addSources(dev::solidity::StandardSources);
-			LinkerObject const& obj = compiler.compile(_user, _opt);
-			solidity = "<h4>Solidity</h4>";
-			solidity += "<pre>var " + compiler.defaultContractName() + " = web3.eth.contract(" + QString::fromStdString(compiler.interface()).replace(QRegExp("\\s"), "").toHtmlEscaped().toStdString() + ");</pre>";
-			solidity += "<pre>" + QString::fromStdString(compiler.solidityInterface()).toHtmlEscaped().toStdString() + "</pre>";
-			solidity += "<pre>" + QString::fromStdString(getFunctionHashes(compiler, "")).toHtmlEscaped().toStdString() + "</pre>";
-			if (obj.linkReferences.empty())
-				data = obj.bytecode;
+			if (!compiler.compile(_user, _opt))
+			{
+				for (auto const& error: compiler.errors())
+				{
+					ostringstream errorStr;
+					solidity::SourceReferenceFormatter::printExceptionInformation(errorStr, *error, "Error", compiler);
+					errors.push_back("Solidity: " + errorStr.str());
+				}
+			}
 			else
-				errors.push_back("Solidity: Compilation resulted in unlinked object.");
+			{
+				solidity = "<h4>Solidity</h4>";
+				solidity += "<pre>var " + compiler.defaultContractName() + " = web3.eth.contract(" + QString::fromStdString(compiler.interface()).replace(QRegExp("\\s"), "").toHtmlEscaped().toStdString() + ");</pre>";
+				solidity += "<pre>" + QString::fromStdString(compiler.solidityInterface()).toHtmlEscaped().toStdString() + "</pre>";
+				solidity += "<pre>" + QString::fromStdString(getFunctionHashes(compiler, "")).toHtmlEscaped().toStdString() + "</pre>";
+				LinkerObject const& obj = compiler.object();
+				if (obj.linkReferences.empty())
+					data = obj.bytecode;
+				else
+					errors.push_back("Solidity: Compilation resulted in unlinked object.");
+			}
 		}
 		catch (dev::Exception const& exception)
 		{
@@ -494,7 +505,7 @@ void TransactDialog::rejigData()
 			// Errors determining transaction data (i.e. init code). Bail.
 			QString htmlErrors;
 			for (auto const& i: errors)
-				htmlErrors.append("<div class=\"error\"><span class=\"icon\">ERROR</span> " + QString::fromStdString(i).toHtmlEscaped() + "</div>");
+				htmlErrors.append("<div class=\"error\"><span class=\"icon\">ERROR</span><pre>" + QString::fromStdString(i).toHtmlEscaped() + "</pre></div>");
 			bail(htmlErrors);
 			return;
 		}
@@ -585,15 +596,18 @@ void TransactDialog::on_send_clicked()
 			try
 			{
 				dev::solidity::CompilerStack compiler(true);
-				LinkerObject obj = compiler.compile(src, m_ui->optimize->isChecked());
-				if (obj.linkReferences.empty())
+				if (compiler.compile(src, m_ui->optimize->isChecked()))
 				{
-					m_data = obj.bytecode;
-					for (string const& s: compiler.contractNames())
+					LinkerObject obj = compiler.object();
+					if (obj.linkReferences.empty())
 					{
-						h256 contractHash = compiler.contractCodeHash(s);
-						if (contractHash != h256())
-							m_natSpecDB->add(contractHash, compiler.metadata(s, dev::solidity::DocumentationType::NatspecUser));
+						m_data = obj.bytecode;
+						for (string const& s: compiler.contractNames())
+						{
+							h256 contractHash = compiler.contractCodeHash(s);
+							if (contractHash != h256())
+								m_natSpecDB->add(contractHash, compiler.metadata(s, dev::solidity::DocumentationType::NatspecUser));
+						}
 					}
 				}
 			}
