@@ -21,6 +21,7 @@
 
 #include "Whisper.h"
 #include <QSettings>
+#include <QShortcut>
 #include <libethereum/Client.h>
 #include <libethereum/Utility.h>
 #include <libwhisper/WhisperHost.h>
@@ -117,6 +118,11 @@ Whisper::Whisper(ZeroFace* _m):
 	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
 	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(on_post_clicked()));
 	connect(m_ui->forget, SIGNAL(clicked()), this, SLOT(on_forget_clicked()));
+
+	QShortcut *shortcutSend1 = new QShortcut(QKeySequence("Ctrl+Enter"), m_ui->shhData);
+	QShortcut *shortcutSend2 = new QShortcut(QKeySequence("Ctrl+Return"), m_ui->shhData);
+	QObject::connect(shortcutSend1, SIGNAL(activated()), this, SLOT(on_post_clicked()));
+	QObject::connect(shortcutSend2, SIGNAL(activated()), this, SLOT(on_post_clicked()));
 }
 
 void Whisper::readSettings(QSettings const& _s)

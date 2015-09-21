@@ -49,11 +49,15 @@ public:
 	void noteTopic(QString const _topic);
 	void forgetTopics();
 
+private slots:
+	void on_filter_changed();
+
 private:
 	void timerEvent(QTimerEvent*) override;
 	void refreshWhispers();
 	void setDefaultTopics();
 	unsigned getTarget(QString const& _topic);
+	void redraw(std::multimap<time_t, QString> const& _messages);
 
 	Ui::WhisperPeers* m_ui;
 	QSet<QString> m_knownTopics;

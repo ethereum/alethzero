@@ -21,6 +21,7 @@
 
 #include "WhisperPeers.h"
 #include <QSettings>
+#include <QScrollBar>
 #include <libethereum/Client.h>
 #include <libwhisper/WhisperHost.h>
 #include <libwebthree/WebThree.h>
@@ -51,7 +52,7 @@ QString messageToString(shh::Envelope const& _e, shh::Message const& _m)
 	t.chop(6);
 	t = t.right(t.size() - 4);
 
-	QString seal = QString("{%1 -> %2}").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
+	QString seal = QString("<%1 -> %2>").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
 	QString item = QString("[%1, ttl: %2] *%3 %4 %5 ").arg(t).arg(_e.ttl()).arg(_e.workProved()).arg(toString(_e.topic()).c_str()).arg(seal);
 
 	bytes raw = _m.payload();
@@ -70,14 +71,18 @@ WhisperPeers::WhisperPeers(ZeroFace* _m):
 {
 	dock(Qt::RightDockWidgetArea, "Active Whispers")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
-	startTimer(1000);
 	setDefaultTopics();
+	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(on_filter_changed()));
+	m_ui->whispers->setAlternatingRowColors(true);
+	m_ui->whispers->setStyleSheet("alternate-background-color: aquamarine;");
+	m_ui->whispers->setWordWrap(true);
+	startTimer(1000);
 }
 
 void WhisperPeers::setDefaultTopics()
 {
-	m_ui->topics->addItem(c_filterToMe);
 	m_ui->topics->addItem(c_filterAll);
+	m_ui->topics->addItem(c_filterToMe);
 	m_ui->topics->addItem(c_filterDecrypted);
 }
 
@@ -95,6 +100,11 @@ void WhisperPeers::forgetTopics()
 }
 
 void WhisperPeers::timerEvent(QTimerEvent*)
+{
+	refreshWhispers();
+}
+
+void WhisperPeers::on_filter_changed()
 {
 	refreshWhispers();
 }
@@ -143,8 +153,28 @@ void WhisperPeers::refreshWhispers()
 			chat.emplace(e.expiry() - e.ttl(), messageToString(e, m));
 	}
 
+	redraw(chat);
+}
+
+void WhisperPeers::redraw(multimap<time_t, QString> const& _messages)
+{
+	//if (m_ui->whispers->count() == _messages.size()) return; // was needed for debug purposes
+
+	QScrollBar* scroll = m_ui->whispers->verticalScrollBar();
+	bool wasAtBottom = (scroll->maximum() == scroll->sliderPosition());
+
 	m_ui->whispers->clear();
 
-	for (auto const& i: chat)
-		m_ui->whispers->addItem(i.second);
+	QListWidgetItem *item = nullptr;
+
+	for (auto const& i: _messages)
+	{
+		item = new QListWidgetItem;
+		item->setText(i.second);
+		item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
+		m_ui->whispers->addItem(item);
+	}
+
+	if (wasAtBottom)
+		m_ui->whispers->scrollToBottom();
 }
