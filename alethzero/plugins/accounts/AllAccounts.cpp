@@ -200,6 +200,7 @@ void AllAccounts::on_accounts_currentItemChanged()
 		m_ui->deleteButton->disconnect();
 		m_ui->nameValue->disconnect();
 		m_ui->defaultValue->disconnect();
+		m_ui->secretCopy->disconnect();
 		
 		AccountData account = m_accounts.at(address);
 		
@@ -209,6 +210,9 @@ void AllAccounts::on_accounts_currentItemChanged()
 		m_ui->defaultLabel->setVisible(!account.isContract);
 		m_ui->defaultValue->setVisible(!account.isContract);
 		m_ui->deleteButton->setVisible(!account.isContract);
+		m_ui->secretLabel->setVisible(!account.isContract);
+		m_ui->secretValue->setVisible(!account.isContract);
+		m_ui->secretCopy->setVisible(!account.isContract);
 		
 		m_ui->nameValue->setText(account.name);
 		m_ui->addressValue->setText(QString::fromStdString(toHex(address.ref())));
@@ -267,6 +271,12 @@ void AllAccounts::on_accounts_currentItemChanged()
 			a.isDefault = _checked;
 			m_accounts[address] = a;
 			item->setText(displayName(a));
+		});
+		
+		connect(m_ui->secretCopy, &QPushButton::clicked, [this, address] ()
+		{
+			Secret s = aleth()->retrieveSecret(address);
+			qApp->clipboard()->setText(QString::fromStdString(s.makeInsecure().hex()));
 		});
 	}
 }
