@@ -140,7 +140,17 @@ void Whisper::readSettings(QSettings const& _s)
 				m_myIdentities.append(KeyPair(k));
 		}
 	}
+
 	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+
+	int ttl = _s.value("ttl").toInt();
+	if (ttl > 0)
+		m_ui->shhTtl->setValue(ttl);
+
+	int PoW = _s.value("PoW").toInt();
+	if (PoW > 0)
+		m_ui->shhWork->setValue(PoW);
+
 	refreshWhisper();
 }
 
@@ -154,7 +164,10 @@ void Whisper::writeSettings(QSettings& _s)
 		memcpy(p, &(i.secret()), sizeof(Secret));
 		p += sizeof(Secret);
 	}
+
 	_s.setValue("identities", b);
+	_s.setValue("ttl", m_ui->shhTtl->value());
+	_s.setValue("PoW", m_ui->shhWork->value());
 }
 
 void Whisper::addNewId(QString _ids)
