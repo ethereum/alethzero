@@ -22,6 +22,7 @@
 #include "Whisper.h"
 #include <QSettings>
 #include <QShortcut>
+#include <QMessageBox>
 #include <libethereum/Client.h>
 #include <libethereum/Utility.h>
 #include <libwhisper/WhisperHost.h>
@@ -186,12 +187,18 @@ void Whisper::on_post_clicked()
 	QString const qsTopic = m_ui->shhTopic->currentText();
 	noteTopic(qsTopic);
 
-	QString const qsDest = m_ui->shhTo->currentText();
-	Public dest = stringToPublic(qsDest);
+	QString const strDest = m_ui->shhTo->currentText();
+	Public dest = stringToPublic(strDest);
 	if (dest)
-		noteDestination(qsDest);
-	else if (!qsDest.isEmpty())
-		return; // don't allow unencrypted messages, unless it was explicitly intended
+		noteDestination(strDest);
+	else if (!strDest.isEmpty())
+	{
+		// don't allow unencrypted messages, unless it was explicitly intended
+		QMessageBox box(QMessageBox::Warning, "Warning", "Invalid destination address!");
+		box.setInformativeText("Destination address must be either valid or blank.");
+		box.exec();
+		return;
+	}
 
 	string text = m_ui->shhData->toPlainText().toStdString();
 	if (text.empty())

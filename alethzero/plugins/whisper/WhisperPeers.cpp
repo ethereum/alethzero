@@ -52,13 +52,14 @@ QString messageToString(shh::Envelope const& _e, shh::Message const& _m)
 	t.chop(6);
 	t = t.right(t.size() - 4);
 
-	QString seal = QString("<%1 -> %2>").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
-	QString item = QString("[%1, ttl: %2] *%3 %4 %5 ").arg(t).arg(_e.ttl()).arg(_e.workProved()).arg(toString(_e.topic()).c_str()).arg(seal);
+	QString seal = QString("{%1 -> %2}").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
+	QString item = QString("[%1, ttl: %2] *%3 %4 %5").arg(t).arg(_e.ttl()).arg(_e.workProved()).arg(toString(_e.topic()).c_str()).arg(seal);
 
 	bytes raw = _m.payload();
 	if (raw.size())
 	{
 		QString plaintext = QString::fromUtf8((const char*)(raw.data()), raw.size());
+		item += ": ";
 		item += plaintext;
 	}
 
