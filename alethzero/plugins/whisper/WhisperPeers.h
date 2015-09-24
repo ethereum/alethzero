@@ -21,11 +21,9 @@
 
 #pragma once
 
-#include <QMutex>
+//#include <QMutex>
 #include <QString>
-#include <QPair>
-#include <QList>
-#include <QSet>
+#include <map>
 #include "Plugin.h"
 
 namespace Ui
@@ -54,13 +52,17 @@ private slots:
 
 private:
 	void timerEvent(QTimerEvent*) override;
-	void refreshWhispers();
+	void refreshWhispers(bool _timerEvent);
 	void setDefaultTopics();
-	unsigned getTarget(QString const& _topic);
-	void redraw(std::multimap<time_t, QString> const& _messages);
+	void addToView(std::multimap<time_t, QString> const& _messages);
+	void refreshAll(bool _timerEvent);
+	void refresh(QString const& _topic, bool _timerEvent);
+	void resizeMap(std::multimap<time_t, QString>& _map);
 
 	Ui::WhisperPeers* m_ui;
-	QSet<QString> m_knownTopics;
+	std::map<QString, unsigned> m_topics;
+	std::map<QString, std::multimap<time_t, QString>> m_chats;
+	std::multimap<time_t, QString> m_all;
 };
 
 }

@@ -213,13 +213,22 @@ void Whisper::on_post_clicked()
 		return;
 	}
 
-	string text = m_ui->shhData->toPlainText().toStdString();
-	if (text.empty())
+
+	int const msgSizeLimit = 1024;
+	QString text = m_ui->shhData->toPlainText();
+	if (text.isEmpty())
 		return;
+	else if (text.size() > msgSizeLimit)
+	{
+		QMessageBox box(QMessageBox::Warning, "Warning", "Message too big!");
+		box.setInformativeText(QString("Single message should not exceed %1 characters.").arg(msgSizeLimit));
+		box.exec();
+		return;
+	}
 
 	shh::Message m;
 	m.setTo(dest);
-	m.setPayload(asBytes(text));
+	m.setPayload(asBytes(text.toStdString()));
 
 	Secret from;
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
