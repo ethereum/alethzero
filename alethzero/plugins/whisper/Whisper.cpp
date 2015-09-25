@@ -55,6 +55,17 @@ static Public stringToPublic(QString const& _a)
 		return Public();
 }
 
+static shh::Topics stringToTopics(QString _s)
+{
+	shh::BuildTopic ret;
+	QStringList tx = _s.split("|", QString::SkipEmptyParts);
+
+	for (auto t: tx)
+		ret.shift(t.toStdString());
+
+	return ret.toTopics();
+}
+
 static shh::Topics topicFromText(QString _s)
 {
 	shh::BuildTopic ret;
@@ -213,7 +224,6 @@ void Whisper::on_post_clicked()
 		return;
 	}
 
-
 	int const msgSizeLimit = 1024;
 	QString text = m_ui->shhData->toPlainText();
 	if (text.isEmpty())
@@ -235,7 +245,7 @@ void Whisper::on_post_clicked()
 	if (zero()->web3Server()->ids().count(f))
 		from = zero()->web3Server()->ids().at(f);
 
-	shh::BuildTopic topic(qsTopic.toStdString());
+	shh::Topics topic = stringToTopics(qsTopic);
 	web3()->whisper()->inject(m.seal(from, topic, m_ui->shhTtl->value(), m_ui->shhWork->value()));
 	m_ui->shhData->clear();
 	m_ui->shhData->setFocus();
@@ -265,8 +275,20 @@ void Whisper::noteTopic(QString const _topic)
 
 	auto x = zero()->findPlugin(c_chatPluginName);
 	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
-	if (wp)
-		wp->noteTopic(_topic);
+	if (!wp)
+		return;
+
+	QStringList tx = _topic.split("|", QString::SkipEmptyParts);
+
+	for (auto t: tx)
+	{
+		if (t.isEmpty() || m_knownTopics.contains(t))
+			continue;
+
+		m_knownTopics.insert(t);
+		m_ui->shhTopic->addItem(t);
+		wp->noteTopic(t);
+	}
 }
 
 void Whisper::noteDestination(QString const _dest)

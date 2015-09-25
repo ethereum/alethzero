@@ -21,7 +21,7 @@
 
 #pragma once
 
-//#include <QMutex>
+#include <QMutex>
 #include <QString>
 #include <map>
 #include "Plugin.h"
@@ -49,6 +49,8 @@ public:
 
 private slots:
 	void on_filter_changed();
+	void on_stop_clicked();
+	void on_clear_clicked();
 
 private:
 	void timerEvent(QTimerEvent*) override;
@@ -60,6 +62,7 @@ private:
 	void resizeMap(std::multimap<time_t, QString>& _map);
 
 	Ui::WhisperPeers* m_ui;
+	QMutex m_chatLock;
 	std::map<QString, unsigned> m_topics;
 	std::map<QString, std::multimap<time_t, QString>> m_chats;
 	std::multimap<time_t, QString> m_all;

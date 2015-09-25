@@ -21,9 +21,7 @@
 
 #pragma once
 
-#include <QMutex>
 #include <QString>
-#include <QPair>
 #include <QList>
 #include <QSet>
 #include <libethcore/Common.h>

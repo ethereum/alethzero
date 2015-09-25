@@ -32,6 +32,41 @@
        </property>
       </widget>
      </item>
+      <item>
+       <widget class="QWidget" name="whisperPeersWidge2t">
+        <layout class="QHBoxLayout" name="whisperPeersLayout2">
+          <property name="spacing">
+            <number>50</number>
+          </property>
+          <property name="leftMargin">
+            <number>100</number>
+          </property>
+          <property name="topMargin">
+            <number>4</number>
+          </property>
+          <property name="rightMargin">
+            <number>100</number>
+          </property>
+          <property name="bottomMargin">
+            <number>4</number>
+          </property>
+              <item>
+                <widget class="QPushButton" name="stop">
+                  <property name="text">
+                    <string>Stop</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QPushButton" name="clear">
+                  <property name="text">
+                    <string>Clear Screen</string>
+                  </property>
+                </widget>
+              </item>
+        </layout>
+       </widget>
+      </item>
     </layout>
    </widget>
  <resources/>

@@ -39,19 +39,19 @@ using namespace zero;
 
 ZERO_NOTE_PLUGIN(WhisperPeers);
 
-int const c_maxMessages = 512;
+int const c_maxMessages = 1000;
 
 static QString const c_filterAll("-= all messages =-");
 
-QString messageToString(shh::Envelope const& _e, shh::Message const& _m)
+static QString messageToString(shh::Envelope const& _e, shh::Message const& _m, QString const& _topic)
 {
 	time_t birth = _e.expiry() - _e.ttl();
 	QString t(ctime(&birth));
 	t.chop(6);
 	t = t.right(t.size() - 4);
 
-	QString seal = QString("{%1 => %2}").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
-	QString item = QString("[%1, ttl: %2] *%3 %4 %5").arg(t).arg(_e.ttl()).arg(_e.workProved()).arg(toString(_e.topic()).c_str()).arg(seal);
+	QString seal = QString("{%1 -> %2}").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
+	QString item = QString("[%1, ttl: %2] *%3 [%4] %5").arg(t).arg(_e.ttl()).arg(_e.workProved()).arg(_topic).arg(seal);
 
 	bytes raw = _m.payload();
 	if (raw.size())
@@ -71,6 +71,8 @@ WhisperPeers::WhisperPeers(ZeroFace* _m):
 	dock(Qt::RightDockWidgetArea, "Active Whispers")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
 	setDefaultTopics();
+	connect(m_ui->stop, SIGNAL(clicked()), this, SLOT(on_stop_clicked()));
+	connect(m_ui->clear, SIGNAL(clicked()), this, SLOT(on_clear_clicked()));
 	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(on_filter_changed()));
 	m_ui->whispers->setAlternatingRowColors(true);
 	m_ui->whispers->setStyleSheet("alternate-background-color: aquamarine;");
@@ -97,21 +99,31 @@ void WhisperPeers::noteTopic(QString const _topic)
 
 void WhisperPeers::forgetTopics()
 {
+	m_chatLock.lock();
 	m_topics.clear();
+	m_chats.clear();
+	m_all.clear();
 	m_ui->topics->clear();
 	m_ui->whispers->clear();
 	setDefaultTopics();
+	m_chatLock.unlock();
 }
 
 void WhisperPeers::timerEvent(QTimerEvent*)
 {
-	refreshWhispers(true);
+	if (m_chatLock.tryLock())
+	{
+		refreshWhispers(true);
+		m_chatLock.unlock();
+	}
 }
 
 void WhisperPeers::on_filter_changed()
 {
+	m_chatLock.lock();
 	m_ui->whispers->clear();
 	refreshWhispers(false);
+	m_chatLock.unlock();
 }
 
 void WhisperPeers::refreshWhispers(bool _timerEvent)
@@ -123,6 +135,18 @@ void WhisperPeers::refreshWhispers(bool _timerEvent)
 		refresh(topic, _timerEvent);
 }
 
+void WhisperPeers::on_stop_clicked()
+{
+
+}
+
+void WhisperPeers::on_clear_clicked()
+{
+	m_chatLock.lock();
+	m_ui->whispers->clear();
+	m_chatLock.unlock();
+}
+
 void WhisperPeers::addToView(std::multimap<time_t, QString> const& _messages)
 {
 	QScrollBar* scroll = m_ui->whispers->verticalScrollBar();
@@ -130,11 +154,15 @@ void WhisperPeers::addToView(std::multimap<time_t, QString> const& _messages)
 	int newMessagesCount = static_cast<int>(_messages.size());
 	int existingMessagesCount = m_ui->whispers->count();
 	int target = c_maxMessages - newMessagesCount;
-	if (target < 0)
-		target = 0;
 
-	while (m_ui->whispers->count() > target)
-		m_ui->whispers->removeItemWidget(m_ui->whispers->item(0));
+	if (target <= 0)
+		m_ui->whispers->clear();
+	else
+		while (m_ui->whispers->count() > target)
+		{
+			QListWidgetItem* item = m_ui->whispers->takeItem(0);
+			delete item;
+		}
 
 	for (auto const& i: _messages)
 	{
@@ -175,7 +203,7 @@ void WhisperPeers::refresh(QString const& _topic, bool _timerEvent)
 		if (msg)
 		{
 			time_t birth = e.expiry() - e.ttl();
-			QString s = messageToString(e, msg);
+			QString s = messageToString(e, msg, _topic);
 			chat.emplace(birth, s);
 			m_all.emplace(birth, s);
 			if (_timerEvent)
@@ -214,7 +242,7 @@ void WhisperPeers::refreshAll(bool _timerEvent)
 			if (msg)
 			{
 				time_t birth = e.expiry() - e.ttl();
-				QString s = messageToString(e, msg);
+				QString s = messageToString(e, msg, t->first);
 				chat.emplace(birth, s);
 				m_all.emplace(birth, s);
 				if (_timerEvent)
