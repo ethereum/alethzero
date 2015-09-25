@@ -63,6 +63,8 @@ AlethFive::AlethFive():
 			m_ui->url->setText(_url.toString());
 	});
 
+	m_ui->url->installEventFilter(this);
+
 	m_backMenu = new QMenu(this);
 	m_ui->back->setMenu(m_backMenu);
 
@@ -87,13 +89,13 @@ void AlethFive::refresh()
 void AlethFive::readSettings()
 {
 	QSettings s("ethereum", "alethfive");
-	m_ui->url->setText(s.value("url", "eth://wallet").toString());
+	enterDestination(s.value("url", "eth://wallet").toString());
 }
 
 void AlethFive::writeSettings()
 {
 	QSettings s("ethereum", "alethfive");
-	s.setValue("url", m_ui->url->text());
+	s.setValue("url", m_history.back().first);
 }
 
 void AlethFive::rebuildBack()
@@ -110,9 +112,41 @@ void AlethFive::rebuildBack()
 
 void AlethFive::on_url_returnPressed()
 {
-	navigateTo(m_ui->url->text());
-	m_history += QPair<QString, QString>(m_ui->url->text(), m_ui->url->text());
+	enterDestination(m_ui->url->text());
+}
+
+void AlethFive::enterDestination(QString _url)
+{
+	m_ui->webView->page()->setContent("");
+	navigateTo(_url);
+	m_history += QPair<QString, QString>(_url, _url);
 	rebuildBack();
+	updateURLBox();
+}
+
+void AlethFive::updateURLBox()
+{
+	if (m_ui->url->hasFocus())
+	{
+		m_ui->url->setText(m_history.back().first);
+		m_ui->url->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+		m_ui->url->setReadOnly(false);
+		m_ui->url->setStyleSheet("");
+	}
+	else
+	{
+		m_ui->url->setText(m_history.back().second);
+		m_ui->url->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+		m_ui->url->setReadOnly(true);
+		m_ui->url->setStyleSheet("font-weight: bold; background: #dfd");
+	}
+}
+
+bool AlethFive::eventFilter(QObject* _o, QEvent* _e)
+{
+	if (_o == m_ui->url && (_e->type() == QEvent::FocusIn || _e->type() == QEvent::FocusOut))
+		updateURLBox();
+	return false;
 }
 
 void AlethFive::navigateTo(QString _url)
@@ -149,4 +183,8 @@ void AlethFive::dappLoaded(Dapp& _dapp)
 void AlethFive::pageLoaded(QByteArray _content, QString _mimeType, QUrl _uri)
 {
 	m_ui->webView->page()->setContent(_content, _mimeType, _uri);
+	if (!m_ui->webView->page()->title().isEmpty())
+		m_history.back().second = m_ui->webView->page()->title();
+	rebuildBack();
+	updateURLBox();
 }
