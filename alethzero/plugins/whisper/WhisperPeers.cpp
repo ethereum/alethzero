@@ -29,6 +29,7 @@
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "ui_WhisperPeers.h"
+
 using namespace std;
 using namespace dev;
 using namespace eth;
@@ -37,6 +38,32 @@ using namespace zero;
 
 ZERO_NOTE_PLUGIN(WhisperPeers);
 
+static QString const c_filterDecrypted("-= all I can decrypt =-");
+static QString const c_filterToMe("-= messages addressed to me =-");
+static QString const c_filterAll("-= show all messages =-");
+
+enum { SpecificTopic = 1, KnownTopics = 2, AddressedToMe = 4, AllMessages = 8 };
+
+QString messageToString(shh::Envelope const& _e, shh::Message const& _m)
+{
+	time_t birth = _e.expiry() - _e.ttl();
+	QString t(ctime(&birth));
+	t.chop(6);
+	t = t.right(t.size() - 4);
+
+	QString seal = QString("{%1 -> %2}").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
+	QString item = QString("[%1, ttl: %2] *%3 %4 %5 ").arg(t).arg(_e.ttl()).arg(_e.workProved()).arg(toString(_e.topic()).c_str()).arg(seal);
+
+	bytes raw = _m.payload();
+	if (raw.size())
+	{
+		QString plaintext = QString::fromUtf8((const char*)(raw.data()), raw.size());
+		item += plaintext;
+	}
+
+	return item;
+}
+
 WhisperPeers::WhisperPeers(ZeroFace* _m):
 	Plugin(_m, "WhisperPeers"),
 	m_ui(new Ui::WhisperPeers)
@@ -44,6 +71,27 @@ WhisperPeers::WhisperPeers(ZeroFace* _m):
 	dock(Qt::RightDockWidgetArea, "Active Whispers")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
 	startTimer(1000);
+	setDefaultTopics();
+}
+
+void WhisperPeers::setDefaultTopics()
+{
+	m_ui->topics->addItem(c_filterToMe);
+	m_ui->topics->addItem(c_filterAll);
+	m_ui->topics->addItem(c_filterDecrypted);
+}
+
+void WhisperPeers::noteTopic(QString const _topic)
+{
+	m_ui->topics->addItem(_topic);
+	m_knownTopics.insert(_topic);
+}
+
+void WhisperPeers::forgetTopics()
+{
+	m_knownTopics.clear();
+	m_ui->topics->clear();
+	setDefaultTopics();
 }
 
 void WhisperPeers::timerEvent(QTimerEvent*)
@@ -51,32 +99,52 @@ void WhisperPeers::timerEvent(QTimerEvent*)
 	refreshWhispers();
 }
 
+unsigned WhisperPeers::getTarget(QString const& _topic)
+{
+	if (!_topic.compare(c_filterAll))
+		return KnownTopics | AddressedToMe | AllMessages;
+	else if (!_topic.compare(c_filterDecrypted))
+		return KnownTopics | AddressedToMe;
+	else if (!_topic.compare(c_filterToMe))
+		return AddressedToMe;
+	else
+		return SpecificTopic;
+}
+
 void WhisperPeers::refreshWhispers()
 {
-	return;
-	m_ui->whispers->clear();
+	multimap<time_t, QString> chat;
+	QString const topic = m_ui->topics->currentText();
+	unsigned const target = getTarget(topic);
+
 	for (auto const& w: web3()->whisper()->all())
 	{
 		shh::Envelope const& e = w.second;
 		shh::Message m;
-		for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
-			if (!!(m = e.open(shh::Topics(), i.second)))
-				break;
-		if (!m)
-			m = e.open(shh::Topics());
 
-		QString msg;
-		if (m.from())
-			// Good message.
-			msg = QString("{%1 -> %2} %3").arg(m.from() ? m.from().abridged().c_str() : "???").arg(m.to() ? m.to().abridged().c_str() : "*").arg(toHex(m.payload()).c_str());
-		else if (m)
-			// Maybe message.
-			msg = QString("{%1 -> %2} %3 (?)").arg(m.from() ? m.from().abridged().c_str() : "???").arg(m.to() ? m.to().abridged().c_str() : "*").arg(toHex(m.payload()).c_str());
+		if (target & SpecificTopic)
+			if (!(m = e.open(shh::BuildTopic(topic.toStdString()))))
+				continue;
 
-		time_t ex = e.expiry();
-		QString t(ctime(&ex));
-		t.chop(1);
-		QString item = QString("[%1 - %2s] *%3 %5 %4").arg(t).arg(e.ttl()).arg(e.workProved()).arg(toString(e.topic()).c_str()).arg(msg);
-		m_ui->whispers->addItem(item);
+		if (!m && (target & AddressedToMe))
+			for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
+				if (!!(m = e.open(shh::Topics(), i.second)))
+					break;
+
+		if (!m && (target & KnownTopics))
+			for (auto k: m_knownTopics)
+				if (!!(m = e.open(shh::BuildTopic(k.toStdString()))))
+					break;
+
+		if (!m && (target & AllMessages))
+			m = e.open(shh::BuildTopic(string()));
+
+		if (m || (target & AllMessages))
+			chat.emplace(e.expiry() - e.ttl(), messageToString(e, m));
 	}
+
+	m_ui->whispers->clear();
+
+	for (auto const& i: chat)
+		m_ui->whispers->addItem(i.second);
 }

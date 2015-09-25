@@ -32,7 +32,7 @@
 #include <libethereum/Client.h>
 #include <libwebthree/WebThree.h>
 #include <libaleth/SendDialog.h>
-#include "BuildInfo.h"
+#include "alethzero/BuildInfo.h"
 #include "ui_AlethOne.h"
 using namespace std;
 using namespace dev;

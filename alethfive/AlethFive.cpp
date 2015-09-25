@@ -34,7 +34,7 @@
 #include <libethereum/Client.h>
 #include <libwebthree/WebThree.h>
 #include <libaleth/WebThreeServer.h>
-#include "BuildInfo.h"
+#include "alethzero/BuildInfo.h"
 #include "ui_AlethFive.h"
 using namespace std;
 using namespace dev;

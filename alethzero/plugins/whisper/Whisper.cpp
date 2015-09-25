@@ -29,7 +29,9 @@
 #include <libaleth/WebThreeServer.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
+#include "WhisperPeers.h"
 #include "ui_Whisper.h"
+
 using namespace std;
 using namespace dev;
 using namespace eth;
@@ -37,6 +39,8 @@ using namespace aleth;
 using namespace zero;
 
 ZERO_NOTE_PLUGIN(Whisper);
+
+static std::string const c_chatPluginName("WhisperPeers");
 
 static Public stringToPublic(QString const& _a)
 {
@@ -111,6 +115,8 @@ Whisper::Whisper(ZeroFace* _m):
 	m_ui->setupUi(dock()->widget());
 	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
 	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
+	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(on_post_clicked()));
+	connect(m_ui->forget, SIGNAL(clicked()), this, SLOT(on_forget_clicked()));
 }
 
 void Whisper::readSettings(QSettings const& _s)
@@ -157,6 +163,8 @@ void Whisper::refreshWhisper()
 	m_ui->shhFrom->clear();
 	for (auto i: zero()->web3Server()->ids())
 		m_ui->shhFrom->addItem(QString::fromStdString(toHex(i.first.ref())));
+
+	m_ui->shhFrom->addItem(QString());
 }
 
 void Whisper::on_newIdentity_triggered()
@@ -169,13 +177,68 @@ void Whisper::on_newIdentity_triggered()
 
 void Whisper::on_post_clicked()
 {
-	return;
+	QString const qsTopic = m_ui->shhTopic->currentText();
+	noteTopic(qsTopic);
+
+	QString const qsDest = m_ui->shhTo->currentText();
+	Public dest = stringToPublic(qsDest);
+	if (dest)
+		noteDestination(qsDest);
+	else if (!qsDest.isEmpty())
+		return; // don't allow unencrypted messages, unless it was explicitly intended
+
+	string text = m_ui->shhData->toPlainText().toStdString();
+	if (text.empty())
+		return;
+
 	shh::Message m;
-	m.setTo(stringToPublic(m_ui->shhTo->currentText()));
-	m.setPayload(parseData(m_ui->shhData->toPlainText().toStdString()));
-	Public f = stringToPublic(m_ui->shhFrom->currentText());
+	m.setTo(dest);
+	m.setPayload(asBytes(text));
+
 	Secret from;
+	Public f = stringToPublic(m_ui->shhFrom->currentText());
 	if (zero()->web3Server()->ids().count(f))
 		from = zero()->web3Server()->ids().at(f);
-	web3()->whisper()->inject(m.seal(from, topicFromText(m_ui->shhTopic->toPlainText()), m_ui->shhTtl->value(), m_ui->shhWork->value()));
+
+	shh::BuildTopic topic(qsTopic.toStdString());
+	web3()->whisper()->inject(m.seal(from, topic, m_ui->shhTtl->value(), m_ui->shhWork->value()));
+	m_ui->shhData->clear();
+	m_ui->shhData->setFocus();
+}
+
+void Whisper::on_forget_clicked()
+{
+	if (m_knownTopics.empty())
+		return;
+
+	m_knownTopics.clear();
+	m_ui->shhTopic->clear();
+
+	auto x = zero()->findPlugin(c_chatPluginName);
+	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
+	if (wp)
+		wp->forgetTopics();
+}
+
+void Whisper::noteTopic(QString const _topic)
+{
+	if (_topic.isEmpty() || m_knownTopics.contains(_topic))
+		return;
+
+	m_knownTopics.insert(_topic);
+	m_ui->shhTopic->addItem(_topic);
+
+	auto x = zero()->findPlugin(c_chatPluginName);
+	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
+	if (wp)
+		wp->noteTopic(_topic);
+}
+
+void Whisper::noteDestination(QString const _dest)
+{
+	if (!m_destinations.contains(_dest))
+	{
+		m_destinations.insert(_dest);
+		m_ui->shhTo->addItem(_dest);
+	}
 }

@@ -71,6 +71,7 @@ public:
 	void killPlugins();
 	void noteAllChange();
 	virtual void addSettingsPage(int _index, QString const& _categoryName, std::function<SettingsPage*()> const& _pageFactory) = 0;
+	std::shared_ptr<Plugin> findPlugin(std::string const& _name) { auto it = m_plugins.find(_name); return it != m_plugins.end() ? it->second : nullptr; }
 
 	virtual AlethFace const* aleth() const = 0;
 	virtual AlethFace* aleth() = 0;

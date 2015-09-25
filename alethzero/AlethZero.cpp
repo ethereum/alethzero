@@ -37,7 +37,7 @@
 #include <libaleth/SyncView.h>
 #include <libaleth/WebThreeServer.h>
 #include "Connect.h"
-#include "BuildInfo.h"
+#include "alethzero/BuildInfo.h"
 #include "SettingsDialog.h"
 #include "NetworkSettings.h"
 #include "ui_AlethZero.h"
