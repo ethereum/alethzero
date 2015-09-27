@@ -66,18 +66,27 @@ static QString messageToString(shh::Envelope const& _e, shh::Message const& _m, 
 
 WhisperPeers::WhisperPeers(ZeroFace* _m):
 	Plugin(_m, "WhisperPeers"),
-	m_ui(new Ui::WhisperPeers)
+	m_ui(new Ui::WhisperPeers),
+	m_stopped(false)
 {
 	dock(Qt::RightDockWidgetArea, "Active Whispers")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
 	setDefaultTopics();
-	connect(m_ui->stop, SIGNAL(clicked()), this, SLOT(on_stop_clicked()));
-	connect(m_ui->clear, SIGNAL(clicked()), this, SLOT(on_clear_clicked()));
-	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(on_filter_changed()));
+	connect(m_ui->stop, SIGNAL(clicked()), this, SLOT(onStopClicked()));
+	connect(m_ui->clear, SIGNAL(clicked()), this, SLOT(onClearClicked()));
+	connect(m_ui->forgetCurrent, SIGNAL(clicked()), this, SLOT(onForgetCurrentTopicClicked()));
+	connect(m_ui->forgetAll, SIGNAL(clicked()), this, SLOT(onForgetAllClicked()));
+	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFilterChanged()));
+	m_ui->forgetCurrent->setEnabled(false);
 	m_ui->whispers->setAlternatingRowColors(true);
 	m_ui->whispers->setStyleSheet("alternate-background-color: aquamarine;");
 	m_ui->whispers->setWordWrap(true);
 	startTimer(1000);
+}
+
+WhisperPeers::~WhisperPeers()
+{
+	onForgetAllClicked();
 }
 
 void WhisperPeers::setDefaultTopics()
@@ -85,32 +94,66 @@ void WhisperPeers::setDefaultTopics()
 	m_ui->topics->addItem(c_filterAll);
 }
 
-void WhisperPeers::noteTopic(QString const _topic)
+bool WhisperPeers::isCurrentTopicAll()
 {
-	m_ui->topics->addItem(_topic);
+	QString const topic = m_ui->topics->currentText();
+	return !topic.compare(c_filterAll);
+}
 
-	if (m_topics.find(_topic) == m_topics.end())
+void WhisperPeers::noteTopic(QString const& _topic)
+{
+	if (m_ui->topics->findText(_topic) < 0)
 	{
-		shh::BuildTopic bt(_topic.toStdString());
-		unsigned f = web3()->whisper()->installWatch(bt);
-		m_topics[_topic] = f;
+		m_ui->topics->addItem(_topic);
+
+		if (m_topics.find(_topic) == m_topics.end())
+		{
+			shh::BuildTopic bt(_topic.toStdString());
+			unsigned f = web3()->whisper()->installWatch(bt);
+			m_topics[_topic] = f;
+		}
 	}
 }
 
-void WhisperPeers::forgetTopics()
+void WhisperPeers::onForgetAllClicked()
 {
+	m_ui->topics->clear();
+	setDefaultTopics();
+
 	m_chatLock.lock();
+
+	for (auto const& i: m_topics)
+		web3()->whisper()->uninstallWatch(i.second);
+
+	m_ui->whispers->clear();
 	m_topics.clear();
 	m_chats.clear();
 	m_all.clear();
-	m_ui->topics->clear();
-	m_ui->whispers->clear();
-	setDefaultTopics();
+
 	m_chatLock.unlock();
+}
+
+void WhisperPeers::onForgetCurrentTopicClicked()
+{
+	if (!isCurrentTopicAll())
+	{
+		QString const& topic = m_ui->topics->currentText();
+
+		auto i = m_topics.find(topic);
+		if (i != m_topics.end())
+			web3()->whisper()->uninstallWatch(i->second);
+
+		m_ui->topics->removeItem(m_ui->topics->currentIndex());
+		m_topics.erase(topic);
+		m_chats.erase(topic);
+	}
 }
 
 void WhisperPeers::timerEvent(QTimerEvent*)
 {
+	if (m_stopped)
+		return;
+
 	if (m_chatLock.tryLock())
 	{
 		refreshWhispers(true);
@@ -118,12 +161,16 @@ void WhisperPeers::timerEvent(QTimerEvent*)
 	}
 }
 
-void WhisperPeers::on_filter_changed()
+void WhisperPeers::onFilterChanged()
 {
-	m_chatLock.lock();
-	m_ui->whispers->clear();
-	refreshWhispers(false);
-	m_chatLock.unlock();
+	if (!m_ui->topics->currentText().isEmpty())
+	{
+		m_chatLock.lock();
+		m_ui->whispers->clear();
+		refreshWhispers(false);
+		m_ui->forgetCurrent->setEnabled(!isCurrentTopicAll());
+		m_chatLock.unlock();
+	}
 }
 
 void WhisperPeers::refreshWhispers(bool _timerEvent)
@@ -135,14 +182,22 @@ void WhisperPeers::refreshWhispers(bool _timerEvent)
 		refresh(topic, _timerEvent);
 }
 
-void WhisperPeers::on_stop_clicked()
+void WhisperPeers::onStopClicked()
 {
-
+	m_stopped = !m_stopped;
+	m_ui->stop->setText(m_stopped ? "Resume" : "Freeze");
 }
 
-void WhisperPeers::on_clear_clicked()
+void WhisperPeers::onClearClicked()
 {
 	m_chatLock.lock();
+
+	QString const topic = m_ui->topics->currentText();
+	if (!topic.compare(c_filterAll))
+		m_all.clear();
+	else
+		m_chats[topic].clear();
+
 	m_ui->whispers->clear();
 	m_chatLock.unlock();
 }

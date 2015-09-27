@@ -126,15 +126,16 @@ Whisper::Whisper(ZeroFace* _m):
 {
 	dock(Qt::RightDockWidgetArea, "Whisper")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
-	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
+	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::onNewIdentityTriggered);
 	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
-	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(on_post_clicked()));
-	connect(m_ui->forget, SIGNAL(clicked()), this, SLOT(on_forget_clicked()));
+	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(onPostClicked()));
+	connect(m_ui->forgetTopics, SIGNAL(clicked()), this, SLOT(onForgetTopicsClicked()));
+	connect(m_ui->forgetDestinations, SIGNAL(clicked()), this, SLOT(onForgetDestinationsClicked()));
 
 	QShortcut *shortcutSend1 = new QShortcut(QKeySequence("Ctrl+Enter"), m_ui->shhData);
 	QShortcut *shortcutSend2 = new QShortcut(QKeySequence("Ctrl+Return"), m_ui->shhData);
-	QObject::connect(shortcutSend1, SIGNAL(activated()), this, SLOT(on_post_clicked()));
-	QObject::connect(shortcutSend2, SIGNAL(activated()), this, SLOT(on_post_clicked()));
+	QObject::connect(shortcutSend1, SIGNAL(activated()), this, SLOT(onPostClicked()));
+	QObject::connect(shortcutSend2, SIGNAL(activated()), this, SLOT(onPostClicked()));
 }
 
 void Whisper::readSettings(QSettings const& _s)
@@ -198,7 +199,7 @@ void Whisper::refreshWhisper()
 	m_ui->shhFrom->addItem(QString());
 }
 
-void Whisper::on_newIdentity_triggered()
+void Whisper::onNewIdentityTriggered()
 {
 	KeyPair kp = KeyPair::create();
 	m_myIdentities.append(kp);
@@ -206,7 +207,7 @@ void Whisper::on_newIdentity_triggered()
 	refreshWhisper();
 }
 
-void Whisper::on_post_clicked()
+void Whisper::onPostClicked()
 {
 	QString const qsTopic = m_ui->shhTopic->currentText();
 	noteTopic(qsTopic);
@@ -214,7 +215,10 @@ void Whisper::on_post_clicked()
 	QString const strDest = m_ui->shhTo->currentText();
 	Public dest = stringToPublic(strDest);
 	if (dest)
-		noteDestination(strDest);
+	{
+		if (m_ui->shhTo->findText(strDest) < 0)
+			m_ui->shhTo->addItem(strDest);
+	}
 	else if (!strDest.isEmpty())
 	{
 		// don't allow unencrypted messages, unless it was explicitly intended
@@ -251,27 +255,20 @@ void Whisper::on_post_clicked()
 	m_ui->shhData->setFocus();
 }
 
-void Whisper::on_forget_clicked()
+void Whisper::onForgetDestinationsClicked()
 {
-	if (m_knownTopics.empty())
-		return;
-
-	m_knownTopics.clear();
-	m_ui->shhTopic->clear();
-
-	auto x = zero()->findPlugin(c_chatPluginName);
-	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
-	if (wp)
-		wp->forgetTopics();
+	m_ui->shhTo->clear();
 }
 
-void Whisper::noteTopic(QString const _topic)
+void Whisper::onForgetTopicsClicked()
 {
-	if (_topic.isEmpty() || m_knownTopics.contains(_topic))
-		return;
+	m_ui->shhTopic->clear();
+}
 
-	m_knownTopics.insert(_topic);
-	m_ui->shhTopic->addItem(_topic);
+void Whisper::noteTopic(QString const& _topic)
+{
+	if (_topic.isEmpty())
+		return;
 
 	auto x = zero()->findPlugin(c_chatPluginName);
 	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
@@ -280,22 +277,17 @@ void Whisper::noteTopic(QString const _topic)
 
 	QStringList tx = _topic.split("|", QString::SkipEmptyParts);
 
+	if (tx.size() > 1 && m_ui->shhTopic->findText(_topic) < 0)
+		m_ui->shhTopic->addItem(_topic);
+
 	for (auto t: tx)
 	{
-		if (t.isEmpty() || m_knownTopics.contains(t))
+		if (t.isEmpty())
 			continue;
 
-		m_knownTopics.insert(t);
-		m_ui->shhTopic->addItem(t);
-		wp->noteTopic(t);
-	}
-}
+		if (m_ui->shhTopic->findText(t) < 0)
+			m_ui->shhTopic->addItem(t);
 
-void Whisper::noteDestination(QString const _dest)
-{
-	if (!m_destinations.contains(_dest))
-	{
-		m_destinations.insert(_dest);
-		m_ui->shhTo->addItem(_dest);
+		wp->noteTopic(t);
 	}
 }

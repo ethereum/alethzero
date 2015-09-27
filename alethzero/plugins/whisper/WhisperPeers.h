@@ -43,16 +43,19 @@ class WhisperPeers: public QObject, public Plugin
 	Q_OBJECT
 
 public:
+	virtual ~WhisperPeers();
 	WhisperPeers(ZeroFace* _m);
-	void noteTopic(QString const _topic);
-	void forgetTopics();
+	void noteTopic(QString const& _topic);
 
 private slots:
-	void on_filter_changed();
-	void on_stop_clicked();
-	void on_clear_clicked();
+	void onFilterChanged();
+	void onStopClicked();
+	void onClearClicked();
+	void onForgetCurrentTopicClicked();
+	void onForgetAllClicked();
 
 private:
+	bool isCurrentTopicAll();
 	void timerEvent(QTimerEvent*) override;
 	void refreshWhispers(bool _timerEvent);
 	void setDefaultTopics();
@@ -62,6 +65,7 @@ private:
 	void resizeMap(std::multimap<time_t, QString>& _map);
 
 	Ui::WhisperPeers* m_ui;
+	bool m_stopped;
 	QMutex m_chatLock;
 	std::map<QString, unsigned> m_topics;
 	std::map<QString, std::multimap<time_t, QString>> m_chats;
