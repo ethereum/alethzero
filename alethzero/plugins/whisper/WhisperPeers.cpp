@@ -207,7 +207,6 @@ void WhisperPeers::addToView(std::multimap<time_t, QString> const& _messages)
 	QScrollBar* scroll = m_ui->whispers->verticalScrollBar();
 	bool wasAtBottom = (scroll->maximum() == scroll->sliderPosition());
 	int newMessagesCount = static_cast<int>(_messages.size());
-	int existingMessagesCount = m_ui->whispers->count();
 	int target = c_maxMessages - newMessagesCount;
 
 	if (target <= 0)
