@@ -57,13 +57,13 @@ static Public stringToPublic(QString const& _a)
 
 static shh::Topics stringToTopics(QString _s)
 {
-	shh::BuildTopic ret;
-	QStringList tx = _s.split("|", QString::SkipEmptyParts);
+	return shh::BuildTopic(_s.toStdString());
 
-	for (auto t: tx)
-		ret.shift(t.toStdString());
-
-	return ret.toTopics();
+	//shh::BuildTopic ret;
+	//QStringList tx = _s.split("|", QString::SkipEmptyParts);
+	//for (auto t: tx)
+	//	ret.shift(t.toStdString());
+	//return ret.toTopics();
 }
 
 static shh::Topics topicFromText(QString _s)
@@ -272,8 +272,14 @@ void Whisper::noteTopic(QString const& _topic)
 
 	auto x = zero()->findPlugin(c_chatPluginName);
 	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
-	QStringList tx = _topic.split("|", QString::SkipEmptyParts);
+	if (wp)
+		wp->noteTopic(_topic);
 
+	if (m_ui->shhTopic->findText(_topic) < 0)
+		m_ui->shhTopic->addItem(_topic);
+
+	/*
+	QStringList tx = _topic.split("|", QString::SkipEmptyParts);
 	if (tx.size() > 1 && m_ui->shhTopic->findText(_topic) < 0)
 		m_ui->shhTopic->addItem(_topic);
 
@@ -285,4 +291,5 @@ void Whisper::noteTopic(QString const& _topic)
 		if (wp)
 			wp->noteTopic(t);
 	}
+	*/
 }
