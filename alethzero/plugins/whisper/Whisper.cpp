@@ -272,9 +272,6 @@ void Whisper::noteTopic(QString const& _topic)
 
 	auto x = zero()->findPlugin(c_chatPluginName);
 	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
-	if (!wp)
-		return;
-
 	QStringList tx = _topic.split("|", QString::SkipEmptyParts);
 
 	if (tx.size() > 1 && m_ui->shhTopic->findText(_topic) < 0)
@@ -282,12 +279,10 @@ void Whisper::noteTopic(QString const& _topic)
 
 	for (auto t: tx)
 	{
-		if (t.isEmpty())
-			continue;
-
 		if (m_ui->shhTopic->findText(t) < 0)
 			m_ui->shhTopic->addItem(t);
 
-		wp->noteTopic(t);
+		if (wp)
+			wp->noteTopic(t);
 	}
 }
