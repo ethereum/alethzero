@@ -27,9 +27,18 @@
      </item>
      <item>
       <widget class="QListWidget" name="whispers">
-       <property name="frameShape">
-        <enum>QFrame::StyledPanel</enum>
-       </property>
+        <property name="alternatingRowColors">
+          <bool>true</bool>
+        </property>
+        <property name="wordWrap">
+          <bool>true</bool>
+        </property>
+        <property name="styleSheet">
+          <string>alternate-background-color: aquamarine;</string>
+        </property>
+        <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+        </property>
       </widget>
      </item>
       <item>
@@ -68,6 +77,9 @@
             <widget class="QPushButton" name="forgetCurrent">
               <property name="text">
                 <string>Forget Topic</string>
+              </property>
+              <property name="enabled">
+                <bool>false</bool>
               </property>
             </widget>
           </item>

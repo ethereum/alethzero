@@ -234,7 +234,7 @@ void Whisper::onPostClicked()
 		return;
 	else if (text.size() > msgSizeLimit)
 	{
-		QMessageBox box(QMessageBox::Warning, "Warning", "Message too big!");
+		QMessageBox box(QMessageBox::Warning, "Warning", "Message too large!");
 		box.setInformativeText(QString("Single message should not exceed %1 characters.").arg(msgSizeLimit));
 		box.exec();
 		return;

@@ -22,6 +22,7 @@
 #include "WhisperPeers.h"
 #include <QSettings>
 #include <QScrollBar>
+#include <QMutexLocker>
 #include <libethereum/Client.h>
 #include <libwhisper/WhisperHost.h>
 #include <libwebthree/WebThree.h>
@@ -77,10 +78,6 @@ WhisperPeers::WhisperPeers(ZeroFace* _m):
 	connect(m_ui->forgetCurrent, SIGNAL(clicked()), this, SLOT(onForgetCurrentTopicClicked()));
 	connect(m_ui->forgetAll, SIGNAL(clicked()), this, SLOT(onForgetAllClicked()));
 	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFilterChanged()));
-	m_ui->forgetCurrent->setEnabled(false);
-	m_ui->whispers->setAlternatingRowColors(true);
-	m_ui->whispers->setStyleSheet("alternate-background-color: aquamarine;");
-	m_ui->whispers->setWordWrap(true);
 	startTimer(1000);
 }
 
@@ -120,7 +117,7 @@ void WhisperPeers::onForgetAllClicked()
 	m_ui->topics->clear();
 	setDefaultTopics();
 
-	m_chatLock.lock();
+	QMutexLocker guard(&m_chatLock);
 
 	for (auto const& i: m_topics)
 		web3()->whisper()->uninstallWatch(i.second);
@@ -129,8 +126,6 @@ void WhisperPeers::onForgetAllClicked()
 	m_topics.clear();
 	m_chats.clear();
 	m_all.clear();
-
-	m_chatLock.unlock();
 }
 
 void WhisperPeers::onForgetCurrentTopicClicked()
@@ -165,11 +160,10 @@ void WhisperPeers::onFilterChanged()
 {
 	if (!m_ui->topics->currentText().isEmpty())
 	{
-		m_chatLock.lock();
+		QMutexLocker guard(&m_chatLock);
 		m_ui->whispers->clear();
 		refreshWhispers(false);
 		m_ui->forgetCurrent->setEnabled(!isCurrentTopicAll());
-		m_chatLock.unlock();
 	}
 }
 
@@ -190,7 +184,7 @@ void WhisperPeers::onStopClicked()
 
 void WhisperPeers::onClearClicked()
 {
-	m_chatLock.lock();
+	QMutexLocker guard(&m_chatLock);
 
 	QString const topic = m_ui->topics->currentText();
 	if (!topic.compare(c_filterAll))
@@ -199,7 +193,6 @@ void WhisperPeers::onClearClicked()
 		m_chats[topic].clear();
 
 	m_ui->whispers->clear();
-	m_chatLock.unlock();
 }
 
 void WhisperPeers::addToView(std::multimap<time_t, QString> const& _messages)
