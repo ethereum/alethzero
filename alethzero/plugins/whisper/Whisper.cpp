@@ -132,8 +132,8 @@ Whisper::Whisper(ZeroFace* _m):
 	connect(m_ui->forgetTopics, SIGNAL(clicked()), this, SLOT(onForgetTopicsClicked()));
 	connect(m_ui->forgetDestinations, SIGNAL(clicked()), this, SLOT(onForgetDestinationsClicked()));
 
-	QShortcut *shortcutSend1 = new QShortcut(QKeySequence("Ctrl+Enter"), m_ui->shhData);
-	QShortcut *shortcutSend2 = new QShortcut(QKeySequence("Ctrl+Return"), m_ui->shhData);
+	QShortcut* shortcutSend1 = new QShortcut(QKeySequence("Ctrl+Enter"), m_ui->shhData);
+	QShortcut* shortcutSend2 = new QShortcut(QKeySequence("Ctrl+Return"), m_ui->shhData);
 	QObject::connect(shortcutSend1, SIGNAL(activated()), this, SLOT(onPostClicked()));
 	QObject::connect(shortcutSend2, SIGNAL(activated()), this, SLOT(onPostClicked()));
 }
