@@ -21,6 +21,8 @@
 
 #include "Whisper.h"
 #include <QSettings>
+#include <QShortcut>
+#include <QMessageBox>
 #include <libethereum/Client.h>
 #include <libethereum/Utility.h>
 #include <libwhisper/WhisperHost.h>
@@ -51,6 +53,17 @@ static Public stringToPublic(QString const& _a)
 		return Public(fromHex(_a.mid(2).toStdString()));
 	else
 		return Public();
+}
+
+static shh::Topics stringToTopics(QString _s)
+{
+	return shh::BuildTopic(_s.toStdString());
+
+	//shh::BuildTopic ret;
+	//QStringList tx = _s.split("|", QString::SkipEmptyParts);
+	//for (auto t: tx)
+	//	ret.shift(t.toStdString());
+	//return ret.toTopics();
 }
 
 static shh::Topics topicFromText(QString _s)
@@ -113,10 +126,16 @@ Whisper::Whisper(ZeroFace* _m):
 {
 	dock(Qt::RightDockWidgetArea, "Whisper")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
-	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::on_newIdentity_triggered);
+	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::onNewIdentityTriggered);
 	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
-	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(on_post_clicked()));
-	connect(m_ui->forget, SIGNAL(clicked()), this, SLOT(on_forget_clicked()));
+	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(onPostClicked()));
+	connect(m_ui->forgetTopics, SIGNAL(clicked()), this, SLOT(onForgetTopicsClicked()));
+	connect(m_ui->forgetDestinations, SIGNAL(clicked()), this, SLOT(onForgetDestinationsClicked()));
+
+	QShortcut* shortcutSend1 = new QShortcut(QKeySequence("Ctrl+Enter"), m_ui->shhData);
+	QShortcut* shortcutSend2 = new QShortcut(QKeySequence("Ctrl+Return"), m_ui->shhData);
+	QObject::connect(shortcutSend1, SIGNAL(activated()), this, SLOT(onPostClicked()));
+	QObject::connect(shortcutSend2, SIGNAL(activated()), this, SLOT(onPostClicked()));
 }
 
 void Whisper::readSettings(QSettings const& _s)
@@ -133,7 +152,17 @@ void Whisper::readSettings(QSettings const& _s)
 				m_myIdentities.append(KeyPair(k));
 		}
 	}
+
 	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+
+	int ttl = _s.value("ttl").toInt();
+	if (ttl > 0)
+		m_ui->shhTtl->setValue(ttl);
+
+	int PoW = _s.value("PoW").toInt();
+	if (PoW > 0)
+		m_ui->shhWork->setValue(PoW);
+
 	refreshWhisper();
 }
 
@@ -147,7 +176,10 @@ void Whisper::writeSettings(QSettings& _s)
 		memcpy(p, &(i.secret()), sizeof(Secret));
 		p += sizeof(Secret);
 	}
+
 	_s.setValue("identities", b);
+	_s.setValue("ttl", m_ui->shhTtl->value());
+	_s.setValue("PoW", m_ui->shhWork->value());
 }
 
 void Whisper::addNewId(QString _ids)
@@ -167,7 +199,7 @@ void Whisper::refreshWhisper()
 	m_ui->shhFrom->addItem(QString());
 }
 
-void Whisper::on_newIdentity_triggered()
+void Whisper::onNewIdentityTriggered()
 {
 	KeyPair kp = KeyPair::create();
 	m_myIdentities.append(kp);
@@ -175,70 +207,89 @@ void Whisper::on_newIdentity_triggered()
 	refreshWhisper();
 }
 
-void Whisper::on_post_clicked()
+void Whisper::onPostClicked()
 {
 	QString const qsTopic = m_ui->shhTopic->currentText();
 	noteTopic(qsTopic);
 
-	QString const qsDest = m_ui->shhTo->currentText();
-	Public dest = stringToPublic(qsDest);
+	QString const strDest = m_ui->shhTo->currentText();
+	Public dest = stringToPublic(strDest);
 	if (dest)
-		noteDestination(qsDest);
-	else if (!qsDest.isEmpty())
-		return; // don't allow unencrypted messages, unless it was explicitly intended
-
-	string text = m_ui->shhData->toPlainText().toStdString();
-	if (text.empty())
+	{
+		if (m_ui->shhTo->findText(strDest) < 0)
+			m_ui->shhTo->addItem(strDest);
+	}
+	else if (!strDest.isEmpty())
+	{
+		// don't allow unencrypted messages, unless it was explicitly intended
+		QMessageBox box(QMessageBox::Warning, "Warning", "Invalid destination address!");
+		box.setInformativeText("Destination address must be either valid or blank.");
+		box.exec();
 		return;
+	}
+
+	int const msgSizeLimit = 1024;
+	QString text = m_ui->shhData->toPlainText();
+	if (text.isEmpty())
+		return;
+	else if (text.size() > msgSizeLimit)
+	{
+		QMessageBox box(QMessageBox::Warning, "Warning", "Message too large!");
+		box.setInformativeText(QString("Single message should not exceed %1 characters.").arg(msgSizeLimit));
+		box.exec();
+		return;
+	}
 
 	shh::Message m;
 	m.setTo(dest);
-	m.setPayload(asBytes(text));
+	m.setPayload(asBytes(text.toStdString()));
 
 	Secret from;
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
 	if (zero()->web3Server()->ids().count(f))
 		from = zero()->web3Server()->ids().at(f);
 
-	shh::BuildTopic topic(qsTopic.toStdString());
+	shh::Topics topic = stringToTopics(qsTopic);
 	web3()->whisper()->inject(m.seal(from, topic, m_ui->shhTtl->value(), m_ui->shhWork->value()));
 	m_ui->shhData->clear();
 	m_ui->shhData->setFocus();
 }
 
-void Whisper::on_forget_clicked()
+void Whisper::onForgetDestinationsClicked()
 {
-	if (m_knownTopics.empty())
-		return;
-
-	m_knownTopics.clear();
-	m_ui->shhTopic->clear();
-
-	auto x = zero()->findPlugin(c_chatPluginName);
-	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
-	if (wp)
-		wp->forgetTopics();
+	m_ui->shhTo->clear();
 }
 
-void Whisper::noteTopic(QString const _topic)
+void Whisper::onForgetTopicsClicked()
 {
-	if (_topic.isEmpty() || m_knownTopics.contains(_topic))
-		return;
+	m_ui->shhTopic->clear();
+}
 
-	m_knownTopics.insert(_topic);
-	m_ui->shhTopic->addItem(_topic);
+void Whisper::noteTopic(QString const& _topic)
+{
+	if (_topic.isEmpty())
+		return;
 
 	auto x = zero()->findPlugin(c_chatPluginName);
 	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
 	if (wp)
 		wp->noteTopic(_topic);
-}
 
-void Whisper::noteDestination(QString const _dest)
-{
-	if (!m_destinations.contains(_dest))
+	if (m_ui->shhTopic->findText(_topic) < 0)
+		m_ui->shhTopic->addItem(_topic);
+
+	/*
+	QStringList tx = _topic.split("|", QString::SkipEmptyParts);
+	if (tx.size() > 1 && m_ui->shhTopic->findText(_topic) < 0)
+		m_ui->shhTopic->addItem(_topic);
+
+	for (auto t: tx)
 	{
-		m_destinations.insert(_dest);
-		m_ui->shhTo->addItem(_dest);
+		if (m_ui->shhTopic->findText(t) < 0)
+			m_ui->shhTopic->addItem(t);
+
+		if (wp)
+			wp->noteTopic(t);
 	}
+	*/
 }
