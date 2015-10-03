@@ -21,9 +21,7 @@
 
 #pragma once
 
-#include <QMutex>
 #include <QString>
-#include <QPair>
 #include <QList>
 #include <QSet>
 #include <libethcore/Common.h>
@@ -49,22 +47,20 @@ public:
 	Whisper(ZeroFace* _m);
 
 private slots:
-	void on_post_clicked();
-	void on_forget_clicked();
+	void onPostClicked();
+	void onForgetTopicsClicked();
+	void onForgetDestinationsClicked();
 
 private:
 	void readSettings(QSettings const&) override;
 	void writeSettings(QSettings&) override;
 	void refreshWhisper();
 	void addNewId(QString _ids);
-	void noteTopic(QString const _topic);
-	void noteDestination(QString const _dest);
-	void on_newIdentity_triggered();
+	void noteTopic(QString const& _topic);
+	void onNewIdentityTriggered();
 
 	Ui::Whisper* m_ui;
 	QList<KeyPair> m_myIdentities;
-	QSet<QString> m_knownTopics;
-	QSet<QString> m_destinations;
 };
 
 }
