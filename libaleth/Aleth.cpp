@@ -76,6 +76,8 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 			resetNetwork(eth::Network::Frontier);
 		else if (arg == "--olympic")
 			resetNetwork(eth::Network::Olympic);
+		else if (arg == "--morden" || arg == "--testnet")
+			resetNetwork(eth::Network::Morden);
 		else if (arg == "--genesis-json" && i + 1 < qApp->arguments().size())
 			CanonBlockChain<Ethash>::setGenesis(contentsString(qApp->arguments()[++i].toStdString()));
 		else if ((arg == "--db-path" || arg == "-d") && i + 1 < qApp->arguments().size())

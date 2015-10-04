@@ -50,7 +50,7 @@ AlethOne::AlethOne():
 	m_ui->setupUi(this);
 	m_aleth.init(Aleth::Nothing, "AlethOne", "anon");
 
-	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : "Frontier") + QString(" AlethOne v") + QString::fromStdString(niceVersion(dev::Version)));
+	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier") + QString(" AlethOne v") + QString::fromStdString(niceVersion(dev::Version)));
 	m_ui->beneficiary->setPlaceholderText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
 	m_ui->sync->setAleth(&m_aleth);
 
