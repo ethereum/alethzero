@@ -55,14 +55,6 @@ AlethZero::AlethZero():
 	setWindowFlags(Qt::Window);
 	m_ui->setupUi(this);
 
-	cerr << "State root: " << CanonBlockChain<Ethash>::genesis().stateRoot() << endl;
-	auto block = CanonBlockChain<Ethash>::createGenesisBlock();
-	cerr << "Block Hash: " << CanonBlockChain<Ethash>::genesis().hash() << endl;
-	cerr << "Block RLP: " << RLP(block) << endl;
-	cerr << "Block Hex: " << toHex(block) << endl;
-	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
-	cerr << "Client database version: " << c_databaseVersion << endl;
-
 //	statusBar()->addPermanentWidget(m_ui->cacheUsage);
 	m_ui->cacheUsage->hide();
 	statusBar()->addPermanentWidget(m_ui->balance);
@@ -75,6 +67,14 @@ AlethZero::AlethZero():
 	connect(&m_aleth, SIGNAL(beneficiaryChanged()), SLOT(onBeneficiaryChanged()));
 	m_aleth.init(Aleth::OpenOnly, "AlethZero", "anon");
 	m_rpcHost.init(&m_aleth);
+
+	cerr << "State root: " << CanonBlockChain<Ethash>::genesis().stateRoot() << endl;
+	auto block = CanonBlockChain<Ethash>::createGenesisBlock();
+	cerr << "Block Hash: " << CanonBlockChain<Ethash>::genesis().hash() << endl;
+	cerr << "Block RLP: " << RLP(block) << endl;
+	cerr << "Block Hex: " << toHex(block) << endl;
+	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
+	cerr << "Client database version: " << c_databaseVersion << endl;
 
 	if (c_network == eth::Network::Olympic)
 		setWindowTitle("AlethZero Olympic");
