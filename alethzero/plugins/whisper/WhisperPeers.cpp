@@ -40,8 +40,6 @@ using namespace zero;
 
 ZERO_NOTE_PLUGIN(WhisperPeers);
 
-int const c_maxMessages = 1000;
-
 static QString const c_filterAll("-= all messages =-");
 
 static QString messageToString(shh::Envelope const& _e, shh::Message const& _m, QString const& _topic)
@@ -72,12 +70,12 @@ WhisperPeers::WhisperPeers(ZeroFace* _m):
 {
 	dock(Qt::RightDockWidgetArea, "Active Whispers")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
-	setDefaultTopics();
-	connect(m_ui->stop, SIGNAL(clicked()), this, SLOT(onStopClicked()));
-	connect(m_ui->clear, SIGNAL(clicked()), this, SLOT(onClearClicked()));
+	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFilterChanged()));
 	connect(m_ui->forgetCurrent, SIGNAL(clicked()), this, SLOT(onForgetCurrentTopicClicked()));
 	connect(m_ui->forgetAll, SIGNAL(clicked()), this, SLOT(onForgetAllClicked()));
-	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFilterChanged()));
+	connect(m_ui->stop, SIGNAL(clicked()), this, SLOT(onStopClicked()));
+	connect(m_ui->clear, SIGNAL(clicked()), this, SLOT(onClearClicked()));
+	setDefaultTopics();
 	startTimer(1000);
 }
 
@@ -91,7 +89,7 @@ void WhisperPeers::setDefaultTopics()
 	m_ui->topics->addItem(c_filterAll);
 }
 
-bool WhisperPeers::isCurrentTopicAll()
+bool WhisperPeers::isCurrentTopicAll() const
 {
 	QString const topic = m_ui->topics->currentText();
 	return !topic.compare(c_filterAll);
@@ -138,6 +136,7 @@ void WhisperPeers::onForgetCurrentTopicClicked()
 		if (i != m_topics.end())
 			web3()->whisper()->uninstallWatch(i->second);
 
+		QMutexLocker guard(&m_chatLock);
 		m_ui->topics->removeItem(m_ui->topics->currentIndex());
 		m_topics.erase(topic);
 		m_chats.erase(topic);
@@ -165,10 +164,15 @@ void WhisperPeers::onFilterChanged()
 		refreshWhispers(false);
 		m_ui->forgetCurrent->setEnabled(!isCurrentTopicAll());
 	}
+
+	QCoreApplication::processEvents();
 }
 
 void WhisperPeers::refreshWhispers(bool _timerEvent)
 {
+	if (_timerEvent)
+		QCoreApplication::processEvents();
+
 	QString const topic = m_ui->topics->currentText();
 	if (!topic.compare(c_filterAll))
 		refreshAll(_timerEvent);
@@ -197,30 +201,34 @@ void WhisperPeers::onClearClicked()
 
 void WhisperPeers::addToView(std::multimap<time_t, QString> const& _messages)
 {
-	QScrollBar* scroll = m_ui->whispers->verticalScrollBar();
-	bool wasAtBottom = (scroll->maximum() == scroll->sliderPosition());
-	int newMessagesCount = static_cast<int>(_messages.size());
-	int target = c_maxMessages - newMessagesCount;
+	auto chat = m_ui->whispers;
+	if (!chat)
+		return;
 
-	if (target <= 0)
-		m_ui->whispers->clear();
-	else
-		while (m_ui->whispers->count() > target)
-		{
-			QListWidgetItem* item = m_ui->whispers->takeItem(0);
-			delete item;
-		}
+	QScrollBar* scroll = chat->verticalScrollBar();
+	if (!scroll)
+		return;
+
+	bool wasAtBottom = (scroll->maximum() == scroll->sliderPosition());
+
+	// limit the number of messges, may be useful in the future
+	//int target = c_maxMessages - static_cast<int>(_messages.size());
+	//if (target <= 0)
+	//	m_ui->whispers->clear();
+	//else
+	//	while (m_ui->whispers->count() > target)
+	//		delete m_ui->whispers->takeItem(0);
 
 	for (auto const& i: _messages)
 	{
 		QListWidgetItem* item = new QListWidgetItem;
 		item->setText(i.second);
 		item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
-		m_ui->whispers->addItem(item);
+		chat->addItem(item);
 	}
 
 	if (wasAtBottom)
-		m_ui->whispers->scrollToBottom();
+		chat->scrollToBottom();
 }
 
 void WhisperPeers::refresh(QString const& _topic, bool _timerEvent)
@@ -260,10 +268,12 @@ void WhisperPeers::refresh(QString const& _topic, bool _timerEvent)
 
 	resizeMap(chat);
 	resizeMap(m_all);
-	resizeMap(newMessages);
 
 	if (_timerEvent)
+	{
+		resizeMap(newMessages);
 		addToView(newMessages);
+	}
 	else
 		addToView(chat);
 }
@@ -301,18 +311,18 @@ void WhisperPeers::refreshAll(bool _timerEvent)
 	}
 
 	resizeMap(m_all);
-	resizeMap(newMessages);
 
 	if (_timerEvent)
+	{
+		resizeMap(newMessages);
 		addToView(newMessages);
+	}
 	else
 		addToView(m_all);
 }
 
 void WhisperPeers::resizeMap(std::multimap<time_t, QString>& _map)
 {
-	size_t const limit = static_cast<size_t>(c_maxMessages);
-	while (_map.size() > limit)
+	while (_map.size() > 5000)
 		_map.erase(_map.begin());
 }
-
