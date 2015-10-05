@@ -90,8 +90,8 @@ void NewAccount::create()
 	updateStatus();
 	if (d.exec() == QDialog::Accepted)
 	{
-		Type v = (Type)u.keyType->currentIndex();
-		KeyPair p = newKeyPair(v);
+		KeyManager::NewKeyType v = (KeyManager::NewKeyType)u.keyType->currentIndex();
+		KeyPair p = KeyManager::newKeyPair(v);
 		QString s = u.keyName->text();
 		if (u.useMaster->isChecked())
 			aleth()->keyManager().import(p.secret(), s.toStdString());
@@ -104,45 +104,4 @@ void NewAccount::create()
 
 		aleth()->noteKeysChanged();
 	}
-}
-
-KeyPair NewAccount::newKeyPair(Type _type)
-{
-	KeyPair p;
-	bool keepGoing = true;
-	unsigned done = 0;
-	function<void()> f = [&]() {
-		KeyPair lp;
-		while (keepGoing)
-		{
-			done++;
-			if (done % 1000 == 0)
-				cnote << "Tried" << done << "keys";
-			lp = KeyPair::create();
-			auto a = lp.address();
-			if (_type == NoVanity ||
-				(_type == DirectICAP && !a[0]) ||
-				(_type == FirstTwo && a[0] == a[1]) ||
-				(_type == FirstTwoNextTwo && a[0] == a[1] && a[2] == a[3]) ||
-				(_type == FirstThree && a[0] == a[1] && a[1] == a[2]) ||
-				(_type == FirstFour && a[0] == a[1] && a[1] == a[2] && a[2] == a[3])
-			)
-				break;
-		}
-		if (keepGoing)
-			p = lp;
-		keepGoing = false;
-	};
-
-	vector<std::thread*> ts;
-	for (unsigned t = 0; t < std::thread::hardware_concurrency() - 1; ++t)
-		ts.push_back(new std::thread(f));
-	f();
-
-	for (std::thread* t: ts)
-	{
-		t->join();
-		delete t;
-	}
-	return p;
 }

@@ -27,6 +27,9 @@
      </item>
      <item>
       <widget class="QListWidget" name="whispers">
+        <property name="verticalScrollMode">
+          <enum>QAbstractItemView::ScrollPerPixel</enum>
+        </property>
         <property name="alternatingRowColors">
           <bool>true</bool>
         </property>
@@ -77,9 +80,6 @@
             <widget class="QPushButton" name="forgetCurrent">
               <property name="text">
                 <string>Forget Topic</string>
-              </property>
-              <property name="enabled">
-                <bool>false</bool>
               </property>
             </widget>
           </item>

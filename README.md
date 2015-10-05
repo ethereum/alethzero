@@ -33,7 +33,7 @@ And let's not forget: Caktux (neth, ongoing CI), Eric Lombrozo (original MinGW32
 
 ### Building
 
-See the [Wiki](https://github.com/ethereum/cpp-ethereum/wiki) for build instructions, compatibility information and build tips. 
+See the [Wiki](https://github.com/ethereum/webthree-umbrella/wiki) for build instructions, compatibility information and build tips. 
 
 ### License
 
@@ -58,5 +58,5 @@ only replacing the word **contribution** by **file**
 
 All development goes in develop branch - please don't submit pull requests to master.
 
-Please read [CodingStandards.txt](CodingStandards.txt) thoroughly before making alterations to the code base. Please do *NOT* use an editor that automatically reformats whitespace away from astylerc or the formatting guidelines as described in [CodingStandards.txt](CodingStandards.txt).
+Please read [CodingStandards.txt](https://github.com/ethereum/webthree-umbrella/blob/develop/CodingStandards.txt) thoroughly before making alterations to the code base. Please do *NOT* use an editor that automatically reformats whitespace away from astylerc or the formatting guidelines as described in [CodingStandards.txt](https://github.com/ethereum/webthree-umbrella/blob/develop/CodingStandards.txt).
 
