@@ -23,8 +23,7 @@
 
 #include <QMutex>
 #include <QString>
-#include <QPair>
-#include <QList>
+#include <map>
 #include "Plugin.h"
 
 namespace Ui
@@ -44,13 +43,33 @@ class WhisperPeers: public QObject, public Plugin
 	Q_OBJECT
 
 public:
+	virtual ~WhisperPeers();
 	WhisperPeers(ZeroFace* _m);
+	void noteTopic(QString const& _topic);
+
+private slots:
+	void onFilterChanged();
+	void onStopClicked();
+	void onClearClicked();
+	void onForgetCurrentTopicClicked();
+	void onForgetAllClicked();
 
 private:
+	bool isCurrentTopicAll();
 	void timerEvent(QTimerEvent*) override;
-	void refreshWhispers();
+	void refreshWhispers(bool _timerEvent);
+	void setDefaultTopics();
+	void addToView(std::multimap<time_t, QString> const& _messages);
+	void refreshAll(bool _timerEvent);
+	void refresh(QString const& _topic, bool _timerEvent);
+	void resizeMap(std::multimap<time_t, QString>& _map);
 
 	Ui::WhisperPeers* m_ui;
+	bool m_stopped;
+	QMutex m_chatLock;
+	std::map<QString, unsigned> m_topics;
+	std::map<QString, std::multimap<time_t, QString>> m_chats;
+	std::multimap<time_t, QString> m_all;
 };
 
 }

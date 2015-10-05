@@ -111,7 +111,8 @@ void AllAccounts::save()
 		{
 			aleth()->keyManager().kill(account.first);
 			deletedBeneficiary |= account.second.isDefault;
-		} else if (account.second.isEdited)
+		}
+		else if (account.second.isEdited)
 		{
 			if (account.second.isDefault)
 				aleth()->setBeneficiary(account.first);

@@ -21,6 +21,8 @@
 
 #include "WhisperPeers.h"
 #include <QSettings>
+#include <QScrollBar>
+#include <QMutexLocker>
 #include <libethereum/Client.h>
 #include <libwhisper/WhisperHost.h>
 #include <libwebthree/WebThree.h>
@@ -29,6 +31,7 @@
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "ui_WhisperPeers.h"
+
 using namespace std;
 using namespace dev;
 using namespace eth;
@@ -37,46 +40,279 @@ using namespace zero;
 
 ZERO_NOTE_PLUGIN(WhisperPeers);
 
+int const c_maxMessages = 1000;
+
+static QString const c_filterAll("-= all messages =-");
+
+static QString messageToString(shh::Envelope const& _e, shh::Message const& _m, QString const& _topic)
+{
+	time_t birth = _e.expiry() - _e.ttl();
+	QString t(ctime(&birth));
+	t.chop(6);
+	t = t.right(t.size() - 4);
+
+	QString seal = QString("{%1 -> %2}").arg(_m.from() ? _m.from().abridged().c_str() : "?").arg(_m.to() ? _m.to().abridged().c_str() : "X");
+	QString item = QString("[%1, ttl: %2] *%3 [%4] %5").arg(t).arg(_e.ttl()).arg(_e.workProved()).arg(_topic).arg(seal);
+
+	bytes raw = _m.payload();
+	if (raw.size())
+	{
+		QString plaintext = QString::fromUtf8((const char*)(raw.data()), raw.size());
+		item += ": ";
+		item += plaintext;
+	}
+
+	return item;
+}
+
 WhisperPeers::WhisperPeers(ZeroFace* _m):
 	Plugin(_m, "WhisperPeers"),
-	m_ui(new Ui::WhisperPeers)
+	m_ui(new Ui::WhisperPeers),
+	m_stopped(false)
 {
 	dock(Qt::RightDockWidgetArea, "Active Whispers")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
+	setDefaultTopics();
+	connect(m_ui->stop, SIGNAL(clicked()), this, SLOT(onStopClicked()));
+	connect(m_ui->clear, SIGNAL(clicked()), this, SLOT(onClearClicked()));
+	connect(m_ui->forgetCurrent, SIGNAL(clicked()), this, SLOT(onForgetCurrentTopicClicked()));
+	connect(m_ui->forgetAll, SIGNAL(clicked()), this, SLOT(onForgetAllClicked()));
+	connect(m_ui->topics, SIGNAL(currentIndexChanged(QString)), this, SLOT(onFilterChanged()));
 	startTimer(1000);
+}
+
+WhisperPeers::~WhisperPeers()
+{
+	onForgetAllClicked();
+}
+
+void WhisperPeers::setDefaultTopics()
+{
+	m_ui->topics->addItem(c_filterAll);
+}
+
+bool WhisperPeers::isCurrentTopicAll()
+{
+	QString const topic = m_ui->topics->currentText();
+	return !topic.compare(c_filterAll);
+}
+
+void WhisperPeers::noteTopic(QString const& _topic)
+{
+	if (m_ui->topics->findText(_topic) < 0)
+	{
+		m_ui->topics->addItem(_topic);
+
+		if (m_topics.find(_topic) == m_topics.end())
+		{
+			shh::BuildTopic bt(_topic.toStdString());
+			unsigned f = web3()->whisper()->installWatch(bt);
+			m_topics[_topic] = f;
+		}
+	}
+}
+
+void WhisperPeers::onForgetAllClicked()
+{
+	m_ui->topics->clear();
+	setDefaultTopics();
+
+	QMutexLocker guard(&m_chatLock);
+
+	for (auto const& i: m_topics)
+		web3()->whisper()->uninstallWatch(i.second);
+
+	m_ui->whispers->clear();
+	m_topics.clear();
+	m_chats.clear();
+	m_all.clear();
+}
+
+void WhisperPeers::onForgetCurrentTopicClicked()
+{
+	if (!isCurrentTopicAll())
+	{
+		QString const& topic = m_ui->topics->currentText();
+
+		auto i = m_topics.find(topic);
+		if (i != m_topics.end())
+			web3()->whisper()->uninstallWatch(i->second);
+
+		m_ui->topics->removeItem(m_ui->topics->currentIndex());
+		m_topics.erase(topic);
+		m_chats.erase(topic);
+	}
 }
 
 void WhisperPeers::timerEvent(QTimerEvent*)
 {
-	refreshWhispers();
-}
+	if (m_stopped)
+		return;
 
-void WhisperPeers::refreshWhispers()
-{
-	return;
-	m_ui->whispers->clear();
-	for (auto const& w: web3()->whisper()->all())
+	if (m_chatLock.tryLock())
 	{
-		shh::Envelope const& e = w.second;
-		shh::Message m;
-		for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
-			if (!!(m = e.open(shh::Topics(), i.second)))
-				break;
-		if (!m)
-			m = e.open(shh::Topics());
-
-		QString msg;
-		if (m.from())
-			// Good message.
-			msg = QString("{%1 -> %2} %3").arg(m.from() ? m.from().abridged().c_str() : "???").arg(m.to() ? m.to().abridged().c_str() : "*").arg(toHex(m.payload()).c_str());
-		else if (m)
-			// Maybe message.
-			msg = QString("{%1 -> %2} %3 (?)").arg(m.from() ? m.from().abridged().c_str() : "???").arg(m.to() ? m.to().abridged().c_str() : "*").arg(toHex(m.payload()).c_str());
-
-		time_t ex = e.expiry();
-		QString t(ctime(&ex));
-		t.chop(1);
-		QString item = QString("[%1 - %2s] *%3 %5 %4").arg(t).arg(e.ttl()).arg(e.workProved()).arg(toString(e.topic()).c_str()).arg(msg);
-		m_ui->whispers->addItem(item);
+		refreshWhispers(true);
+		m_chatLock.unlock();
 	}
 }
+
+void WhisperPeers::onFilterChanged()
+{
+	if (!m_ui->topics->currentText().isEmpty())
+	{
+		QMutexLocker guard(&m_chatLock);
+		m_ui->whispers->clear();
+		refreshWhispers(false);
+		m_ui->forgetCurrent->setEnabled(!isCurrentTopicAll());
+	}
+}
+
+void WhisperPeers::refreshWhispers(bool _timerEvent)
+{
+	QString const topic = m_ui->topics->currentText();
+	if (!topic.compare(c_filterAll))
+		refreshAll(_timerEvent);
+	else
+		refresh(topic, _timerEvent);
+}
+
+void WhisperPeers::onStopClicked()
+{
+	m_stopped = !m_stopped;
+	m_ui->stop->setText(m_stopped ? "Resume" : "Freeze");
+}
+
+void WhisperPeers::onClearClicked()
+{
+	QMutexLocker guard(&m_chatLock);
+
+	QString const topic = m_ui->topics->currentText();
+	if (!topic.compare(c_filterAll))
+		m_all.clear();
+	else
+		m_chats[topic].clear();
+
+	m_ui->whispers->clear();
+}
+
+void WhisperPeers::addToView(std::multimap<time_t, QString> const& _messages)
+{
+	QScrollBar* scroll = m_ui->whispers->verticalScrollBar();
+	bool wasAtBottom = (scroll->maximum() == scroll->sliderPosition());
+	int newMessagesCount = static_cast<int>(_messages.size());
+	int target = c_maxMessages - newMessagesCount;
+
+	if (target <= 0)
+		m_ui->whispers->clear();
+	else
+		while (m_ui->whispers->count() > target)
+		{
+			QListWidgetItem* item = m_ui->whispers->takeItem(0);
+			delete item;
+		}
+
+	for (auto const& i: _messages)
+	{
+		QListWidgetItem* item = new QListWidgetItem;
+		item->setText(i.second);
+		item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
+		m_ui->whispers->addItem(item);
+	}
+
+	if (wasAtBottom)
+		m_ui->whispers->scrollToBottom();
+}
+
+void WhisperPeers::refresh(QString const& _topic, bool _timerEvent)
+{
+	shh::BuildTopic bt(_topic.toStdString());
+	unsigned const w = m_topics[_topic];
+	multimap<time_t, QString> newMessages;
+	multimap<time_t, QString>& chat = m_chats[_topic];
+
+	if (m_topics.find(_topic) == m_topics.end())
+	{
+		unsigned f = web3()->whisper()->installWatch(bt);
+		m_topics[_topic] = f;
+		return;
+	}
+
+	for (auto i: web3()->whisper()->checkWatch(w))
+	{
+		shh::Envelope const& e = web3()->whisper()->envelope(i);
+		shh::Message msg = e.open(web3()->whisper()->fullTopics(w));
+
+		if (!msg)
+			for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
+				if (!!(msg = e.open(bt, i.second)))
+					break;
+
+		if (msg)
+		{
+			time_t birth = e.expiry() - e.ttl();
+			QString s = messageToString(e, msg, _topic);
+			chat.emplace(birth, s);
+			m_all.emplace(birth, s);
+			if (_timerEvent)
+				newMessages.emplace(birth, s);
+		}
+	}
+
+	resizeMap(chat);
+	resizeMap(m_all);
+	resizeMap(newMessages);
+
+	if (_timerEvent)
+		addToView(newMessages);
+	else
+		addToView(chat);
+}
+
+void WhisperPeers::refreshAll(bool _timerEvent)
+{
+	multimap<time_t, QString> newMessages;
+
+	for (auto t = m_topics.begin(); t != m_topics.end(); ++t)
+	{
+		multimap<time_t, QString>& chat = m_chats[t->first];
+
+		for (auto i: web3()->whisper()->checkWatch(t->second))
+		{
+			shh::Envelope const& e = web3()->whisper()->envelope(i);
+			shh::Message msg = e.open(web3()->whisper()->fullTopics(t->second));
+
+			if (!msg)
+				for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
+					if (!!(msg = e.open(shh::Topics(), i.second)))
+						break;
+
+			if (msg)
+			{
+				time_t birth = e.expiry() - e.ttl();
+				QString s = messageToString(e, msg, t->first);
+				chat.emplace(birth, s);
+				m_all.emplace(birth, s);
+				if (_timerEvent)
+					newMessages.emplace(birth, s);
+			}
+		}
+
+		resizeMap(chat);
+	}
+
+	resizeMap(m_all);
+	resizeMap(newMessages);
+
+	if (_timerEvent)
+		addToView(newMessages);
+	else
+		addToView(m_all);
+}
+
+void WhisperPeers::resizeMap(std::multimap<time_t, QString>& _map)
+{
+	size_t const limit = static_cast<size_t>(c_maxMessages);
+	while (_map.size() > limit)
+		_map.erase(_map.begin());
+}
+

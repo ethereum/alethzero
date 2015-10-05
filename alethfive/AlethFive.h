@@ -50,8 +50,11 @@ private slots:
 	void dappLoaded(Dapp& _dapp);
 	void pageLoaded(QByteArray _content, QString _mimeType, QUrl _uri);
 	void navigateTo(QString _url);
+	void enterDestination(QString _url);
 
 	void on_url_returnPressed();
+
+	void updateURLBox();
 
 private:
 	void refresh();
@@ -59,6 +62,8 @@ private:
 
 	void readSettings();
 	void writeSettings();
+
+	bool eventFilter(QObject* _o, QEvent* _e) override;
 
 	Ui::AlethFive* m_ui;
 	QMenu* m_backMenu;
