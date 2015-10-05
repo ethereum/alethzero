@@ -66,7 +66,7 @@ void EncryptKey::create()
 	}
 	m_ui->accounts->model()->sort(0);
 	
-	DefaultPasswordValidator validator;
+	PasswordValidator validator;
 	auto updateStatus = [&]()
 	{
 		int index = m_ui->passwordType->currentIndex();
