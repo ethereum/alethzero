@@ -246,6 +246,8 @@ void DappLoader::loadPage(QString const& _uri)
 {
 	QUrl uri(_uri);
 	QNetworkRequest request(uri);
+	request.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml,*/*");
+	request.setRawHeader("User-Agent", "Mozilla/5.0");
 	m_pageUrls.insert(uri);
 	m_net.get(request);
 }
