@@ -199,6 +199,8 @@ Manifest DappLoader::loadManifest(std::string const& _manifest)
 	jsonReader.parse(_manifest, root, false);
 
 	Json::Value entries = root["entries"];
+	QMimeDatabase mime;
+
 	for (Json::ValueIterator it = entries.begin(); it != entries.end(); ++it)
 	{
 		Json::Value const& entryValue = *it;
@@ -206,6 +208,14 @@ Manifest DappLoader::loadManifest(std::string const& _manifest)
 		if (path.size() == 0 || path[0] != '/')
 			path = "/" + path;
 		std::string contentType = entryValue["contentType"].asString();
+		if (contentType.empty())
+		{
+			if (path[path.size() - 1] == '/')
+				contentType = "text/html";
+			else
+				contentType = mime.mimeTypeForFile(QString::fromStdString(path)).name().toStdString();
+		}
+
 		std::string strHash = entryValue["hash"].asString();
 		if (strHash.length() == 64)
 			strHash = "0x" + strHash;
