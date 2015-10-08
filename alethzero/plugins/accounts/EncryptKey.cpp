@@ -66,7 +66,6 @@ void EncryptKey::create()
 	}
 	m_ui->accounts->model()->sort(0);
 	
-	PasswordValidator validator;
 	auto updateStatus = [&]()
 	{
 		int index = m_ui->passwordType->currentIndex();
@@ -87,7 +86,7 @@ void EncryptKey::create()
 			return;
 		}
 
-		PasswordValidation v = validator.check(m_ui->password->text().toStdString(), m_ui->confirm->text().toStdString());
+		PasswordValidation v = validatePassword(m_ui->password->text().toStdString(), m_ui->confirm->text().toStdString());
 		m_ui->status->setText(QString::fromStdString(errorDescription(v)));
 		m_ui->change->setEnabled(v == PasswordValidation::Valid);
 	};
