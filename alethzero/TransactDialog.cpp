@@ -372,7 +372,6 @@ void TransactDialog::timerEvent(QTimerEvent*)
 			m_lastGood = er;
 			m_upperBound = m_upperBound == mid ? m_lowerBound : mid;
 		}
-
 		updateBounds();
 	}
 	else

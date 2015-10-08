@@ -20,7 +20,9 @@
  */
 
 #include <algorithm>
+#include <functional>
 #include <json/json.h>
+#include <boost/algorithm/string.hpp>
 #include <QUrl>
 #include <QStringList>
 #include <QNetworkAccessManager>
@@ -35,6 +37,7 @@
 #include <libwebthree/WebThree.h>
 #include "DappLoader.h"
 #include "AlethResources.hpp"
+using namespace std;
 using namespace dev;
 using namespace crypto;
 using namespace eth;
@@ -48,57 +51,48 @@ DappLoader::DappLoader(QObject* _parent, WebThreeDirect* _web3, Address _nameReg
 	connect(&m_net, &QNetworkAccessManager::finished, this, &DappLoader::downloadComplete);
 }
 
+strings decomposed(std::string const& _name)
+{
+	unsigned i = _name.find_first_of('/');
+	strings parts;
+	string ts = _name.substr(0, i);
+	boost::algorithm::split(parts, ts, boost::algorithm::is_any_of("."));
+	std::reverse(parts.begin(), parts.end());
+	strings pathParts;
+	boost::algorithm::split(pathParts, ts = _name.substr(i + 1), boost::is_any_of("/"));
+	parts += pathParts;
+	return parts;
+}
+
+template <class T> T lookup(Address const& _nameReg, std::function<bytes(Address, bytes)> const& _call, strings const& _path, std::string const& _query)
+{
+	Address address = _nameReg;
+	for (unsigned i = 0; i < _path.size() - 1; ++i)
+		address = abiOut<Address>(_call(address, abiIn("subRegistrar(string)", _path[i])));
+	return abiOut<T>(_call(address, abiIn(_query + "(bytes32)", _path.back())));
+}
+
+template <class T> T lookup(Address const& _nameReg, Client* _c, strings const& _path, std::string const& _query)
+{
+	return lookup<T>(_nameReg, [&](Address a, bytes b){return _c->call(a, b).output;}, _path, _query);
+}
+
 DappLocation DappLoader::resolveAppUri(QString const& _uri)
 {
 	QUrl url(_uri);
 	if (!url.scheme().isEmpty() && url.scheme() != "eth")
 		throw dev::Exception(); //TODO:
 
-	QStringList parts = url.host().split('.', QString::SkipEmptyParts);
-	QStringList domainParts;
-	std::reverse(parts.begin(), parts.end());
-	parts.append(url.path().split('/', QString::SkipEmptyParts));
-
-	Address address = m_nameReg;
-	Address lastAddress;
-	int partIndex = 0;
-
-	h256 contentHash;
-	while (address && partIndex < parts.length())
-	{
-		lastAddress = address;
-		string32 name = ZeroString32;
-		QByteArray utf8 = parts[partIndex].toUtf8();
-		std::copy(utf8.data(), utf8.data() + utf8.size(), name.data());
-		if (address != m_nameReg)
-			address = abiOut<Address>(web3()->ethereum()->call(address, abiIn("subRegistrar(bytes32)", name)).output);
-		else
-			address = abiOut<Address>(web3()->ethereum()->call(address, abiIn("register(bytes32)", name)).output);
-
-		domainParts.append(parts[partIndex]);
-		if (!address)
-		{
-			//we have the address of the last part, try to get content hash
-			contentHash = abiOut<h256>(web3()->ethereum()->call(lastAddress, abiIn("content(bytes32)", name)).output);
-			if (!contentHash)
-				throw dev::Exception() << errinfo_comment("Can't resolve address");
-		}
-		++partIndex;
-	}
-
-	string32 urlHintName = ZeroString32;
-	QByteArray utf8 = QString("urlhint").toUtf8();
-	std::copy(utf8.data(), utf8.data() + utf8.size(), urlHintName.data());
-
-	Address urlHint = abiOut<Address>(web3()->ethereum()->call(m_nameReg, abiIn("addr(bytes32)", urlHintName)).output);
+	strings domainParts = decomposed((url.host() + url.path()).toUtf8().toStdString());
+	h256 contentHash = lookup<h256>(m_nameReg, web3()->ethereum(), domainParts, "content");
+	Address urlHint = lookup<Address>(m_nameReg, web3()->ethereum(), {"UrlHinter"}, "owner");
 	string32 contentUrl = abiOut<string32>(web3()->ethereum()->call(urlHint, abiIn("url(bytes32)", contentHash)).output);
-	QString domain = domainParts.join('/');
-	parts.erase(parts.begin(), parts.begin() + partIndex);
-	QString path = parts.join('/');
+
+	QString path = QString::fromStdString(boost::algorithm::join(domainParts, "/"));
 	QString contentUrlString = QString::fromUtf8(std::string(contentUrl.data(), contentUrl.size()).c_str());
 	if (!contentUrlString.startsWith("http://") || !contentUrlString.startsWith("https://"))
 		contentUrlString = "http://" + contentUrlString;
-	return DappLocation { domain, path, contentUrlString, contentHash };
+	return DappLocation { "/", path, contentUrlString, contentHash };
 }
 
 void DappLoader::downloadComplete(QNetworkReply* _reply)
@@ -206,6 +200,8 @@ Manifest DappLoader::loadManifest(std::string const& _manifest)
 		if (path.size() == 0 || path[0] != '/')
 			path = "/" + path;
 		std::string contentType = entryValue["contentType"].asString();
+		if (contentType.empty())
+			contentType = QMimeDatabase().mimeTypesForFileName(QString::fromStdString(path))[0].name().toStdString();
 		std::string strHash = entryValue["hash"].asString();
 		if (strHash.length() == 64)
 			strHash = "0x" + strHash;
@@ -221,6 +217,8 @@ void DappLoader::loadDapp(QString const& _uri)
 	QUrl uri(_uri);
 	QUrl contentUri;
 	h256 hash;
+	qDebug() << "URI path:" << uri.path();
+	qDebug() << "URI query:" << uri.query();
 	if (uri.path().endsWith(".dapp") && uri.query().startsWith("hash="))
 	{
 		contentUri = uri;
