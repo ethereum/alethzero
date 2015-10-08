@@ -32,6 +32,7 @@ void RPCHost::init(AlethFace* _aleth)
 {
 	m_httpConnector.reset(new SafeHttpServer(SensibleHttpPort, "", "", SensibleHttpThreads));
 	m_server.reset(new WebThreeServer(*m_httpConnector, _aleth));
+	m_server->enableIpc(true);
 	m_server->StartListening();
 }
 

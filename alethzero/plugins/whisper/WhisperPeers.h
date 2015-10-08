@@ -55,8 +55,8 @@ private slots:
 	void onForgetAllClicked();
 
 private:
-	bool isCurrentTopicAll();
 	void timerEvent(QTimerEvent*) override;
+	bool isCurrentTopicAll() const;
 	void refreshWhispers(bool _timerEvent);
 	void setDefaultTopics();
 	void addToView(std::multimap<time_t, QString> const& _messages);
@@ -65,8 +65,9 @@ private:
 	void resizeMap(std::multimap<time_t, QString>& _map);
 
 	Ui::WhisperPeers* m_ui;
-	bool m_stopped;
 	QMutex m_chatLock;
+	bool m_stopped;
+
 	std::map<QString, unsigned> m_topics;
 	std::map<QString, std::multimap<time_t, QString>> m_chats;
 	std::multimap<time_t, QString> m_all;

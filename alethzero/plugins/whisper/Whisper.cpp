@@ -209,11 +209,15 @@ void Whisper::onNewIdentityTriggered()
 
 void Whisper::onPostClicked()
 {
-	QString const qsTopic = m_ui->shhTopic->currentText();
-	noteTopic(qsTopic);
-
+	QString const strTopic = m_ui->shhTopic->currentText();
+	QString const text = m_ui->shhData->toPlainText();
 	QString const strDest = m_ui->shhTo->currentText();
 	Public dest = stringToPublic(strDest);
+
+	noteTopic(strTopic);
+	m_ui->shhData->clear();
+	m_ui->shhData->setFocus();
+
 	if (dest)
 	{
 		if (m_ui->shhTo->findText(strDest) < 0)
@@ -228,11 +232,11 @@ void Whisper::onPostClicked()
 		return;
 	}
 
-	int const msgSizeLimit = 1024;
-	QString text = m_ui->shhData->toPlainText();
 	if (text.isEmpty())
 		return;
-	else if (text.size() > msgSizeLimit)
+
+	int const msgSizeLimit = 2000;
+	if (text.size() > msgSizeLimit)
 	{
 		QMessageBox box(QMessageBox::Warning, "Warning", "Message too large!");
 		box.setInformativeText(QString("Single message should not exceed %1 characters.").arg(msgSizeLimit));
@@ -249,10 +253,8 @@ void Whisper::onPostClicked()
 	if (zero()->web3Server()->ids().count(f))
 		from = zero()->web3Server()->ids().at(f);
 
-	shh::Topics topic = stringToTopics(qsTopic);
+	shh::Topics topic = stringToTopics(strTopic);
 	web3()->whisper()->inject(m.seal(from, topic, m_ui->shhTtl->value(), m_ui->shhWork->value()));
-	m_ui->shhData->clear();
-	m_ui->shhData->setFocus();
 }
 
 void Whisper::onForgetDestinationsClicked()
@@ -270,26 +272,22 @@ void Whisper::noteTopic(QString const& _topic)
 	if (_topic.isEmpty())
 		return;
 
+	if (m_ui->shhTopic->findText(_topic) < 0)
+		m_ui->shhTopic->addItem(_topic);
+
 	auto x = zero()->findPlugin(c_chatPluginName);
 	WhisperPeers* wp = dynamic_cast<WhisperPeers*>(x.get());
 	if (wp)
 		wp->noteTopic(_topic);
 
-	if (m_ui->shhTopic->findText(_topic) < 0)
-		m_ui->shhTopic->addItem(_topic);
-
-	/*
-	QStringList tx = _topic.split("|", QString::SkipEmptyParts);
-	if (tx.size() > 1 && m_ui->shhTopic->findText(_topic) < 0)
-		m_ui->shhTopic->addItem(_topic);
-
-	for (auto t: tx)
-	{
-		if (m_ui->shhTopic->findText(t) < 0)
-			m_ui->shhTopic->addItem(t);
-
-		if (wp)
-			wp->noteTopic(t);
-	}
-	*/
+	//QStringList tx = _topic.split("|", QString::SkipEmptyParts);
+	//if (tx.size() > 1 && m_ui->shhTopic->findText(_topic) < 0)
+	//	m_ui->shhTopic->addItem(_topic);
+	//for (auto t: tx)
+	//{
+	//	if (m_ui->shhTopic->findText(t) < 0)
+	//		m_ui->shhTopic->addItem(t);
+	//	if (wp)
+	//		wp->noteTopic(t);
+	//}
 }

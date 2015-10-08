@@ -22,6 +22,7 @@
 #pragma once
 
 #include <libdevcrypto/Common.h>
+#include <libethcore/KeyManager.h>
 #include "Plugin.h"
 
 namespace Ui
@@ -46,10 +47,6 @@ public:
 
 private slots:
 	void create();
-
-private:
-	enum Type { DirectICAP = 0, NoVanity, FirstTwo, FirstTwoNextTwo, FirstThree, FirstFour };
-	static KeyPair newKeyPair(Type _type);
 };
 
 }
