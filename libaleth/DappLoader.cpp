@@ -131,8 +131,6 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 		QByteArray data = _reply->readAll();
 		_reply->deleteLater();
 
-		qDebug() << "URI:" << requestUrl;
-		cdebug << m_uriHashes[requestUrl];
 		h256 expected = m_uriHashes[requestUrl];
 		bytes package(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
 		Secp256k1PP dec;
@@ -231,8 +229,6 @@ void DappLoader::loadDapp(QString const& _uri)
 	QUrl uri(_uri);
 	QUrl contentUri;
 	h256 hash;
-	qDebug() << "URI path:" << uri.path();
-	qDebug() << "URI query:" << uri.query();
 	if (uri.path().endsWith(".dapp") && uri.query().startsWith("hash="))
 	{
 		contentUri = uri;
@@ -251,8 +247,6 @@ void DappLoader::loadDapp(QString const& _uri)
 	}
 	QNetworkRequest request(contentUri);
 	m_uriHashes[contentUri] = hash;
-	qDebug() << "URI:" << contentUri;
-	cdebug << m_uriHashes[contentUri];
 	m_net.get(request);
 }
 
