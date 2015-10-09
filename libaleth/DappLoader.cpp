@@ -53,14 +53,17 @@ DappLoader::DappLoader(QObject* _parent, WebThreeDirect* _web3, Address _nameReg
 
 strings decomposed(std::string const& _name)
 {
-	unsigned i = _name.find_first_of('/');
+	size_t i = _name.find_first_of('/');
 	strings parts;
 	string ts = _name.substr(0, i);
 	boost::algorithm::split(parts, ts, boost::algorithm::is_any_of("."));
 	std::reverse(parts.begin(), parts.end());
-	strings pathParts;
-	boost::algorithm::split(pathParts, ts = _name.substr(i + 1), boost::is_any_of("/"));
-	parts += pathParts;
+	if (i != string::npos)
+	{
+		strings pathParts;
+		boost::algorithm::split(pathParts, ts = _name.substr(i + 1), boost::is_any_of("/"));
+		parts += pathParts;
+	}
 	return parts;
 }
 
@@ -69,7 +72,7 @@ template <class T> T lookup(Address const& _nameReg, std::function<bytes(Address
 	Address address = _nameReg;
 	for (unsigned i = 0; i < _path.size() - 1; ++i)
 		address = abiOut<Address>(_call(address, abiIn("subRegistrar(string)", _path[i])));
-	return abiOut<T>(_call(address, abiIn(_query + "(bytes32)", _path.back())));
+	return abiOut<T>(_call(address, abiIn(_query + "(string)", _path.back())));
 }
 
 template <class T> T lookup(Address const& _nameReg, Client* _c, strings const& _path, std::string const& _query)
@@ -85,14 +88,25 @@ DappLocation DappLoader::resolveAppUri(QString const& _uri)
 
 	strings domainParts = decomposed((url.host() + url.path()).toUtf8().toStdString());
 	h256 contentHash = lookup<h256>(m_nameReg, web3()->ethereum(), domainParts, "content");
-	Address urlHint = lookup<Address>(m_nameReg, web3()->ethereum(), {"UrlHinter"}, "owner");
+	Address urlHint = lookup<Address>(m_nameReg, web3()->ethereum(), {"UrlHinting"}, "owner");
 	string32 contentUrl = abiOut<string32>(web3()->ethereum()->call(urlHint, abiIn("url(bytes32)", contentHash)).output);
 
 	QString path = QString::fromStdString(boost::algorithm::join(domainParts, "/"));
-	QString contentUrlString = QString::fromUtf8(std::string(contentUrl.data(), contentUrl.size()).c_str());
-	if (!contentUrlString.startsWith("http://") || !contentUrlString.startsWith("https://"))
+	QString contentUrlString = QString::fromStdString(toString(contentUrl));
+	if (!contentUrlString.contains(":"))
 		contentUrlString = "http://" + contentUrlString;
 	return DappLocation { "/", path, contentUrlString, contentHash };
+}
+
+QByteArray DappLoader::injectWeb3(QByteArray _page) const
+{
+	//inject web3 js
+	QByteArray content = "<script>\n";
+	content.append(jsCode());
+	content.append(("web3.admin.setSessionKey('" + m_sessionKey + "');").c_str());
+	content.append("</script>\n");
+	content.append(_page);
+	return content;
 }
 
 void DappLoader::downloadComplete(QNetworkReply* _reply)
@@ -100,12 +114,7 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 	QUrl requestUrl = _reply->request().url();
 	if (m_pageUrls.count(requestUrl) != 0)
 	{
-		//inject web3 js
-		QByteArray content = "<script>\n";
-		content.append(jsCode());
-		content.append(("web3.admin.setSessionKey('" + m_sessionKey + "');").c_str());
-		content.append("</script>\n");
-		content.append(_reply->readAll());
+		QByteArray content = injectWeb3(_reply->readAll());
 		QString contentType = _reply->header(QNetworkRequest::ContentTypeHeader).toString();
 		if (contentType.isEmpty())
 		{
@@ -122,6 +131,8 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 		QByteArray data = _reply->readAll();
 		_reply->deleteLater();
 
+		qDebug() << "URI:" << requestUrl;
+		cdebug << m_uriHashes[requestUrl];
 		h256 expected = m_uriHashes[requestUrl];
 		bytes package(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
 		Secp256k1PP dec;
@@ -168,6 +179,8 @@ void DappLoader::loadDapp(RLP const& _rlp)
 				b.insert(b.end(), content.begin(), content.end());
 				dapp.content[hash] = b;
 			}
+			else if (entry->path == "/")
+				dapp.content[hash] = asBytes(boost::algorithm::replace_all_copy(asString(content), "var web3;\n", jsCode().toStdString()));
 			else
 				dapp.content[hash] = content.toBytes();
 		}
@@ -192,6 +205,7 @@ Manifest DappLoader::loadManifest(std::string const& _manifest)
 	Json::Value root;
 	jsonReader.parse(_manifest, root, false);
 
+	QMimeDatabase mimeDB;
 	Json::Value entries = root["entries"];
 	for (Json::ValueIterator it = entries.begin(); it != entries.end(); ++it)
 	{
@@ -201,7 +215,7 @@ Manifest DappLoader::loadManifest(std::string const& _manifest)
 			path = "/" + path;
 		std::string contentType = entryValue["contentType"].asString();
 		if (contentType.empty())
-			contentType = QMimeDatabase().mimeTypesForFileName(QString::fromStdString(path))[0].name().toStdString();
+			contentType = path == "/" ? "text/html" : mimeDB.mimeTypesForFileName(QString::fromStdString(path))[0].name().toStdString();
 		std::string strHash = entryValue["hash"].asString();
 		if (strHash.length() == 64)
 			strHash = "0x" + strHash;
@@ -236,7 +250,9 @@ void DappLoader::loadDapp(QString const& _uri)
 		uri = contentUri;
 	}
 	QNetworkRequest request(contentUri);
-	m_uriHashes[uri] = hash;
+	m_uriHashes[contentUri] = hash;
+	qDebug() << "URI:" << contentUri;
+	cdebug << m_uriHashes[contentUri];
 	m_net.get(request);
 }
 
