@@ -252,7 +252,7 @@ void BlockList::refreshInfo()
 			s << "<div>D/TD: <b>" << info.difficulty() << "</b>/<b>" << details.totalDifficulty << "</b> = 2^" << log2((double)info.difficulty()) << "/2^" << log2((double)details.totalDifficulty) << "</div>";
 			s << "&nbsp;&emsp;&nbsp;Children: <b>" << details.children.size() << "</b></div>";
 			s << "<div>Gas used/limit: <b>" << info.gasUsed() << "</b>/<b>" << info.gasLimit() << "</b>" << "</div>";
-			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toName(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
+			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toReadable(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
 			s << "<div>Difficulty: <b>" << info.difficulty() << "</b>" << "</div>";
 			if (h != PendingBlockHash)
 			{
@@ -288,7 +288,7 @@ void BlockList::refreshInfo()
 					s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
 					s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
 					s << line << "Number: <b>" << uncle.number() << "</b>" << "</div>";
-					s << line << "Coinbase: <b>" << htmlEscaped(aleth()->toName(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
+					s << line << "Coinbase: <b>" << htmlEscaped(aleth()->toReadable(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
 					s << line << "Seed hash: <b>" << uncle.seedHash() << "</b>" << "</div>";
 					s << line << "Mix hash: <b>" << uncle.mixHash() << "</b>" << "</div>";
 					s << line << "Nonce: <b>" << uncle.nonce() << "</b>" << "</div>";
@@ -327,11 +327,11 @@ void BlockList::refreshInfo()
 
 			s << "<h3>" << th << "</h3>";
 			s << "<h4>" << h << "[<b>" << txi << "</b>]</h4>";
-			s << "<div>From: <b>" << htmlEscaped(aleth()->toName(ss)) << " " << ss << "</b>" << "</div>";
+			s << "<div>From: <b>" << htmlEscaped(aleth()->toReadable(ss)) << " " << ss << "</b>" << "</div>";
 			if (tx.isCreation())
-				s << "<div>Creates: <b>" << htmlEscaped(aleth()->toName(right160(th))) << "</b> " << right160(th) << "</div>";
+				s << "<div>Creates: <b>" << htmlEscaped(aleth()->toReadable(right160(th))) << "</b> " << right160(th) << "</div>";
 			else
-				s << "<div>To: <b>" << htmlEscaped(aleth()->toName(tx.receiveAddress())) << "</b> " << tx.receiveAddress() << "</div>";
+				s << "<div>To: <b>" << htmlEscaped(aleth()->toReadable(tx.receiveAddress())) << "</b> " << tx.receiveAddress() << "</div>";
 			s << "<div>Value: <b>" << formatBalance(tx.value()) << "</b>" << "</div>";
 			s << "&nbsp;&emsp;&nbsp;#<b>" << tx.nonce() << "</b>" << "</div>";
 			s << "<div>Gas price: <b>" << formatBalance(tx.gasPrice()) << "</b>" << "</div>";

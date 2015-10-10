@@ -109,6 +109,8 @@ AlethZero::AlethZero():
 	connect(&m_aleth, &AlethFace::keysChanged, [&](){ refreshBalances(); });
 
 	readSettings(false, true);
+
+	refreshAll();
 }
 
 AlethZero::~AlethZero()
@@ -594,7 +596,7 @@ void AlethZero::on_reencryptAll_triggered()
 	try {
 		for (Address const& a: aleth()->keyManager().accounts())
 			while (!aleth()->keyManager().recode(a, SemanticPassword::Existing, [&](){
-				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(aleth()->toName(a))).arg(QString::fromStdString(aleth()->keyManager().passwordHint(a))), QLineEdit::Password, QString()).toStdString();
+				auto p = QInputDialog::getText(nullptr, "Re-Encrypt Key", QString("Enter the original password for key %1.\nHint: %2").arg(QString::fromStdString(aleth()->toReadable(a))).arg(QString::fromStdString(aleth()->keyManager().passwordHint(a))), QLineEdit::Password, QString()).toStdString();
 				if (p.empty())
 					throw PasswordUnknown();
 				return p;

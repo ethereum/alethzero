@@ -23,6 +23,7 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <libethcore/Common.h>
+#include <libethcore/ICAP.h>
 #include <libethereum/AccountDiff.h>
 #include "Common.h"
 using namespace std;
@@ -59,4 +60,13 @@ std::string Context::toHTML(dev::u256 const& _n) const
 	else
 		s << "<span style=\"color: #466\">0x</span><span style=\"color: #044\">" << (h256)_n << "</span>";
 	return s.str();
+}
+
+std::string Context::toReadable(Address const& _a) const
+{
+	string ret = ICAP(_a).encoded();
+	string n = toName(_a);
+	if (!n.empty())
+		ret = n + " (" + ret + ")";
+	return ret;
 }

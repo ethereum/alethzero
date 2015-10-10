@@ -143,7 +143,7 @@ void TransactDialog::updateDestination()
 	m_ui->destination->addItem("(Create Contract)");
 	QMultiMap<QString, QString> in;
 	for (Address const& a: aleth()->allKnownAddresses())
-		in.insert(QString::fromStdString(aleth()->toName(a) + " (" + ICAP(a).encoded() + ")"), QString::fromStdString(a.hex()));
+		in.insert(QString::fromStdString(aleth()->toReadable(a)), QString::fromStdString(a.hex()));
 	for (auto i = in.begin(); i != in.end(); ++i)
 		m_ui->destination->addItem(i.key(), i.value());
 

@@ -42,6 +42,7 @@ public:
 
 	virtual Address toAddress(std::string const&) const = 0;
 	virtual std::string toName(Address const&) const = 0;
+	std::string toReadable(Address const& _a) const;
 	virtual Addresses allKnownAddresses() const = 0;
 };
 

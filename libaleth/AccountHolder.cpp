@@ -108,7 +108,7 @@ bool aleth::AccountHolder::validateTransaction(TransactionSkeleton const& _t, bo
 			userNotice = evaluator.evalExpression(userNotice);*/ // TODO: need a virtual for this to avoid linking to QWebEngine's JS engine.Z
 			return std::make_pair(true, userNotice);
 		},
-		[&](Address const& _a) -> string { return m_aleth->toName(_a); }
+		[&](Address const& _a) -> string { return m_aleth->toReadable(_a); }
 	));
 }
 
