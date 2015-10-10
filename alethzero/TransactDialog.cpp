@@ -29,6 +29,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QClipboard>
+#include <QtConcurrent/QtConcurrent>
 #include <liblll/Compiler.h>
 #include <liblll/CodeFragment.h>
 #if ETH_SOLIDITY || !ETH_TRUE
@@ -60,6 +61,10 @@ TransactDialog::TransactDialog(QWidget* _parent, AlethFace* _aleth):
 {
 	m_ui->setupUi(this);
 
+	qRegisterMetaType<dev::eth::ExecutionResult>("dev::eth::ExecutionResult");
+	connect(this, &TransactDialog::gasEstimationProgress, this, &TransactDialog::updateBounds, Qt::QueuedConnection);
+	connect(this, &TransactDialog::gasEstimationComplete, this, &TransactDialog::finaliseBounds, Qt::QueuedConnection);
+
 	resetGasPrice();
 	setValueUnits(m_ui->valueUnits, m_ui->value, 0);
 
@@ -68,6 +73,7 @@ TransactDialog::TransactDialog(QWidget* _parent, AlethFace* _aleth):
 
 TransactDialog::~TransactDialog()
 {
+	m_estimationFuture.waitForFinished();
 	delete m_ui;
 }
 
@@ -108,7 +114,7 @@ u256 TransactDialog::fee() const
 
 u256 TransactDialog::gas() const
 {
-	return m_ui->gas->value() == -1 ? m_upperBound : m_ui->gas->value();
+	return m_ui->gas->value() == -1 ? (qint64)m_upperBound : m_ui->gas->value();
 }
 
 u256 TransactDialog::value() const
@@ -352,32 +358,6 @@ pair<Address, bytes> TransactDialog::toAccount()
 	return p;
 }
 
-void TransactDialog::timerEvent(QTimerEvent*)
-{
-	Address from = fromAccount();
-	Address to = toAccount().first;
-
-	if (m_upperBound != m_lowerBound)
-	{
-		qint64 mid = (m_lowerBound + m_upperBound) / 2;
-		ExecutionResult er;
-		if (isCreation())
-			er = ethereum()->create(from, value(), m_data, mid, gasPrice(), PendingBlock, FudgeFactor::Lenient);
-		else
-			er = ethereum()->call(from, value(), to, m_data, mid, gasPrice(), PendingBlock, FudgeFactor::Lenient);
-		if (er.excepted == TransactionException::OutOfGas || er.excepted == TransactionException::OutOfGasBase || er.excepted == TransactionException::OutOfGasIntrinsic || er.codeDeposit == CodeDeposit::Failed)
-			m_lowerBound = m_lowerBound == mid ? m_upperBound : mid;
-		else
-		{
-			m_lastGood = er;
-			m_upperBound = m_upperBound == mid ? m_lowerBound : mid;
-		}
-		updateBounds();
-	}
-	else
-		finaliseBounds();
-}
-
 void TransactDialog::updateBounds()
 {
 	m_ui->minGas->setValue(m_lowerBound);
@@ -390,15 +370,13 @@ void TransactDialog::updateBounds()
 	m_ui->gas->setSpecialValueText(QString("Auto (%1 gas)").arg(m_upperBound));
 }
 
-void TransactDialog::finaliseBounds()
+void TransactDialog::finaliseBounds(ExecutionResult const& _er)
 {
-	killTimer(m_gasCalcTimer);
-
 	quint64 baseGas = (quint64)Transaction::gasRequired(m_data, 0);
 	m_ui->progressGas->setVisible(false);
 
 	quint64 executionGas = m_upperBound - baseGas;
-	QString htmlInfo = QString("<div class=\"info\"><span class=\"icon\">INFO</span> Gas required: %1 total = %2 base, %3 exec [%4 refunded later]</div>").arg(m_upperBound).arg(baseGas).arg(executionGas).arg((qint64)m_lastGood.gasRefunded);
+	QString htmlInfo = QString("<div class=\"info\"><span class=\"icon\">INFO</span> Gas required: %1 total = %2 base, %3 exec [%4 refunded later]</div>").arg(m_upperBound).arg(baseGas).arg(executionGas).arg((qint64)_er.gasRefunded);
 
 	auto bail = [&](QString he) {
 		m_ui->send->setEnabled(false);
@@ -414,20 +392,20 @@ void TransactDialog::finaliseBounds()
 		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Account doesn't contain enough for paying even the basic amount of gas required.</div>");
 		return;
 	}
-	if (m_upperBound > ethereum()->gasLimitRemaining())
+	if ((qint64)m_upperBound > ethereum()->gasLimitRemaining())
 	{
 		// Not enough - bail.
 		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Gas remaining in block isn't enough to allow the gas required.</div>");
 		return;
 	}
-	if (m_lastGood.excepted != TransactionException::None)
+	if (_er.excepted != TransactionException::None)
 	{
-		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> " + QString::fromStdString(toString(m_lastGood.excepted)) + "</div>");
+		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> " + QString::fromStdString(toString(_er.excepted)) + "</div>");
 		return;
 	}
-	if (m_lastGood.codeDeposit == CodeDeposit::Failed)
+	if (_er.codeDeposit == CodeDeposit::Failed)
 	{
-		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Code deposit failed due to insufficient gas; " + QString::fromStdString(toString(m_lastGood.gasForDeposit)) + " GAS &lt; " + QString::fromStdString(toString(m_lastGood.depositSize)) + " bytes * " + QString::fromStdString(toString(c_createDataGas)) + "GAS/byte</div>");
+		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Code deposit failed due to insufficient gas; " + QString::fromStdString(toString(_er.gasForDeposit)) + " GAS &lt; " + QString::fromStdString(toString(_er.depositSize)) + " bytes * " + QString::fromStdString(toString(c_createDataGas)) + "GAS/byte</div>");
 		return;
 	}
 
@@ -436,42 +414,42 @@ void TransactDialog::finaliseBounds()
 	m_ui->send->setEnabled(true);
 }
 
-GasRequirements TransactDialog::determineGasRequirements()
+void TransactDialog::determineGasRequirements()
 {
+	if (m_estimationFuture.isRunning())
+	{
+		m_needsEstimation = true;
+		return;
+	}
 	// Determine the minimum amount of gas we need to play...
-	qint64 baseGas = (qint64)Transaction::gasRequired(m_data, 0);
 
 	Address from = fromAccount();
 	Address to = toAccount().first;
-	ExecutionResult lastGood;
 
-	m_startLowerBound = baseGas;
-	m_startUpperBound = (qint64)ethereum()->gasLimitRemaining();
-	for (unsigned i = 0; i < 30; ++i)
+	m_startLowerBound = 0;
+	m_startUpperBound = 0;
+
+	m_estimationFuture = QtConcurrent::run([this, from, to]()
 	{
-		qint64 mid = m_startUpperBound;
-		ExecutionResult er;
-		if (isCreation())
-			er = ethereum()->create(from, value(), m_data, mid, gasPrice(), PendingBlock, FudgeFactor::Lenient);
-		else
-			er = ethereum()->call(from, value(), to, m_data, mid, gasPrice(), PendingBlock, FudgeFactor::Lenient);
-		if (er.excepted == TransactionException::OutOfGas || er.excepted == TransactionException::OutOfGasBase || er.excepted == TransactionException::OutOfGasIntrinsic || er.codeDeposit == CodeDeposit::Failed)
+		GasEstimationCallback callback = [this](GasEstimationProgress const& _p)
 		{
-			m_startLowerBound = mid;
-			m_startUpperBound *= 2;
-		}
-		else
+			m_lowerBound = (qint64)_p.lowerBound;
+			m_upperBound = (qint64)_p.upperBound;
+			if (m_startLowerBound == 0)
+				m_startLowerBound = m_lowerBound;
+			if (m_startUpperBound == 0)
+				m_startUpperBound = m_upperBound;
+
+			emit gasEstimationProgress();
+		};
+		do
 		{
-			// Begin async binary chop for gas calculation..
-			m_lastGood = lastGood;
-			m_lowerBound = m_startLowerBound;
-			m_upperBound = m_startUpperBound;
-			killTimer(m_gasCalcTimer);
-			m_gasCalcTimer = startTimer(0);
-			return GasRequirements{m_upperBound, baseGas, m_upperBound - baseGas, (qint64)lastGood.gasRefunded, lastGood};
+			m_needsEstimation = false;
+			ExecutionResult er = ethereum()->estimateGas(from, value(), to, m_data, UndefinedU256, gasPrice(), PendingBlock, callback).second;
+			emit gasEstimationComplete(er);
 		}
-	}
-	return GasRequirements();
+		while (m_needsEstimation);
+	});
 }
 
 void TransactDialog::rejigData()
