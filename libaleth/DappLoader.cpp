@@ -178,7 +178,7 @@ void DappLoader::loadDapp(RLP const& _rlp)
 				dapp.content[hash] = b;
 			}
 			else if (entry->path == "/")
-				dapp.content[hash] = asBytes(boost::algorithm::replace_all_copy(asString(content), "var web3;\n", jsCode().toStdString()));
+				dapp.content[hash] = asBytes(boost::algorithm::replace_all_copy(asString(content), "\nweb3;\n", "\n" + jsCode().toStdString() + "\n"));
 			else
 				dapp.content[hash] = content.toBytes();
 		}
@@ -213,7 +213,15 @@ Manifest DappLoader::loadManifest(std::string const& _manifest)
 			path = "/" + path;
 		std::string contentType = entryValue["contentType"].asString();
 		if (contentType.empty())
-			contentType = path == "/" ? "text/html" : mimeDB.mimeTypesForFileName(QString::fromStdString(path))[0].name().toStdString();
+		{
+			if (path == "/")
+				contentType = "text/html";
+			else
+			{
+				auto mts = mimeDB.mimeTypesForFileName(QString::fromStdString(path));
+				contentType = mts.isEmpty() ? "application/octet-stream" : mts[0].name().toStdString();
+			}
+		}
 		std::string strHash = entryValue["hash"].asString();
 		if (strHash.length() == 64)
 			strHash = "0x" + strHash;
