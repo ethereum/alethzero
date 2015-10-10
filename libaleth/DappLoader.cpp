@@ -43,6 +43,10 @@ using namespace crypto;
 using namespace eth;
 using namespace aleth;
 
+struct DappLoaderChannel: public LogChannel { static const char* name(); static const int verbosity = 3; };
+const char* DappLoaderChannel::name() { return EthOrange "Ð->"; }
+#define cdapp clog(DappLoaderChannel)
+
 namespace dev { namespace aleth { QString contentsOfQResource(std::string const& res); } }
 
 DappLoader::DappLoader(QObject* _parent, WebThreeDirect* _web3, Address _nameReg):
@@ -86,15 +90,24 @@ DappLocation DappLoader::resolveAppUri(QString const& _uri)
 	if (!url.scheme().isEmpty() && url.scheme() != "eth")
 		throw dev::Exception(); //TODO:
 
-	strings domainParts = decomposed((url.host() + url.path()).toUtf8().toStdString());
+	string dappuri = (url.host() + url.path()).toUtf8().toStdString();
+	cdapp << "Resolving" << dappuri;
+	strings domainParts = decomposed(dappuri);
+	cdapp << "Decomposed: " << domainParts;
 	h256 contentHash = lookup<h256>(m_nameReg, web3()->ethereum(), domainParts, "content");
-	Address urlHint = lookup<Address>(m_nameReg, web3()->ethereum(), {"UrlHinting"}, "owner");
+	cdapp << "Content hash: " << contentHash;
+	Address urlHint = lookup<Address>(m_nameReg, web3()->ethereum(), {"urlhinter"}, "addr");
+	cdapp << "URLHint address: " << urlHint;
 	string32 contentUrl = abiOut<string32>(web3()->ethereum()->call(urlHint, abiIn("url(bytes32)", contentHash)).output);
+	cdapp << "Suggested: " << toString(contentUrl);
 
-	QString path = QString::fromStdString(boost::algorithm::join(domainParts, "/"));
+	string canon = boost::algorithm::join(domainParts, "/");
+	QString path = QString::fromStdString(canon);
 	QString contentUrlString = QString::fromStdString(toString(contentUrl));
 	if (!contentUrlString.contains(":"))
 		contentUrlString = "http://" + contentUrlString;
+	cdapp << "Canon: " << canon << "; contentUrl: " << contentUrlString.toStdString();
+
 	return DappLocation { "/", path, contentUrlString, contentHash };
 }
 
@@ -133,9 +146,12 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 
 		h256 expected = m_uriHashes[requestUrl];
 		bytes package(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
+		cdapp << "Package arrived: " << package.size();
+		cdapp << "Expecting (key): " << expected;
 		Secp256k1PP dec;
 		dec.decrypt(Secret(expected), package);
 		h256 got = sha3(package);
+		cdapp << "As binary, package contains: " << got;
 		if (got != expected)
 		{
 			//try base64
@@ -143,6 +159,7 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 			package = bytes(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
 			dec.decrypt(Secret(expected), package);
 			got = sha3(package);
+			cdapp << "As base-64, package contains: " << got;
 			if (got != expected)
 				throw dev::Exception() << errinfo_comment("Dapp content hash does not match");
 		}
