@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <QDialog>
 #include <QMap>
 #include <QList>
