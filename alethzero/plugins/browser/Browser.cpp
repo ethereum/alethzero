@@ -20,6 +20,8 @@
  */
 
 #include "Browser.h"
+#include <chrono>
+#include <thread>
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <QFileDialog>
 #include <QtWebEngine/QtWebEngine>
@@ -40,6 +42,35 @@ using namespace zero;
 
 ZERO_NOTE_PLUGIN(Browser);
 
+static void getDebuggerURL(QWebEngineView* _v, function<void(QUrl)> const& _cb)
+{
+	QNetworkAccessManager* manager = new QNetworkAccessManager(_v);
+	QNetworkRequest req(QUrl(QString("http://127.0.0.1:%1/json/list").arg(chromiumDebugToolsPort())));
+	QString magic = QString("magic:%1").arg(intptr_t(_v), 0, 16);
+
+	auto go = [=](){
+		_v->setContent(QString("<html><head><title>%1</title></head><body></body></html>").arg(magic).toUtf8(), "text/html", magic);
+		manager->get(req);
+	};
+	manager->connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply* _r) {
+		auto jsonDump = _r->readAll();
+		qDebug() << "Chromium received:" << QString::fromUtf8(jsonDump);
+		QJsonDocument d = QJsonDocument::fromJson(jsonDump);
+		for (QJsonValue i: d.array())
+		{
+			QJsonObject o = i.toObject();
+			if (o["title"].toString() == magic || o["url"].toString() == magic)
+			{
+				_cb(QUrl(QString("http://127.0.0.1:%1%2").arg(chromiumDebugToolsPort()).arg(o["devtoolsFrontendUrl"].toString())));
+				manager->deleteLater();
+				return;
+			}
+		}
+		go();
+	});
+	go();
+}
+
 Browser::Browser(ZeroFace* _m):
 	Plugin(_m, "Web view"),
 	m_ui(new Ui::Browser)
@@ -47,31 +78,42 @@ Browser::Browser(ZeroFace* _m):
 	QtWebEngine::initialize();
 	dock(Qt::TopDockWidgetArea, "Browser")->setWidget(new QWidget());
 	m_ui->setupUi(dock()->widget());
-	m_ui->jsConsole->setWebView(m_ui->webView);
+
 	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
 	m_dappHost.reset(new DappHost(8081));
 	m_dappLoader = new DappLoader(this, web3(), AlethFace::getNameReg());
 	m_dappLoader->setSessionKey(adminSessionKey);
-	connect(m_dappLoader, &DappLoader::dappReady, this, &Browser::dappLoaded);
-	connect(m_dappLoader, &DappLoader::pageReady, this, &Browser::pageLoaded);
 
-	connect(addMenuItem("Load Javascript...", "menuAccounts", true), &QAction::triggered, this, &Browser::loadJs);
+	connect(addMenuItem("Load Javascript...", "menuSpecial", true), &QAction::triggered, this, &Browser::loadJs);
 
-	connect(m_ui->webView, &QWebEngineView::titleChanged, [=]()
-	{
-//		m_ui->tabWidget->setTabText(0, m_ui->webView->title());
-	});
-	connect(m_ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& _url)
-	{
-		if (!m_dappHost->servesUrl(_url))
-			m_ui->urlEdit->setText(_url.toString());
-	});
-	connect(m_ui->urlEdit, &QLineEdit::returnPressed, this, &Browser::reloadUrl);
 	m_ui->jsConsole->setVisible(false);
-	connect(m_ui->consoleToggle, &QToolButton::clicked, [this]()
-	{
-		m_ui->jsConsole->setVisible(!m_ui->jsConsole->isVisible());
-		m_ui->consoleToggle->setChecked(m_ui->jsConsole->isVisible());
+
+	m_finding = true;
+	getDebuggerURL(m_ui->webView, [=](QUrl u){
+		m_ui->jsConsole->setUrl(u);
+		connect(m_dappLoader, &DappLoader::dappReady, this, &Browser::dappLoaded);
+		connect(m_dappLoader, &DappLoader::pageReady, this, &Browser::pageLoaded);
+		connect(m_ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& _url)
+		{
+			// ignore our "discovery" URLs - they are delayed until after the real page is loaded
+			// due to being initiated in a different thread.
+			if (_url.scheme() == "magic")
+				return;
+			if (!m_dappHost->servesUrl(_url))
+				m_ui->urlEdit->setText(_url.toString());
+		});
+		connect(m_ui->urlEdit, &QLineEdit::returnPressed, this, &Browser::reloadUrl);
+		connect(m_ui->webView, &QWebEngineView::titleChanged, [=]()
+		{
+//			m_ui->tabWidget->setTabText(0, m_ui->webView->title());
+		});
+		connect(m_ui->consoleToggle, &QToolButton::clicked, [this]()
+		{
+			m_ui->jsConsole->setVisible(!m_ui->jsConsole->isVisible());
+			m_ui->consoleToggle->setChecked(m_ui->jsConsole->isVisible());
+		});
+		m_finding = false;
+		reloadUrl();
 	});
 }
 
@@ -93,6 +135,8 @@ void Browser::writeSettings(QSettings& _s)
 
 void Browser::reloadUrl()
 {
+	if (m_finding)
+		return;
 	QString s = m_ui->urlEdit->text();
 	QUrl url(s);
 	if (url.scheme().isEmpty() || url.scheme() == "eth" || url.path().endsWith(".dapp"))

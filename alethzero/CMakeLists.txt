@@ -22,7 +22,9 @@ eth_add_executable(${EXECUTABLE}
 target_link_libraries(${EXECUTABLE} aleth)
 target_include_directories(${EXECUTABLE} PUBLIC ..)
 eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::WebEngineWidgets Eth::ethereum Web3::web3jsonrpc Eth::natspec)
-eth_use(${EXECUTABLE} OPTIONAL Solidity)
+if (SOLDIITY)
+	eth_use(${EXECUTABLE} OPTIONAL Solidity)
+endif()
 
 # required because AUTOUIC can't handle multiple ui includes in one cpp file
 qt5_wrap_ui(ui_AlethZero.h AlethZero.ui)

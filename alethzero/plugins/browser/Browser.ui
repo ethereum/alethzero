@@ -59,7 +59,7 @@
        </sizepolicy>
       </property>
      </widget>
-     <widget class="dev::aleth::JsConsoleWidget" name="jsConsole" native="true">
+     <widget class="QWebEngineView" name="jsConsole" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -82,12 +82,6 @@
    <class>QWebEngineView</class>
    <extends>QWidget</extends>
    <header location="global">QWebEngineView</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>dev::aleth::JsConsoleWidget</class>
-   <extends>QWidget</extends>
-   <header>plugins/browser/JsConsoleWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

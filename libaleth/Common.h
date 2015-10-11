@@ -68,5 +68,8 @@ public:
 	virtual std::string userNotice(dev::h256 const& _contractHash, dev::bytes const& _transactionDacta) = 0;
 };
 
+void initChromiumDebugTools(int& _argc, char**& _argv);
+unsigned chromiumDebugToolsPort();
+
 }
 }

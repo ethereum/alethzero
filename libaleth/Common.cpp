@@ -19,10 +19,12 @@
  * @date 2015
  */
 
+#include <cstdlib>
 #include "Common.h"
 #include <QComboBox>
 #include <QSpinBox>
 #include <libethcore/Common.h>
+#include <libdevcore/Log.h>
 using namespace std;
 using namespace dev;
 using namespace eth;
@@ -37,6 +39,33 @@ string dev::niceVersion(string const& _v)
 	if (_v.substr(1, 4) == ".9.9" && _v.size() >= 6)
 		return toString(stoi(_v.substr(0, 1)) + 1) + ".0rc" + _v.substr(5);
 	return _v;
+}
+
+static unsigned s_port = 0;
+
+
+void dev::aleth::initChromiumDebugTools(int& _argc, char**& _argv)
+{
+	for (int i = 0; i < _argc; ++i)
+		if (string(_argv[i]).substr(0, 24) == "--remote-debugging-port=")
+		{
+			s_port = stoi(string(_argv[i]).substr(24));
+			return;
+		}
+
+	s_port = ((uint16_t)(FixedHash<2>::Arith)FixedHash<2>::random()) % (32768 - 1024) + 1024;
+	cnote << "Web developers: Debugger on 127.0.0.1:" << s_port;
+
+	static string s_addition = "--remote-debugging-port=" + toString(s_port);
+	static vector<char*> s_argv(_argv, _argv + _argc);
+	s_argv.push_back(const_cast<char*>(s_addition.c_str()));
+	_argc++;
+	_argv = const_cast<char**>(s_argv.data());
+}
+
+unsigned dev::aleth::chromiumDebugToolsPort()
+{
+	return s_port;
 }
 
 string dev::aleth::fromRaw(h256 const& _n, unsigned* _inc)

@@ -37,7 +37,7 @@ void NetworkSettings::read(QSettings const& _settings)
 	p2pSettings.listenPort =  _settings.value("port", p2p::c_defaultListenPort).toInt();
 	p2pSettings.traverseNAT = _settings.value("upnp", true).toBool();
 	clientName = _settings.value("clientName", "").toString();
-	idealPeers = _settings.value("idealPeers", 0).toInt();
+	idealPeers = _settings.value("idealPeers", 50).toInt();
 	hermitMode = _settings.value("hermitMode", false).toBool();
 	dropPeers = _settings.value("dropPeers", false).toBool();
 	p2pSettings.discovery = !hermitMode;
