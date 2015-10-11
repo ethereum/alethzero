@@ -106,7 +106,7 @@ bool Aleth::open(OnInit _connect)
 
 		try
 		{
-			m_webThree.reset(new WebThreeDirect(m_clientVersion + "/v" + niceVersion(dev::Version) + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+			m_webThree.reset(new WebThreeDirect(m_clientVersion + "/v" + niceVersion(dev::Version) + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth", "bzz"/*, "shh"*/}, p2p::NetworkPreferences(), network));
 		}
 		catch (DatabaseAlreadyOpen&)
 		{
