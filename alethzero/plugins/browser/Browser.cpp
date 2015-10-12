@@ -80,8 +80,8 @@ Browser::Browser(ZeroFace* _m):
 	m_ui->setupUi(dock()->widget());
 
 	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
-	m_dappHost.reset(new DappHost(8081));
-	m_dappLoader = new DappLoader(this, web3(), AlethFace::getNameReg());
+	m_dappHost.reset(new DappHost(8081, web3()));
+	m_dappLoader = new DappLoader(this, web3());
 	m_dappLoader->setSessionKey(adminSessionKey);
 
 	connect(addMenuItem("Load Javascript...", "menuSpecial", true), &QAction::triggered, this, &Browser::loadJs);

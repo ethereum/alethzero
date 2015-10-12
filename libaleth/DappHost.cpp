@@ -24,15 +24,19 @@
 #include <microhttpd.h>
 #include <boost/algorithm/string.hpp>
 #include <libdevcore/Common.h>
+#include <libethereum/Client.h>
+#include <libwebthree/Swarm.h>
+#include <libwebthree/WebThree.h>
 using namespace dev;
 using namespace aleth;
 
-DappHost::DappHost(int _port, int _threads):
+DappHost::DappHost(int _port, WebThreeDirect* _web3, int _threads):
 	m_port(_port),
 	m_url(QString("http://localhost:%1/").arg(m_port)),
 	m_threads(_threads),
 	m_running(false),
-	m_daemon(nullptr)
+	m_daemon(nullptr),
+	m_web3(_web3)
 {
 	startListening();
 }
@@ -86,6 +90,7 @@ void DappHost::sendResponse(std::string const& _url, MHD_Connection* _connection
 	if (path.isEmpty())
 		path = "/";
 
+	bzz::Pinned pinned;
 	bytesConstRef response;
 	unsigned code = MHD_HTTP_NOT_FOUND;
 	std::string contentType;
@@ -96,20 +101,20 @@ void DappHost::sendResponse(std::string const& _url, MHD_Connection* _connection
 		if (iter != m_entriesByPath.end())
 		{
 			ManifestEntry const* entry = iter->second;
-			auto contentIter = m_dapp.content.find(entry->hash);
-			if (contentIter == m_dapp.content.end())
-				break;
-
-			response = bytesConstRef(contentIter->second.data(), contentIter->second.size());
-			code =  entry->httpStatus != 0 ? entry->httpStatus : MHD_HTTP_OK;
-			contentType = entry->contentType;
+			pinned = m_web3->swarm()->get(entry->hash);
+			if (pinned)
+			{
+				response = (bytesConstRef)pinned;
+				code =  entry->httpStatus != 0 ? entry->httpStatus : MHD_HTTP_OK;
+				contentType = entry->contentType;
+			}
 			break;
 		}
 		path.truncate(path.length() - 1);
 		path = path.mid(0, path.lastIndexOf('/'));
 	}
 
-	MHD_Response *result = MHD_create_response_from_data(response.size(), const_cast<byte*>(response.data()), 0, 1);
+	MHD_Response* result = MHD_create_response_from_data(response.size(), const_cast<byte*>(response.data()), 0, 1);
 	if (!contentType.empty())
 		MHD_add_response_header(result, "Content-Type", contentType.c_str());
 	MHD_queue_response(_connection, code, result);

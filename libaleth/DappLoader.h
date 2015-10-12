@@ -30,6 +30,7 @@
 #include <QNetworkAccessManager>
 #include <libdevcore/FixedHash.h>
 #include <libdevcrypto/Common.h>
+#include <libwebthree/Swarm.h>
 
 namespace dev
 {
@@ -56,7 +57,7 @@ struct Manifest
 struct Dapp
 {
 	Manifest manifest;
-	std::map<dev::h256, dev::bytes> content;
+	bzz::Pinneds content;
 };
 
 struct DappLocation
@@ -73,7 +74,7 @@ class DappLoader: public QObject
 	Q_OBJECT
 
 public:
-	DappLoader(QObject* _parent, dev::WebThreeDirect* _web3, dev::Address _nameReg);
+	DappLoader(QObject* _parent, dev::WebThreeDirect* _web3);
 
 	/// Load a new DApp. Resolves a name with a name reg contract. Asynchronous. dappReady is emitted once everything is read, dappError othervise
 	/// @param _uri Eth name path
@@ -110,8 +111,9 @@ private:
 	QNetworkAccessManager m_net;
 	std::map<QUrl, dev::h256> m_uriHashes;
 	std::set<QUrl> m_pageUrls;
-	dev::Address m_nameReg;
 	std::string m_sessionKey;
+
+	bzz::Pinneds m_bundleContent;
 
 	mutable QByteArray m_web3JsCache;
 };

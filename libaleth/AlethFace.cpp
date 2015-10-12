@@ -25,23 +25,11 @@
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include <libwebthree/WebThree.h>
+#include <libwebthree/Support.h>
 using namespace std;
 using namespace dev;
 using namespace eth;
 using namespace aleth;
-
-Address AlethFace::getNameReg()
-{
-	if (c_network == Network::Frontier)
-		return Address("c6d9d2cd449a754c494264e1809c50e34d64562b");
-	else
-		return Address("5e70c0bbcd5636e0f9f9316e9f8633feb64d4050");
-}
-
-Address AlethFace::getICAPReg()
-{
-	return Address("a1a111bc074c9cfa781f0c38e63bd51c91b8af00");
-}
 
 eth::Client* AlethFace::ethereum() const
 {
@@ -90,13 +78,8 @@ pair<Address, bytes> AlethFace::readAddress(std::string const& _n) const
 		return make_pair(a, bytes());
 
 	std::string n = _n;
-	try {
-		return ICAP::decoded(n).address([&](Address const& a, bytes const& b) -> bytes
-		{
-			return isOpen() ? ethereum()->call(a, b).output : bytes();
-		}, getICAPReg());
-	}
-	catch (...) {}
+	if (isOpen())
+		DEV_IGNORE_EXCEPTIONS(return web3()->support()->decodeICAP(n));
 
 	if (n.find("0x") == 0)
 		n.erase(0, 2);

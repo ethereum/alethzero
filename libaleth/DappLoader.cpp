@@ -34,6 +34,7 @@
 #include <libdevcore/SHA3.h>
 #include <libethcore/CommonJS.h>
 #include <libethereum/Client.h>
+#include <libwebthree/Support.h>
 #include <libwebthree/WebThree.h>
 #include "DappLoader.h"
 #include "AlethResources.hpp"
@@ -49,39 +50,10 @@ const char* DappLoaderChannel::name() { return EthOrange "Ð->"; }
 
 namespace dev { namespace aleth { QString contentsOfQResource(std::string const& res); } }
 
-DappLoader::DappLoader(QObject* _parent, WebThreeDirect* _web3, Address _nameReg):
-	QObject(_parent), m_web3(_web3), m_nameReg(_nameReg)
+DappLoader::DappLoader(QObject* _parent, WebThreeDirect* _web3):
+	QObject(_parent), m_web3(_web3)
 {
 	connect(&m_net, &QNetworkAccessManager::finished, this, &DappLoader::downloadComplete);
-}
-
-strings decomposed(std::string const& _name)
-{
-	size_t i = _name.find_first_of('/');
-	strings parts;
-	string ts = _name.substr(0, i);
-	boost::algorithm::split(parts, ts, boost::algorithm::is_any_of("."));
-	std::reverse(parts.begin(), parts.end());
-	if (i != string::npos)
-	{
-		strings pathParts;
-		boost::algorithm::split(pathParts, ts = _name.substr(i + 1), boost::is_any_of("/"));
-		parts += pathParts;
-	}
-	return parts;
-}
-
-template <class T> T lookup(Address const& _nameReg, std::function<bytes(Address, bytes)> const& _call, strings const& _path, std::string const& _query)
-{
-	Address address = _nameReg;
-	for (unsigned i = 0; i < _path.size() - 1; ++i)
-		address = abiOut<Address>(_call(address, abiIn("subRegistrar(string)", _path[i])));
-	return abiOut<T>(_call(address, abiIn(_query + "(string)", _path.back())));
-}
-
-template <class T> T lookup(Address const& _nameReg, Client* _c, strings const& _path, std::string const& _query)
-{
-	return lookup<T>(_nameReg, [&](Address a, bytes b){return _c->call(a, b).output;}, _path, _query);
 }
 
 DappLocation DappLoader::resolveAppUri(QString const& _uri)
@@ -92,14 +64,14 @@ DappLocation DappLoader::resolveAppUri(QString const& _uri)
 
 	string dappuri = (url.host() + url.path()).toUtf8().toStdString();
 	cdapp << "Resolving" << dappuri;
-	strings domainParts = decomposed(dappuri);
+	strings domainParts = Support::decomposed(dappuri);
 	cdapp << "Decomposed: " << domainParts;
-	h256 contentHash = lookup<h256>(m_nameReg, web3()->ethereum(), domainParts, "content");
+	h256 contentHash = web3()->support()->content(dappuri);
 	cdapp << "Content hash: " << contentHash;
-	Address urlHint = lookup<Address>(m_nameReg, web3()->ethereum(), {"urlhinter"}, "addr");
+	Address urlHint = web3()->support()->urlHint();
 	cdapp << "URLHint address: " << urlHint;
-	string32 contentUrl = abiOut<string32>(web3()->ethereum()->call(urlHint, abiIn("url(bytes32)", contentHash)).output);
-	cdapp << "Suggested: " << toString(contentUrl);
+	string contentUrl = web3()->support()->urlHint(contentHash);
+	cdapp << "Suggested: " << contentUrl;
 
 	string canon = boost::algorithm::join(domainParts, "/");
 	QString path = QString::fromStdString(canon);
@@ -178,29 +150,21 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 void DappLoader::loadDapp(RLP const& _rlp)
 {
 	Dapp dapp;
-	unsigned len = _rlp.itemCountStrict();
 	dapp.manifest = loadManifest(_rlp[0].toString());
-	for (unsigned c = 1; c < len; ++c)
+	dapp.content = m_web3->swarm()->insertBundle(_rlp.data());
+
+	for (ManifestEntry& m: dapp.manifest.entries)
 	{
-		bytesConstRef content = _rlp[c].toBytesConstRef();
-		h256 hash = sha3(content);
-		auto entry = std::find_if(dapp.manifest.entries.cbegin(), dapp.manifest.entries.cend(), [=](ManifestEntry const& _e) { return _e.hash == hash; });
-		if (entry != dapp.manifest.entries.cend())
-		{
-			if (entry->path == "/deployment.js")
-			{
-				//inject web3 code
-				bytes b(jsCode().data(), jsCode().data() + jsCode().size());
-				b.insert(b.end(), content.begin(), content.end());
-				dapp.content[hash] = b;
-			}
-			else if (entry->path == "/")
-				dapp.content[hash] = asBytes(boost::algorithm::replace_all_copy(asString(content), "\nweb3;\n", "\n" + jsCode().toStdString() + "\n"));
-			else
-				dapp.content[hash] = content.toBytes();
-		}
+		bytes b;
+		if (m.path == "/deployment.js")
+			//inject web3 code
+			b = bytes(jsCode().data(), jsCode().data() + jsCode().size()) + (bytes)m_web3->swarm()->get(m.hash);
+		else if (m.path == "/")
+			b = asBytes(boost::algorithm::replace_all_copy(asString((bytes)m_web3->swarm()->get(m.hash)), "\nweb3;\n", "\n" + jsCode().toStdString() + "\n"));
 		else
-			throw dev::Exception() << errinfo_comment("Dapp content hash does not match");
+			continue;
+		dapp.content.push_back(m_web3->swarm()->put(b));
+		m.hash = sha3(b);
 	}
 	emit dappReady(dapp);
 }
@@ -239,10 +203,7 @@ Manifest DappLoader::loadManifest(std::string const& _manifest)
 				contentType = mts.isEmpty() ? "application/octet-stream" : mts[0].name().toStdString();
 			}
 		}
-		std::string strHash = entryValue["hash"].asString();
-		if (strHash.length() == 64)
-			strHash = "0x" + strHash;
-		h256 hash = jsToFixed<32>(strHash);
+		h256 hash(entryValue["hash"].asString());
 		unsigned httpStatus = entryValue["status"].asInt();
 		manifest.entries.push_back(ManifestEntry{ path, hash, contentType, httpStatus });
 	}
@@ -295,6 +256,27 @@ QString DappLoader::makeJSCode()
 	content += "\n";
 	content += QString::fromStdString(resources.loadResourceAsString("admin"));
 	content += "\n";
+	content += R"ETHEREUM(
+		web3._extend({
+			property: "bzz",
+			methods: [
+				new web3._extend.Method({
+					name: "put",
+					call: 'bzz_put',
+					params: 1,
+					inputFormatter: [null],
+					outputFormatter: null
+				}),
+				new web3._extend.Method({
+					name: 'get',
+					call: 'bzz_get',
+					params: 1,
+					inputFormatter: [null],
+					outputFormatter: null
+				})
+			]
+		});
+	)ETHEREUM";
 	return content;
 }
 

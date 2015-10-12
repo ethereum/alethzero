@@ -51,9 +51,6 @@ class AlethFace: public QObject, public Context
 public:
 	AlethFace(QObject* _parent = nullptr): QObject(_parent) {}
 
-	static Address getNameReg();
-	static Address getICAPReg();
-
 	// TODO: tidy - all should be references that throw if module unavailable.
 	// TODO: provide a set of available web3 modules.
 	bool isOpen() const { return !!web3(); }

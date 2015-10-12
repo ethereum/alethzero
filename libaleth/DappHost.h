@@ -32,6 +32,8 @@ struct MHD_Connection;
 namespace dev
 {
 
+class WebThreeDirect;
+
 namespace aleth
 {
 
@@ -41,7 +43,7 @@ class DappHost
 public:
 	/// @param _port Network pork to listen for incoming connections
 	/// @param _threads Max number of threads to process requests
-	DappHost(int _port, int _threads = 10);
+	DappHost(int _port, WebThreeDirect* _web3, int _threads = 10);
 
 	virtual ~DappHost();
 
@@ -66,6 +68,8 @@ private:
 	MHD_Daemon* m_daemon;
 	Dapp m_dapp;
 	std::map<QString, ManifestEntry const*> m_entriesByPath;
+
+	WebThreeDirect* m_web3;
 };
 
 }
