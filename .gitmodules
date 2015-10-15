@@ -1,0 +1,3 @@
+[submodule "EthWallet"]
+	path = EthWallet
+	url = https://github.com/yann300/EthWallet
