@@ -38,6 +38,8 @@
 #include <libwebthree/WebThree.h>
 #include "DappLoader.h"
 #include "AlethResources.hpp"
+#include "WalletResources.hpp"
+
 using namespace std;
 using namespace dev;
 using namespace crypto;
@@ -117,34 +119,38 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 		_reply->deleteLater();
 
 		h256 expected = m_uriHashes[requestUrl];
-		bytes package(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
-		cdapp << "Package arrived: " << package.size();
-		cdapp << "Expecting (key): " << expected;
-		Secp256k1PP dec;
-		dec.decrypt(Secret(expected), package);
-		h256 got = sha3(package);
-		cdapp << "As binary, package contains: " << got;
-		if (got != expected)
-		{
-			//try base64
-			data = QByteArray::fromBase64(data);
-			package = bytes(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
-			dec.decrypt(Secret(expected), package);
-			got = sha3(package);
-			cdapp << "As base-64, package contains: " << got;
-			if (got != expected)
-				throw dev::Exception() << errinfo_comment("Dapp content hash does not match");
-		}
-
-		RLP rlp(package);
-		loadDapp(rlp);
-		bytesRef(&package).cleanse();	// TODO: replace with bytesSec once the crypto API is up to it.
+		initiateDapp(data, expected);
 	}
 	catch (...)
 	{
 		qWarning() << tr("Error downloading DApp: ") << boost::current_exception_diagnostic_information().c_str();
 		emit dappError();
 	}
+}
+
+void DappLoader::initiateDapp(QByteArray _data, h256 _key)
+{
+	bytes package(reinterpret_cast<unsigned char const*>(_data.constData()), reinterpret_cast<unsigned char const*>(_data.constData() + _data.size()));
+	cdapp << "Package arrived: " << package.size();
+	cdapp << "Expecting (key): " << _key;
+	Secp256k1PP dec;
+	dec.decrypt(Secret(_key), package);
+	h256 got = sha3(package);
+	cdapp << "As binary, package contains: " << got;
+	if (got != _key)
+	{
+		//try base64
+		_data = QByteArray::fromBase64(_data);
+		package = bytes(reinterpret_cast<unsigned char const*>(_data.constData()), reinterpret_cast<unsigned char const*>(_data.constData() + _data.size()));
+		dec.decrypt(Secret(_key), package);
+		got = sha3(package);
+		cdapp << "As base-64, package contains: " << got;
+		if (got != _key)
+			throw dev::Exception() << errinfo_comment("Dapp content hash does not match");
+	}
+	RLP rlp(package);
+	loadDapp(rlp);
+	bytesRef(&package).cleanse();	// TODO: replace with bytesSec once the crypto API is up to it.
 }
 
 void DappLoader::loadDapp(RLP const& _rlp)
@@ -215,7 +221,20 @@ void DappLoader::loadDapp(QString const& _uri)
 	QUrl uri(_uri);
 	QUrl contentUri;
 	h256 hash;
-	if (uri.path().endsWith(".dapp") && uri.query().startsWith("hash="))
+	if (uri.scheme() == "about" && uri.path() == "wallet")
+	{
+		WalletResources resources;
+		QString wallet = QString::fromStdString(resources.loadResourceAsString("wallet"));
+		std::string key = resources.loadResourceAsString("wallet_hash");
+		key.erase(key.begin(), key.begin() + 15);
+		key.erase(key.length() - 1); // Keccak of RLP
+		if (key.find("0x") != 0)
+			key = "0x" + key;
+		hash = jsToFixed<32>(key);
+		initiateDapp(QByteArray::fromStdString(wallet.toStdString()), h256(hash));
+		return;
+	}
+	else if (uri.path().endsWith(".dapp") && uri.query().startsWith("hash="))
 	{
 		contentUri = uri;
 		QString query = uri.query();

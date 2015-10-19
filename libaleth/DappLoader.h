@@ -106,6 +106,7 @@ private:
 	void loadDapp(dev::RLP const& _rlp);
 	Manifest loadManifest(std::string const& _manifest);
 	QByteArray injectWeb3(QByteArray _page) const;
+	void initiateDapp(QByteArray _data, h256 _key);
 
 	dev::WebThreeDirect* m_web3;
 	QNetworkAccessManager m_net;
