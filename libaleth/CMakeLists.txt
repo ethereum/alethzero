@@ -13,7 +13,7 @@ set(ETH_DIR "${ETH_CMAKE_DIR}/../../libethereum" CACHE PATH "The path to the eth
 eth_add_resources("${CMAKE_CURRENT_SOURCE_DIR}/JSResources.cmake" "JSRES" "${ETH_DIR}/..")
 
 # package the wallet
-set(WALLET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/EthWallet")
+set(WALLET_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../wallet")
 set(WALLETRES "${CMAKE_CURRENT_BINARY_DIR}/WalletResources.hpp")
 set(RLP_DIR "${ETH_CMAKE_DIR}/../../libweb3core/build/rlp")
 add_custom_command(
