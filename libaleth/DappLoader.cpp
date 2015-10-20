@@ -224,14 +224,13 @@ void DappLoader::loadDapp(QString const& _uri)
 	if (uri.scheme() == "about" && uri.path() == "wallet")
 	{
 		WalletResources resources;
-		QString wallet = QString::fromStdString(resources.loadResourceAsString("wallet"));
 		std::string key = resources.loadResourceAsString("wallet_hash");
-		key.erase(key.begin(), key.begin() + 15);
-		key.erase(key.length() - 1); // Keccak of RLP
+		key.erase(key.begin(), key.begin() + 15); // Keccak of RLP
+		key.erase(key.length() - 1);
 		if (key.find("0x") != 0)
 			key = "0x" + key;
 		hash = jsToFixed<32>(key);
-		initiateDapp(QByteArray::fromStdString(wallet.toStdString()), h256(hash));
+		initiateDapp(QByteArray::fromStdString(resources.loadResourceAsString("wallet")), h256(hash));
 		return;
 	}
 	else if (uri.path().endsWith(".dapp") && uri.query().startsWith("hash="))
