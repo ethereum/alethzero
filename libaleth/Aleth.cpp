@@ -28,6 +28,7 @@
 #include <libp2p/Host.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
+#include <libethashseal/GenesisInfo.h>
 #include "ui_GetPassword.h"
 using namespace std;
 using namespace dev;
@@ -69,22 +70,34 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 
 	// Get options
 	m_dbPath = getDataDir();
+
+	eth::Network network = eth::Network::Frontier;
+
 	for (int i = 1; i < qApp->arguments().size(); ++i)
 	{
 		QString arg = qApp->arguments()[i];
 		if (arg == "--frontier")
-			resetNetwork(eth::Network::Frontier);
+			network = eth::Network::Frontier;
 		else if (arg == "--olympic")
-			resetNetwork(eth::Network::Olympic);
+			network = eth::Network::Olympic;
 		else if (arg == "--morden" || arg == "--testnet")
-			resetNetwork(eth::Network::Morden);
+			network = eth::Network::Morden;
 		else if (arg == "--genesis-json" && i + 1 < qApp->arguments().size())
-			CanonBlockChain<Ethash>::setGenesis(contentsString(qApp->arguments()[++i].toStdString()));
+		{
+			network = eth::Network::Special;
+			m_baseParams = ChainParams(contentsString(qApp->arguments()[++i].toStdString()));
+		}
 		else if ((arg == "--db-path" || arg == "-d") && i + 1 < qApp->arguments().size())
 			m_dbPath = qApp->arguments()[++i].toStdString();
 	}
+
 	if (!dev::contents(m_dbPath + "/genesis.json").empty())
-		CanonBlockChain<Ethash>::setGenesis(contentsString(m_dbPath + "/genesis.json"));
+	{
+		m_baseParams = ChainParams(contentsString(m_dbPath + "/genesis.json"));
+		network = eth::Network::Special;
+	}
+	if (network != eth::Network::Special)
+		m_baseParams = ChainParams(genesisInfo(network), genesisStateRoot(network));
 
 	// Open Key Store
 	if (keyManager().exists())
@@ -106,7 +119,7 @@ bool Aleth::open(OnInit _connect)
 
 		try
 		{
-			m_webThree.reset(new WebThreeDirect(m_clientVersion + "/v" + niceVersion(dev::Version) + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, WithExisting::Trust, {"eth", "bzz"/*, "shh"*/}, p2p::NetworkPreferences(), network));
+			m_webThree.reset(new WebThreeDirect(m_clientVersion + "/v" + niceVersion(dev::Version) + "/" DEV_QUOTED(ETH_BUILD_TYPE) "/" DEV_QUOTED(ETH_BUILD_PLATFORM), m_dbPath, m_baseParams, WithExisting::Trust, {"eth", "bzz", "shh"}, p2p::NetworkPreferences(), network));
 		}
 		catch (DatabaseAlreadyOpen&)
 		{
@@ -114,7 +127,7 @@ bool Aleth::open(OnInit _connect)
 		}
 
 		web3()->setClientVersion(WebThreeDirect::composeClientVersion(m_clientVersion, m_nodeName));
-		setBeneficiary(keyManager().accounts().front());
+		setAuthor(keyManager().accounts().front());
 		ethereum()->setDefault(LatestBlock);
 
 		{
@@ -143,6 +156,18 @@ void Aleth::close()
 
 	delete findChild<QTimer*>();
 	m_webThree.reset(nullptr);
+}
+
+void Aleth::reopenChain(ChainParams const& _p)
+{
+	ethereum()->reopenChain(_p);
+	m_isTampered = true;
+}
+
+void Aleth::reopenChain()
+{
+	ethereum()->reopenChain(m_baseParams);
+	m_isTampered = false;
 }
 
 unsigned Aleth::installWatch(LogFilter const& _tf, WatchHandler const& _f)
