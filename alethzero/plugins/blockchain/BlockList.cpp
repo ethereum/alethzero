@@ -25,7 +25,7 @@
 #include <QTimer>
 #include <libdevcore/Log.h>
 #include <libethereum/Client.h>
-#include <libethcore/EthashAux.h>
+#include <libethashseal/EthashAux.h>
 #include <libaleth/Debugger.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
@@ -216,11 +216,10 @@ void BlockList::refreshInfo()
 		BlockDetails details;
 		bytes blockData;
 		RLP block;
-		Ethash::BlockHeader header;
-		BlockInfo info;
+		BlockHeader header;
 		if (h == PendingBlockHash)
 		{
-			info = ethereum()->pendingInfo();
+			header = ethereum()->pendingInfo();
 			details = ethereum()->pendingDetails();
 		}
 		else
@@ -228,43 +227,42 @@ void BlockList::refreshInfo()
 			details = ethereum()->blockChain().details(h);
 			blockData = ethereum()->blockChain().block(h);
 			block = RLP(blockData);
-			info = header = Ethash::BlockHeader(blockData);
+			header = BlockHeader(blockData);
 		}
 
 		if (item->data(Qt::UserRole + 1).isNull())
 		{
 			char timestamp[64];
-			time_t rawTime = (time_t)(uint64_t)info.timestamp();
+			time_t rawTime = (time_t)(uint64_t)header.timestamp();
 			strftime(timestamp, 64, "%c", localtime(&rawTime));
 			if (h == PendingBlockHash)
 				s << "<h3>Pending</h3>";
 			else
 				s << "<h3>" << h << "</h3>";
-			s << "<h4>#" << info.number();
+			s << "<h4>#" << header.number();
 			s << "&nbsp;&emsp;&nbsp;<b>" << timestamp << "</b></h4>";
 			try
 			{
-				RLP r(info.extraData());
+				RLP r(header.extraData());
 				if (r[0].toInt<int>() == 0)
 					s << "<div>Sealing client: <b>" << htmlEscaped(r[1].toString()) << "</b>" << "</div>";
 			}
 			catch (...) {}
-			s << "<div>D/TD: <b>" << info.difficulty() << "</b>/<b>" << details.totalDifficulty << "</b> = 2^" << log2((double)info.difficulty()) << "/2^" << log2((double)details.totalDifficulty) << "</div>";
+			s << "<div>D/TD: <b>" << header.difficulty() << "</b>/<b>" << details.totalDifficulty << "</b> = 2^" << log2((double)header.difficulty()) << "/2^" << log2((double)details.totalDifficulty) << "</div>";
 			s << "&nbsp;&emsp;&nbsp;Children: <b>" << details.children.size() << "</b></div>";
-			s << "<div>Gas used/limit: <b>" << info.gasUsed() << "</b>/<b>" << info.gasLimit() << "</b>" << "</div>";
-			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toReadable(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
-			s << "<div>Difficulty: <b>" << info.difficulty() << "</b>" << "</div>";
+			s << "<div>Gas used/limit: <b>" << header.gasUsed() << "</b>/<b>" << header.gasLimit() << "</b>" << "</div>";
+			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toReadable(header.author())) << " " << header.author() << "</b>" << "</div>";
+			s << "<div>Difficulty: <b>" << header.difficulty() << "</b>" << "</div>";
 			if (h != PendingBlockHash)
 			{
-				s << "<div>Seed hash: <b>" << header.seedHash() << "</b>" << "</div>";
-				s << "<div>Mix hash: <b>" << header.mixHash() << "</b>" << "</div>";
-				s << "<div>Nonce: <b>" << header.nonce() << "</b>" << "</div>";
-				s << "<div>Hash w/o nonce: <b>" << info.hashWithout() << "</b>" << "</div>";
-				if (info.number())
+				for (auto const& i: ethereum()->sealEngine()->jsInfo(header))
+					s << "<div>" << i.first << ": <b>" << htmlEscaped(i.second) << "</b>" << "</div>";
+				s << "<div>Hash w/o nonce: <b>" << header.hash(WithoutSeal) << "</b>" << "</div>";
+				if (header.number())
 				{
-					auto e = EthashAux::eval(header.seedHash(), info.hashWithout(), header.nonce());
-					s << "<div>Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / info.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
-					s << "<div>Parent: <b>" << info.parentHash() << "</b>" << "</div>";
+//					auto e = EthashAux::eval(header.seedHash(), header.hash(WithoutSeal), header.nonce());
+//					s << "<div>Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / header.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
+					s << "<div>Parent: <b>" << header.parentHash() << "</b>" << "</div>";
 				}
 				else
 				{
@@ -272,37 +270,36 @@ void BlockList::refreshInfo()
 					s << "<div>Parent: <b><i>It was a virgin birth</i></b></div>";
 				}
 			}
-			s << "<div>State root: " << ETH_HTML_SPAN(ETH_HTML_MONO) << info.stateRoot().hex() << "</span></div>";
-			s << "<div>Extra data: " << ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(info.extraData()) << "</span></div>";
-			if (!!info.logBloom())
-				s << "<div>Log Bloom: " << info.logBloom() << "</div>";
+			s << "<div>State root: " << ETH_HTML_SPAN(ETH_HTML_MONO) << header.stateRoot().hex() << "</span></div>";
+			s << "<div>Extra data: " << ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(header.extraData()) << "</span></div>";
+			if (!!header.logBloom())
+				s << "<div>Log Bloom: " << header.logBloom() << "</div>";
 			else
 				s << "<div>Log Bloom: <b><i>Uneventful</i></b></div>";
-			s << "<div>Transactions: <b>" << block[1].itemCount() << "</b> @<b>" << info.transactionsRoot() << "</b>" << "</div>";
-			s << "<div>Uncles: <b>" << block[2].itemCount() << "</b> @<b>" << info.sha3Uncles() << "</b>" << "</div>";
+			s << "<div>Transactions: <b>" << block[1].itemCount() << "</b> @<b>" << header.transactionsRoot() << "</b>" << "</div>";
+			s << "<div>Uncles: <b>" << block[2].itemCount() << "</b> @<b>" << header.sha3Uncles() << "</b>" << "</div>";
 			if (h != PendingBlockHash)
 				for (auto u: block[2])
 				{
-					Ethash::BlockHeader uncle(u.data(), CheckNothing, h256(), HeaderData);
+					BlockHeader uncle(u.data(), HeaderData);
 					char const* line = "<div><span style=\"margin-left: 2em\">&nbsp;</span>";
 					s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
 					s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
 					s << line << "Number: <b>" << uncle.number() << "</b>" << "</div>";
-					s << line << "Coinbase: <b>" << htmlEscaped(aleth()->toReadable(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
-					s << line << "Seed hash: <b>" << uncle.seedHash() << "</b>" << "</div>";
-					s << line << "Mix hash: <b>" << uncle.mixHash() << "</b>" << "</div>";
-					s << line << "Nonce: <b>" << uncle.nonce() << "</b>" << "</div>";
-					s << line << "Hash w/o nonce: <b>" << uncle.headerHash(WithoutProof) << "</b>" << "</div>";
+					s << line << "Author: <b>" << htmlEscaped(aleth()->toReadable(uncle.author())) << " " << uncle.author() << "</b>" << "</div>";
+					for (auto const& i: ethereum()->sealEngine()->jsInfo(header))
+						s << line << i.first << ": <b>" << htmlEscaped(i.second) << "</b>" << "</div>";
+					s << line << "Hash w/o nonce: <b>" << uncle.hash(WithoutSeal) << "</b>" << "</div>";
 					s << line << "Difficulty: <b>" << uncle.difficulty() << "</b>" << "</div>";
-					auto e = EthashAux::eval(uncle.seedHash(), uncle.hashWithout(), uncle.nonce());
-					s << line << "Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / uncle.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
+//					auto e = EthashAux::eval(uncle.seedHash(), uncle.hash(WithoutSeal), uncle.nonce());
+//					s << line << "Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / uncle.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
 				}
-			if (info.parentHash())
-				s << "<div>Pre: <b>" << BlockInfo(ethereum()->blockChain().block(info.parentHash())).stateRoot() << "</b>" << "</div>";
+			if (header.parentHash())
+				s << "<div>Pre: <b>" << BlockHeader(ethereum()->blockChain().block(header.parentHash())).stateRoot() << "</b>" << "</div>";
 			else
 				s << "<div>Pre: <b><i>Nothing is before Phil</i></b>" << "</div>";
 
-			s << "<div>Receipts: @<b>" << info.receiptsRoot() << "</b>:" << "</div>";
+			s << "<div>Receipts: @<b>" << header.receiptsRoot() << "</b>:" << "</div>";
 			unsigned ii = 0;
 			for (auto const& i: block[1])
 			{
@@ -310,7 +307,7 @@ void BlockList::refreshInfo()
 				s << "<div>" << sha3(i.data()).abridged() << ": <b>" << r.stateRoot() << "</b> [<b>" << r.gasUsed() << "</b> used]" << "</div>";
 				++ii;
 			}
-			s << "<div>Post: <b>" << info.stateRoot() << "</b>" << "</div>";
+			s << "<div>Post: <b>" << header.stateRoot() << "</b>" << "</div>";
 			if (h != PendingBlockHash)
 			{
 				s << "<div>Dump: " ETH_HTML_SPAN(ETH_HTML_MONO) << toHex(block[0].data()) << "</span>" << "</div>";
@@ -380,7 +377,7 @@ void BlockList::debugCurrent()
 
 			bytes t = h == PendingBlockHash ? ethereum()->pending()[txi].rlp() : ethereum()->blockChain().transaction(h, txi);
 			State s = h == PendingBlockHash ? ethereum()->state(txi) : ethereum()->state(txi, h);
-			BlockInfo bi = h == PendingBlockHash ? ethereum()->pendingInfo() : ethereum()->blockChain().info(h);
+			BlockHeader bi = h == PendingBlockHash ? ethereum()->pendingInfo() : ethereum()->blockChain().info(h);
 			Executive e(s, EnvInfo(bi, ethereum()->blockChain().lastHashes(bi.parentHash())));
 			Debugger dw(aleth(), zero());
 			dw.populate(e, Transaction(t, CheckTransaction::Everything));
