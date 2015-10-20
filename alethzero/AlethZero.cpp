@@ -68,11 +68,6 @@ AlethZero::AlethZero():
 	m_aleth.init(Aleth::OpenOnly, "AlethZero", "anon");
 	m_rpcHost.init(&m_aleth);
 
-	cerr << "State root: " << CanonBlockChain<Ethash>::genesis().stateRoot() << endl;
-	auto block = CanonBlockChain<Ethash>::createGenesisBlock();
-	cerr << "Block Hash: " << CanonBlockChain<Ethash>::genesis().hash() << endl;
-	cerr << "Block RLP: " << RLP(block) << endl;
-	cerr << "Block Hex: " << toHex(block) << endl;
 	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
 	cerr << "Client database version: " << c_databaseVersion << endl;
 
@@ -249,8 +244,8 @@ void AlethZero::setNetPrefs(NetworkSettings const& _settings)
 {
 	aleth()->web3()->setIdealPeerCount(_settings.idealPeers);
 	auto p = _settings.p2pSettings;
-	p.discovery = p.discovery && !CanonBlockChain<Ethash>::isNonStandard();
-	p.pin = p.pin || CanonBlockChain<Ethash>::isNonStandard();
+	p.discovery = p.discovery && aleth()->isStandard();
+	p.pin = p.pin || !aleth()->isStandard();
 	aleth()->web3()->setNetworkPreferences(p, _settings.dropPeers);
 	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", _settings.clientName.toStdString()));
 	QSettings s("ethereum", "alethzero");
