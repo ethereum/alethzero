@@ -70,6 +70,12 @@ public:
 	/// Stop the webthree subsystem.
 	void close();
 
+	// Deep Ethereum API
+	virtual void reopenChain(eth::ChainParams const& _p) override;
+	virtual void reopenChain() override;
+	virtual bool isTampered() const { return m_isTampered; }
+	virtual bool isStandard() const { return m_network != eth::Network::Special; }
+
 	// Watch API
 	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
 	unsigned installWatch(h256 const& _tf, WatchHandler const& _f) override;
@@ -102,6 +108,9 @@ private:
 	std::unordered_set<AccountNamer*> m_namers;
 
 	bool m_destructing = false;
+	eth::Network m_network;
+	eth::ChainParams m_baseParams;
+	bool m_isTampered;
 	std::string m_dbPath;
 	std::string m_clientVersion;
 	std::string m_nodeName;

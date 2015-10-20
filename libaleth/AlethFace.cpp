@@ -41,16 +41,16 @@ std::shared_ptr<shh::WhisperHost> AlethFace::whisper() const
 	return web3()->whisper();
 }
 
-Address AlethFace::beneficiary() const
+Address AlethFace::author() const
 {
-	return ethereum()->beneficiary();
+	return ethereum()->author();
 }
 
-void AlethFace::setBeneficiary(Address const& _a)
+void AlethFace::setAuthor(Address const& _a)
 {
-	if (_a != ethereum()->beneficiary())
+	if (_a != ethereum()->author())
 	{
-		ethereum()->setBeneficiary(_a);
+		ethereum()->setAuthor(_a);
 		emit beneficiaryChanged();
 	}
 }

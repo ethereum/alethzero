@@ -26,7 +26,11 @@
 #include <libethereum/Client.h>
 #include <libwhisper/WhisperHost.h>
 #include <libwebthree/WebThree.h>
+<<<<<<< Updated upstream
 #include <libaleth/AlethWhisper.h>
+=======
+#include <libaleth/WebThreeServer.h>
+>>>>>>> Stashed changes
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "ui_WhisperPeers.h"

@@ -45,9 +45,9 @@ Mining::Mining(ZeroFace* _m):
 		if (ethereum()->isMining() != mine->isChecked())
 		{
 			if (mine->isChecked())
-				ethereum()->startMining();
+				ethereum()->startSealing();
 			else
-				ethereum()->stopMining();
+				ethereum()->stopSealing();
 		}
 	});
 	connect(addMenuItem("Prepare Next DAG", "menuMining"), &QAction::triggered, [&](){

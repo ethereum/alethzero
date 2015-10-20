@@ -38,7 +38,7 @@ namespace jsonrpc { class HttpClient; }
 namespace dev
 {
 
-namespace eth { class EthashSealEngine; }
+namespace eth { class Ethash; }
 
 namespace aleth
 {
@@ -83,7 +83,7 @@ private:
 
 	bool reportSolution(eth::EthashProofOfWork::Solution const& _sol);
 
-	std::shared_ptr<eth::EthashSealEngine> m_engine;
+	std::shared_ptr<eth::Ethash> m_engine;
 	std::shared_ptr<jsonrpc::HttpClient> m_client;
 
 	h256 m_id;

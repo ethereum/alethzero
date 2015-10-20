@@ -28,6 +28,7 @@
 #include <functional>
 #include <QObject>
 #include <libevm/ExtVMFace.h>
+#include <libethereum/ChainParams.h>
 #include "Context.h"
 #include "Common.h"
 #include "AccountNamer.h"
@@ -59,10 +60,16 @@ public:
 	dev::eth::Client* ethereum() const;
 	std::shared_ptr<dev::shh::WhisperHost> whisper() const;
 
-	Address beneficiary() const;
-	void setBeneficiary(Address const& _a);
+	Address author() const;
+	void setAuthor(Address const& _a);
 
 	virtual NatSpecFace& natSpec() = 0;
+
+	// Deep Ethereum API
+	virtual void reopenChain(eth::ChainParams const& _p) = 0;
+	virtual void reopenChain() = 0;
+	virtual bool isTampered() const = 0;
+	virtual bool isStandard() const = 0;
 
 	// Watch API
 	virtual unsigned installWatch(dev::eth::LogFilter const& _tf, WatchHandler const& _f) = 0;

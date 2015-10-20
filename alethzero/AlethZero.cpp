@@ -68,11 +68,6 @@ AlethZero::AlethZero():
 	m_aleth.init(Aleth::OpenOnly, "AlethZero", "anon");
 	m_rpcHost.init(&m_aleth);
 
-	cerr << "State root: " << CanonBlockChain<Ethash>::genesis().stateRoot() << endl;
-	auto block = CanonBlockChain<Ethash>::createGenesisBlock();
-	cerr << "Block Hash: " << CanonBlockChain<Ethash>::genesis().hash() << endl;
-	cerr << "Block RLP: " << RLP(block) << endl;
-	cerr << "Block Hex: " << toHex(block) << endl;
 	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
 	cerr << "Client database version: " << c_databaseVersion << endl;
 
@@ -157,7 +152,7 @@ void AlethZero::unloadPlugin(string const& _name)
 void AlethZero::allStop()
 {
 	writeSettings();
-	aleth()->ethereum()->stopMining();
+	aleth()->ethereum()->stopSealing();
 	m_ui->net->setChecked(false);
 	aleth()->web3()->stopNetwork();
 }
@@ -249,8 +244,8 @@ void AlethZero::setNetPrefs(NetworkSettings const& _settings)
 {
 	aleth()->web3()->setIdealPeerCount(_settings.idealPeers);
 	auto p = _settings.p2pSettings;
-	p.discovery = p.discovery && !CanonBlockChain<Ethash>::isNonStandard();
-	p.pin = p.pin || CanonBlockChain<Ethash>::isNonStandard();
+	p.discovery = p.discovery && aleth()->isStandard();
+	p.pin = p.pin || !aleth()->isStandard();
 	aleth()->web3()->setNetworkPreferences(p, _settings.dropPeers);
 	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", _settings.clientName.toStdString()));
 	QSettings s("ethereum", "alethzero");
@@ -272,7 +267,7 @@ void AlethZero::onKeysChanged()
 
 void AlethZero::onBeneficiaryChanged()
 {
-	Address b = aleth()->beneficiary();
+	Address b = aleth()->author();
 	for (int i = 0; i < m_ui->ourAccounts->count(); ++i)
 	{
 		auto hba = m_ui->ourAccounts->item(i)->data(Qt::UserRole).toByteArray();
@@ -321,7 +316,7 @@ void AlethZero::refreshBalances()
 		altCoins[addr] = make_tuple(fromRaw(n), 0, denom);
 	}*/
 
-	auto bene = aleth()->beneficiary();
+	auto bene = aleth()->author();
 	for (auto const& address: aleth()->keyManager().accounts())
 	{
 		u256 b = aleth()->ethereum()->balanceAt(address);
@@ -521,7 +516,7 @@ void AlethZero::on_ourAccounts_doubleClicked()
 void AlethZero::on_ourAccounts_itemClicked(QListWidgetItem* _i)
 {
 	auto hba = _i->data(Qt::UserRole).toByteArray();
-	aleth()->setBeneficiary(Address((byte const*)hba.data(), Address::ConstructFromPointer));
+	aleth()->setAuthor(Address((byte const*)hba.data(), Address::ConstructFromPointer));
 }
 
 void AlethZero::on_exportKey_triggered()
@@ -551,8 +546,8 @@ void AlethZero::on_killAccount_triggered()
 		if (aleth()->keyManager().accounts().empty())
 			aleth()->keyManager().import(Secret::random(), "Default account");
 		aleth()->noteKeysChanged();
-		if (aleth()->beneficiary() == h)
-			aleth()->setBeneficiary(aleth()->keyManager().accounts().front());
+		if (aleth()->author() == h)
+			aleth()->setAuthor(aleth()->keyManager().accounts().front());
 	}
 }
 

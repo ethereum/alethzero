@@ -216,7 +216,7 @@ void BlockList::refreshInfo()
 		BlockDetails details;
 		bytes blockData;
 		RLP block;
-		Ethash::BlockHeader header;
+		BlockInfo header;
 		BlockInfo info;
 		if (h == PendingBlockHash)
 		{
@@ -228,7 +228,7 @@ void BlockList::refreshInfo()
 			details = ethereum()->blockChain().details(h);
 			blockData = ethereum()->blockChain().block(h);
 			block = RLP(blockData);
-			info = header = Ethash::BlockHeader(blockData);
+			info = header = BlockInfo(blockData);
 		}
 
 		if (item->data(Qt::UserRole + 1).isNull())
@@ -252,17 +252,17 @@ void BlockList::refreshInfo()
 			s << "<div>D/TD: <b>" << info.difficulty() << "</b>/<b>" << details.totalDifficulty << "</b> = 2^" << log2((double)info.difficulty()) << "/2^" << log2((double)details.totalDifficulty) << "</div>";
 			s << "&nbsp;&emsp;&nbsp;Children: <b>" << details.children.size() << "</b></div>";
 			s << "<div>Gas used/limit: <b>" << info.gasUsed() << "</b>/<b>" << info.gasLimit() << "</b>" << "</div>";
-			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toReadable(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
+			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toReadable(info.author())) << " " << info.author() << "</b>" << "</div>";
 			s << "<div>Difficulty: <b>" << info.difficulty() << "</b>" << "</div>";
 			if (h != PendingBlockHash)
 			{
 				s << "<div>Seed hash: <b>" << header.seedHash() << "</b>" << "</div>";
 				s << "<div>Mix hash: <b>" << header.mixHash() << "</b>" << "</div>";
 				s << "<div>Nonce: <b>" << header.nonce() << "</b>" << "</div>";
-				s << "<div>Hash w/o nonce: <b>" << info.hashWithout() << "</b>" << "</div>";
+				s << "<div>Hash w/o nonce: <b>" << info.hash(WithoutSeal) << "</b>" << "</div>";
 				if (info.number())
 				{
-					auto e = EthashAux::eval(header.seedHash(), info.hashWithout(), header.nonce());
+					auto e = EthashAux::eval(header.seedHash(), info.hash(WithoutSeal), header.nonce());
 					s << "<div>Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / info.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
 					s << "<div>Parent: <b>" << info.parentHash() << "</b>" << "</div>";
 				}
@@ -283,18 +283,18 @@ void BlockList::refreshInfo()
 			if (h != PendingBlockHash)
 				for (auto u: block[2])
 				{
-					Ethash::BlockHeader uncle(u.data(), CheckNothing, h256(), HeaderData);
+					BlockInfo uncle(u.data(), HeaderData);
 					char const* line = "<div><span style=\"margin-left: 2em\">&nbsp;</span>";
 					s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
 					s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
 					s << line << "Number: <b>" << uncle.number() << "</b>" << "</div>";
-					s << line << "Coinbase: <b>" << htmlEscaped(aleth()->toReadable(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
+					s << line << "Author: <b>" << htmlEscaped(aleth()->toReadable(uncle.author())) << " " << uncle.author() << "</b>" << "</div>";
 					s << line << "Seed hash: <b>" << uncle.seedHash() << "</b>" << "</div>";
 					s << line << "Mix hash: <b>" << uncle.mixHash() << "</b>" << "</div>";
 					s << line << "Nonce: <b>" << uncle.nonce() << "</b>" << "</div>";
 					s << line << "Hash w/o nonce: <b>" << uncle.headerHash(WithoutProof) << "</b>" << "</div>";
 					s << line << "Difficulty: <b>" << uncle.difficulty() << "</b>" << "</div>";
-					auto e = EthashAux::eval(uncle.seedHash(), uncle.hashWithout(), uncle.nonce());
+					auto e = EthashAux::eval(uncle.seedHash(), uncle.hash(WithoutSeal), uncle.nonce());
 					s << line << "Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / uncle.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
 				}
 			if (info.parentHash())
