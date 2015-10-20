@@ -288,7 +288,7 @@ void BlockList::refreshInfo()
 					s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
 					s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
 					s << line << "Number: <b>" << uncle.number() << "</b>" << "</div>";
-					s << line << "Coinbase: <b>" << htmlEscaped(aleth()->toReadable(uncle.author())) << " " << uncle.author() << "</b>" << "</div>";
+					s << line << "Author: <b>" << htmlEscaped(aleth()->toReadable(uncle.author())) << " " << uncle.author() << "</b>" << "</div>";
 					s << line << "Seed hash: <b>" << uncle.seedHash() << "</b>" << "</div>";
 					s << line << "Mix hash: <b>" << uncle.mixHash() << "</b>" << "</div>";
 					s << line << "Nonce: <b>" << uncle.nonce() << "</b>" << "</div>";
