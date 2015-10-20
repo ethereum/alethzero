@@ -252,7 +252,7 @@ void BlockList::refreshInfo()
 			s << "<div>D/TD: <b>" << info.difficulty() << "</b>/<b>" << details.totalDifficulty << "</b> = 2^" << log2((double)info.difficulty()) << "/2^" << log2((double)details.totalDifficulty) << "</div>";
 			s << "&nbsp;&emsp;&nbsp;Children: <b>" << details.children.size() << "</b></div>";
 			s << "<div>Gas used/limit: <b>" << info.gasUsed() << "</b>/<b>" << info.gasLimit() << "</b>" << "</div>";
-			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toReadable(info.beneficiary())) << " " << info.beneficiary() << "</b>" << "</div>";
+			s << "<div>Beneficiary: <b>" << htmlEscaped(aleth()->toReadable(info.author())) << " " << info.author() << "</b>" << "</div>";
 			s << "<div>Difficulty: <b>" << info.difficulty() << "</b>" << "</div>";
 			if (h != PendingBlockHash)
 			{
@@ -288,7 +288,7 @@ void BlockList::refreshInfo()
 					s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
 					s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
 					s << line << "Number: <b>" << uncle.number() << "</b>" << "</div>";
-					s << line << "Coinbase: <b>" << htmlEscaped(aleth()->toReadable(uncle.beneficiary())) << " " << uncle.beneficiary() << "</b>" << "</div>";
+					s << line << "Coinbase: <b>" << htmlEscaped(aleth()->toReadable(uncle.author())) << " " << uncle.author() << "</b>" << "</div>";
 					s << line << "Seed hash: <b>" << uncle.seedHash() << "</b>" << "</div>";
 					s << line << "Mix hash: <b>" << uncle.mixHash() << "</b>" << "</div>";
 					s << line << "Nonce: <b>" << uncle.nonce() << "</b>" << "</div>";

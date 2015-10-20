@@ -59,8 +59,8 @@ public:
 	dev::eth::Client* ethereum() const;
 	std::shared_ptr<dev::shh::WhisperHost> whisper() const;
 
-	Address beneficiary() const;
-	void setBeneficiary(Address const& _a);
+	Address author() const;
+	void setAuthor(Address const& _a);
 
 	virtual NatSpecFace& natSpec() = 0;
 

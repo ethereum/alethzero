@@ -157,7 +157,7 @@ void AlethZero::unloadPlugin(string const& _name)
 void AlethZero::allStop()
 {
 	writeSettings();
-	aleth()->ethereum()->stopMining();
+	aleth()->ethereum()->stopSealing();
 	m_ui->net->setChecked(false);
 	aleth()->web3()->stopNetwork();
 }
@@ -272,7 +272,7 @@ void AlethZero::onKeysChanged()
 
 void AlethZero::onBeneficiaryChanged()
 {
-	Address b = aleth()->beneficiary();
+	Address b = aleth()->author();
 	for (int i = 0; i < m_ui->ourAccounts->count(); ++i)
 	{
 		auto hba = m_ui->ourAccounts->item(i)->data(Qt::UserRole).toByteArray();
@@ -321,7 +321,7 @@ void AlethZero::refreshBalances()
 		altCoins[addr] = make_tuple(fromRaw(n), 0, denom);
 	}*/
 
-	auto bene = aleth()->beneficiary();
+	auto bene = aleth()->author();
 	for (auto const& address: aleth()->keyManager().accounts())
 	{
 		u256 b = aleth()->ethereum()->balanceAt(address);
@@ -521,7 +521,7 @@ void AlethZero::on_ourAccounts_doubleClicked()
 void AlethZero::on_ourAccounts_itemClicked(QListWidgetItem* _i)
 {
 	auto hba = _i->data(Qt::UserRole).toByteArray();
-	aleth()->setBeneficiary(Address((byte const*)hba.data(), Address::ConstructFromPointer));
+	aleth()->setAuthor(Address((byte const*)hba.data(), Address::ConstructFromPointer));
 }
 
 void AlethZero::on_exportKey_triggered()
@@ -551,8 +551,8 @@ void AlethZero::on_killAccount_triggered()
 		if (aleth()->keyManager().accounts().empty())
 			aleth()->keyManager().import(Secret::random(), "Default account");
 		aleth()->noteKeysChanged();
-		if (aleth()->beneficiary() == h)
-			aleth()->setBeneficiary(aleth()->keyManager().accounts().front());
+		if (aleth()->author() == h)
+			aleth()->setAuthor(aleth()->keyManager().accounts().front());
 	}
 }
 
