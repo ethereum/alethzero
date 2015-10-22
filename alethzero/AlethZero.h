@@ -38,7 +38,7 @@
 #include <libethereum/Executive.h>
 #include <libwebthree/WebThree.h>
 #if ETH_SOLIDITY
-#include <libsolidity/CompilerStack.h>
+#include <libsolidity/interface/CompilerStack.h>
 #endif
 #include <libaleth/NatspecHandler.h>
 #include <libaleth/Common.h>
