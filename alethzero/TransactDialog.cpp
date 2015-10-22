@@ -33,10 +33,10 @@
 #include <liblll/Compiler.h>
 #include <liblll/CodeFragment.h>
 #if ETH_SOLIDITY || !ETH_TRUE
-#include <libsolidity/CompilerStack.h>
-#include <libsolidity/Scanner.h>
-#include <libsolidity/AST.h>
-#include <libsolidity/SourceReferenceFormatter.h>
+#include <libsolidity/interface/CompilerStack.h>
+#include <libsolidity/parsing/Scanner.h>
+#include <libsolidity/ast/AST.h>
+#include <libsolidity/interface/SourceReferenceFormatter.h>
 #endif
 #include <libethereum/Client.h>
 #include <libethereum/Utility.h>
