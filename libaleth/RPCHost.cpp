@@ -19,11 +19,8 @@
  * @date 2015
  */
 
-#include <memory>
 #include "RPCHost.h"
 #include <libdevcore/Log.h>
-#include <libweb3jsonrpc/SafeHttpServer.h>
-#include <libweb3jsonrpc/ModularServer.h>
 #include <libweb3jsonrpc/RPCServer.h>
 #include "WebThreeServer.h"
 #include "AlethFace.h"
