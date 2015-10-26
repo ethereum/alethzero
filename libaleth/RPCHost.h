@@ -25,6 +25,7 @@
 #include <libweb3jsonrpc/IpcServer.h>
 
 template <class I, class... Is> class RPCServer;
+class AbstractDb;
 
 namespace dev
 {
@@ -53,7 +54,7 @@ public:
 
 private:
 	WebThreeServer* m_webthreeFace;
-	std::shared_ptr<RPCServer<WebThreeServer>> m_rpcServer;
+	std::shared_ptr<RPCServer<WebThreeServer, AbstractDb>> m_rpcServer;
 
 };
 

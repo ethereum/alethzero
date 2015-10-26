@@ -22,6 +22,7 @@
 #include "RPCHost.h"
 #include <libdevcore/Log.h>
 #include <libweb3jsonrpc/RPCServer.h>
+#include <libweb3jsonrpc/MemoryDBFace.h>
 #include "WebThreeServer.h"
 #include "AlethFace.h"
 
@@ -32,7 +33,7 @@ using namespace aleth;
 void RPCHost::init(AlethFace* _aleth)
 {
 	m_webthreeFace = new WebThreeServer(_aleth);
-	m_rpcServer.reset(new RPCServer<WebThreeServer>(m_webthreeFace));
+	m_rpcServer.reset(new RPCServer<WebThreeServer, AbstractDb>(m_webthreeFace, new MemoryDBFace()));
 	m_rpcServer->StartListening();
 }
 
