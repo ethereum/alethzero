@@ -25,13 +25,14 @@
 #include <libweb3jsonrpc/IpcServer.h>
 
 template <class I, class... Is> class RPCServer;
-class AbstractDb;
 
 namespace dev
 {
 
 struct SessionPermissions;
 class SafeHttpServer;
+
+namespace rpc { class DBFace; }
 
 namespace aleth
 {
@@ -54,7 +55,7 @@ public:
 
 private:
 	WebThreeServer* m_webthreeFace;
-	std::shared_ptr<RPCServer<WebThreeServer, AbstractDb>> m_rpcServer;
+	std::shared_ptr<RPCServer<WebThreeServer, rpc::DBFace>> m_rpcServer;
 
 };
 
