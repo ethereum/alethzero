@@ -19,24 +19,41 @@
  * @date 2015
  */
 
+#include <memory>
 #include "RPCHost.h"
 #include <libdevcore/Log.h>
 #include <libweb3jsonrpc/SafeHttpServer.h>
+#include <libweb3jsonrpc/ModularServer.h>
+#include <libweb3jsonrpc/RPCServer.h>
 #include "WebThreeServer.h"
 #include "AlethFace.h"
+
 using namespace std;
 using namespace dev;
 using namespace aleth;
 
 void RPCHost::init(AlethFace* _aleth)
 {
-	m_httpConnector.reset(new SafeHttpServer(SensibleHttpPort, "", "", SensibleHttpThreads));
-	m_server.reset(new WebThreeServer(*m_httpConnector, _aleth));
-	m_server->enableIpc(true);
-	m_server->StartListening();
+	m_webthreeFace = new WebThreeServer(_aleth);
+	m_rpcServer.reset(new RPCServer<WebThreeServer>(m_webthreeFace));
+	m_rpcServer->StartListening();
 }
 
 RPCHost::~RPCHost()
 {
-	m_httpConnector->StopListening();
+}
+
+std::string RPCHost::newSession(SessionPermissions const& _p)
+{
+	return m_webthreeFace->newSession(_p);
+}
+
+SafeHttpServer* RPCHost::httpConnector() const
+{
+	return m_rpcServer->httpConnector();
+}
+
+IpcServer* RPCHost::ipcConnector() const
+{
+	return m_rpcServer->ipcConnector();
 }

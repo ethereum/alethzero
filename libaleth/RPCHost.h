@@ -22,10 +22,14 @@
 #pragma once
 
 #include <libdevcore/Common.h>
+#include <libweb3jsonrpc/IpcServer.h>
+
+template <class I, class... Is> class RPCServer;
 
 namespace dev
 {
 
+struct SessionPermissions;
 class SafeHttpServer;
 
 namespace aleth
@@ -42,13 +46,15 @@ public:
 	~RPCHost();
 
 	void init(AlethFace* _aleth);
-
-	WebThreeServer* web3Server() const { return m_server.get(); }
-	SafeHttpServer* web3ServerConnector() const { return m_httpConnector.get(); }
+	std::string newSession(SessionPermissions const& _p);
+	WebThreeServer* webthreeFace() const { return m_webthreeFace; }
+	SafeHttpServer* httpConnector() const;
+	IpcServer* ipcConnector() const;
 
 private:
-	std::shared_ptr<SafeHttpServer> m_httpConnector;
-	std::shared_ptr<WebThreeServer> m_server;
+	WebThreeServer* m_webthreeFace;
+	std::shared_ptr<RPCServer<WebThreeServer>> m_rpcServer;
+
 };
 
 }

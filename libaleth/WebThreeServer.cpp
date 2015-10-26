@@ -30,10 +30,9 @@ using namespace eth;
 using namespace aleth;
 
 WebThreeServer::WebThreeServer(
-	jsonrpc::AbstractServerConnector& _conn,
 	AlethFace* _aleth
 ):
-	WebThreeStubServer(_conn, *_aleth->web3(), make_shared<AccountHolder>(_aleth), vector<KeyPair>{}, _aleth->keyManager(), *static_cast<TrivialGasPricer*>(_aleth->ethereum()->gasPricer().get()))
+	WebThreeStubServer(*_aleth->web3(), make_shared<AccountHolder>(_aleth), vector<KeyPair>{}, _aleth->keyManager(), *static_cast<TrivialGasPricer*>(_aleth->ethereum()->gasPricer().get()))
 {
 }
 
