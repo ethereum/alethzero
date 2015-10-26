@@ -21,8 +21,9 @@
 
 #include "RPCHost.h"
 #include <libdevcore/Log.h>
-#include <libweb3jsonrpc/RPCServer.h>
+#include <libweb3jsonrpc/ModularServer.h>
 #include <libweb3jsonrpc/MemoryDB.h>
+#include <libweb3jsonrpc/SafeHttpServer.h>
 #include "WebThreeServer.h"
 #include "AlethFace.h"
 
@@ -32,8 +33,10 @@ using namespace aleth;
 
 void RPCHost::init(AlethFace* _aleth)
 {
-	m_webthreeFace = new WebThreeServer(_aleth);
-	m_rpcServer.reset(new RPCServer<WebThreeServer, rpc::DBFace>(m_webthreeFace, new rpc::MemoryDB()));
+	m_web3Face = new WebThreeServer(_aleth);
+	m_rpcServer.reset(new ModularServer<WebThreeServer, rpc::DBFace>(m_web3Face, new rpc::MemoryDB()));
+	m_httpConnectorId = m_rpcServer->addConnector(new dev::SafeHttpServer(8545, "", "", 4));
+	m_ipcConnectorId = m_rpcServer->addConnector(new dev::IpcServer("geth"));
 	m_rpcServer->StartListening();
 }
 
@@ -43,15 +46,15 @@ RPCHost::~RPCHost()
 
 std::string RPCHost::newSession(SessionPermissions const& _p)
 {
-	return m_webthreeFace->newSession(_p);
+	return m_web3Face->newSession(_p);
 }
 
 SafeHttpServer* RPCHost::httpConnector() const
 {
-	return m_rpcServer->httpConnector();
+	return static_cast<dev::SafeHttpServer*>(m_rpcServer->connector(m_httpConnectorId));
 }
 
 IpcServer* RPCHost::ipcConnector() const
 {
-	return m_rpcServer->ipcConnector();
+	return static_cast<dev::IpcServer*>(m_rpcServer->connector(m_ipcConnectorId));
 }

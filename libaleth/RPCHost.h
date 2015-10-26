@@ -24,7 +24,7 @@
 #include <libdevcore/Common.h>
 #include <libweb3jsonrpc/IpcServer.h>
 
-template <class I, class... Is> class RPCServer;
+template <class... Is> class ModularServer;
 
 namespace dev
 {
@@ -49,14 +49,15 @@ public:
 
 	void init(AlethFace* _aleth);
 	std::string newSession(SessionPermissions const& _p);
-	WebThreeServer* webthreeFace() const { return m_webthreeFace; }
+	WebThreeServer* web3Face() const { return m_web3Face; }
 	SafeHttpServer* httpConnector() const;
 	IpcServer* ipcConnector() const;
 
 private:
-	WebThreeServer* m_webthreeFace;
-	std::shared_ptr<RPCServer<WebThreeServer, rpc::DBFace>> m_rpcServer;
-
+	WebThreeServer* m_web3Face;
+	std::shared_ptr<ModularServer<WebThreeServer, rpc::DBFace>> m_rpcServer;
+	unsigned m_httpConnectorId;
+	unsigned m_ipcConnectorId;
 };
 
 }
