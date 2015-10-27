@@ -32,13 +32,18 @@ namespace dev
 struct SessionPermissions;
 class SafeHttpServer;
 
-namespace rpc { class DBFace; }
+namespace rpc
+{
+class DBFace;
+class WhisperFace;
+}
 
 namespace aleth
 {
 
 class AlethFace;
 class WebThreeServer;
+class AlethWhisper;
 
 class RPCHost
 {
@@ -50,12 +55,14 @@ public:
 	void init(AlethFace* _aleth);
 	std::string newSession(SessionPermissions const& _p);
 	WebThreeServer* web3Face() const { return m_web3Face; }
+	AlethWhisper* whisperFace() const { return m_whisperFace; }
 	SafeHttpServer* httpConnector() const;
 	IpcServer* ipcConnector() const;
 
 private:
 	WebThreeServer* m_web3Face;
-	std::shared_ptr<ModularServer<WebThreeServer, rpc::DBFace>> m_rpcServer;
+	AlethWhisper* m_whisperFace;
+	std::shared_ptr<ModularServer<WebThreeServer, rpc::DBFace, rpc::WhisperFace>> m_rpcServer;
 	unsigned m_httpConnectorId;
 	unsigned m_ipcConnectorId;
 };

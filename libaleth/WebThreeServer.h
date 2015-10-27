@@ -25,14 +25,28 @@
 #include <libethcore/CommonJS.h>
 #include <libdevcrypto/Common.h>
 #include <libweb3jsonrpc/WebThreeStubServer.h>
+#include <libweb3jsonrpc/Whisper.h>
 #include "AccountHolder.h"
 
 namespace dev
 {
+
 namespace aleth
 {
 
 class AccountHolder;
+
+class AlethWhisper: public QObject, public rpc::Whisper
+{
+	Q_OBJECT
+
+public:
+	AlethWhisper(WebThreeDirect& _web3, std::vector<dev::KeyPair> const& _accounts): rpc::Whisper(_web3, _accounts) {}
+	virtual std::string shh_newIdentity() override;
+
+signals:
+	void onNewId(QString _s);
+};
 
 class WebThreeServer: public QObject, public WebThreeStubServer
 {
@@ -42,11 +56,6 @@ public:
 	WebThreeServer(AlethFace* _aleth);
 
 	std::shared_ptr<dev::aleth::AccountHolder> ethAccounts() const;
-
-	virtual std::string shh_newIdentity() override;
-
-signals:
-	void onNewId(QString _s);
 };
 
 }

@@ -27,6 +27,7 @@
 #include <libethereum/Utility.h>
 #include <libwhisper/WhisperHost.h>
 #include <libweb3jsonrpc/WebThreeStubServerBase.h>
+#include <libweb3jsonrpc/Whisper.h>
 #include <libwebthree/WebThree.h>
 #include <libaleth/WebThreeServer.h>
 #include <libaleth/AlethFace.h>
@@ -127,7 +128,7 @@ Whisper::Whisper(ZeroFace* _m):
 	dock(Qt::RightDockWidgetArea, "Whisper")->setWidget(new QWidget);
 	m_ui->setupUi(dock()->widget());
 	connect(addMenuItem("New Whisper Identity", "menuAccounts", true), &QAction::triggered, this, &Whisper::onNewIdentityTriggered);
-	connect(zero()->web3Server(), &WebThreeServer::onNewId, this, &Whisper::addNewId);
+	connect(zero()->whisperFace(), &AlethWhisper::onNewId, this, &Whisper::addNewId);
 	connect(m_ui->post, SIGNAL(clicked()), this, SLOT(onPostClicked()));
 	connect(m_ui->forgetTopics, SIGNAL(clicked()), this, SLOT(onForgetTopicsClicked()));
 	connect(m_ui->forgetDestinations, SIGNAL(clicked()), this, SLOT(onForgetDestinationsClicked()));
@@ -153,7 +154,7 @@ void Whisper::readSettings(QSettings const& _s)
 		}
 	}
 
-	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	zero()->whisperFace()->setIdentities(keysAsVector(m_myIdentities));
 
 	int ttl = _s.value("ttl").toInt();
 	if (ttl > 0)
@@ -186,7 +187,7 @@ void Whisper::addNewId(QString _ids)
 {
 	KeyPair kp(jsToSecret(_ids.toStdString()));
 	m_myIdentities.push_back(kp);
-	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	zero()->whisperFace()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 
@@ -203,7 +204,7 @@ void Whisper::onNewIdentityTriggered()
 {
 	KeyPair kp = KeyPair::create();
 	m_myIdentities.append(kp);
-	zero()->web3Server()->setIdentities(keysAsVector(m_myIdentities));
+	zero()->whisperFace()->setIdentities(keysAsVector(m_myIdentities));
 	refreshWhisper();
 }
 

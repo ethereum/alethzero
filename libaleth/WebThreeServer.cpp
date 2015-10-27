@@ -29,18 +29,18 @@ using namespace dev;
 using namespace eth;
 using namespace aleth;
 
-WebThreeServer::WebThreeServer(
-	AlethFace* _aleth
-):
-	WebThreeStubServer(*_aleth->web3(), make_shared<AccountHolder>(_aleth), vector<KeyPair>{}, _aleth->keyManager(), *static_cast<TrivialGasPricer*>(_aleth->ethereum()->gasPricer().get()))
-{
-}
-
-string WebThreeServer::shh_newIdentity()
+string AlethWhisper::shh_newIdentity()
 {
 	KeyPair kp = dev::KeyPair::create();
 	emit onNewId(QString::fromStdString(toJS(kp.sec())));
 	return toJS(kp.pub());
+}
+
+WebThreeServer::WebThreeServer(
+	AlethFace* _aleth
+):
+	WebThreeStubServer(*_aleth->web3(), make_shared<AccountHolder>(_aleth), _aleth->keyManager(), *static_cast<TrivialGasPricer*>(_aleth->ethereum()->gasPricer().get()))
+{
 }
 
 std::shared_ptr<dev::aleth::AccountHolder> WebThreeServer::ethAccounts() const

@@ -34,7 +34,11 @@ using namespace aleth;
 void RPCHost::init(AlethFace* _aleth)
 {
 	m_web3Face = new WebThreeServer(_aleth);
-	m_rpcServer.reset(new ModularServer<WebThreeServer, rpc::DBFace>(m_web3Face, new rpc::MemoryDB()));
+	m_whisperFace = new AlethWhisper(*_aleth->web3(), {});
+	m_rpcServer.reset(new ModularServer<
+					  WebThreeServer,
+					  rpc::DBFace,
+					  rpc::WhisperFace>(m_web3Face, new rpc::MemoryDB(), m_whisperFace));
 	m_httpConnectorId = m_rpcServer->addConnector(new dev::SafeHttpServer(8545, "", "", 4));
 	m_ipcConnectorId = m_rpcServer->addConnector(new dev::IpcServer("geth"));
 	m_rpcServer->StartListening();

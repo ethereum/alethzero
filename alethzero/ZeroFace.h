@@ -41,6 +41,7 @@ namespace aleth
 
 class AlethFace;
 class WebThreeServer;
+class AlethWhisper;
 
 namespace zero
 {
@@ -78,6 +79,7 @@ public:
 
 	virtual WebThreeServer* web3Server() const = 0;
 	virtual SafeHttpServer* web3ServerConnector() const = 0;
+	virtual AlethWhisper* whisperFace() const = 0;
 
 	virtual void allStop() = 0;
 	virtual void carryOn() = 0;
