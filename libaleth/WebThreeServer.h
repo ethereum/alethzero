@@ -39,7 +39,7 @@ class WebThreeServer: public QObject, public WebThreeStubServer
 	Q_OBJECT
 
 public:
-	WebThreeServer(jsonrpc::AbstractServerConnector& _conn, AlethFace* _aleth);
+	WebThreeServer(AlethFace* _aleth);
 
 	std::shared_ptr<dev::aleth::AccountHolder> ethAccounts() const;
 
