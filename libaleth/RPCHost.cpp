@@ -25,6 +25,7 @@
 #include <libweb3jsonrpc/MemoryDB.h>
 #include <libweb3jsonrpc/SafeHttpServer.h>
 #include <libweb3jsonrpc/Net.h>
+#include <libweb3jsonrpc/Bzz.h>
 #include <libwebthree/WebThree.h>
 #include "WebThreeServer.h"
 #include "AlethFace.h"
@@ -41,7 +42,8 @@ void RPCHost::init(AlethFace* _aleth)
 					  WebThreeServer,
 					  rpc::DBFace,
 					  rpc::WhisperFace,
-					  rpc::NetFace>(m_web3Face, new rpc::MemoryDB(), m_whisperFace, new rpc::Net(*_aleth->web3())));
+					  rpc::NetFace,
+					  rpc::BzzFace>(m_web3Face, new rpc::MemoryDB(), m_whisperFace, new rpc::Net(*_aleth->web3()), new rpc::Bzz(*_aleth->web3()->swarm())));
 	m_httpConnectorId = m_rpcServer->addConnector(new dev::SafeHttpServer(8545, "", "", 4));
 	m_ipcConnectorId = m_rpcServer->addConnector(new dev::IpcServer("geth"));
 	m_rpcServer->StartListening();
