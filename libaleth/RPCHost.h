@@ -36,6 +36,7 @@ namespace rpc
 {
 class DBFace;
 class WhisperFace;
+class NetFace;
 }
 
 namespace aleth
@@ -62,7 +63,7 @@ public:
 private:
 	WebThreeServer* m_web3Face;
 	AlethWhisper* m_whisperFace;
-	std::shared_ptr<ModularServer<WebThreeServer, rpc::DBFace, rpc::WhisperFace>> m_rpcServer;
+	std::shared_ptr<ModularServer<WebThreeServer, rpc::DBFace, rpc::WhisperFace, rpc::NetFace>> m_rpcServer;
 	unsigned m_httpConnectorId;
 	unsigned m_ipcConnectorId;
 };
