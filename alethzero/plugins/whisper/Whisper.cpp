@@ -194,7 +194,7 @@ void Whisper::addNewId(QString _ids)
 void Whisper::refreshWhisper()
 {
 	m_ui->shhFrom->clear();
-	for (auto i: zero()->web3Server()->ids())
+	for (auto i: zero()->whisperFace()->ids())
 		m_ui->shhFrom->addItem(QString::fromStdString(toHex(i.first.ref())));
 
 	m_ui->shhFrom->addItem(QString());
@@ -251,8 +251,8 @@ void Whisper::onPostClicked()
 
 	Secret from;
 	Public f = stringToPublic(m_ui->shhFrom->currentText());
-	if (zero()->web3Server()->ids().count(f))
-		from = zero()->web3Server()->ids().at(f);
+	if (zero()->whisperFace()->ids().count(f))
+		from = zero()->whisperFace()->ids().at(f);
 
 	shh::Topics topic = stringToTopics(strTopic);
 	web3()->whisper()->inject(m.seal(from, topic, m_ui->shhTtl->value(), m_ui->shhWork->value()));

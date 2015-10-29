@@ -251,7 +251,7 @@ void WhisperPeers::refresh(QString const& _topic, bool _timerEvent)
 		shh::Message msg = e.open(web3()->whisper()->fullTopics(w));
 
 		if (!msg)
-			for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
+			for (pair<Public, Secret> const& i: zero()->whisperFace()->ids())
 				if (!!(msg = e.open(bt, i.second)))
 					break;
 
@@ -292,7 +292,7 @@ void WhisperPeers::refreshAll(bool _timerEvent)
 			shh::Message msg = e.open(web3()->whisper()->fullTopics(t->second));
 
 			if (!msg)
-				for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
+				for (pair<Public, Secret> const& i: zero()->whisperFace()->ids())
 					if (!!(msg = e.open(shh::Topics(), i.second)))
 						break;
 
