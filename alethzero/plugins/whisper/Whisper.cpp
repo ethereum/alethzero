@@ -26,10 +26,9 @@
 #include <libethereum/Client.h>
 #include <libethereum/Utility.h>
 #include <libwhisper/WhisperHost.h>
-#include <libweb3jsonrpc/WebThreeStubServerBase.h>
 #include <libweb3jsonrpc/Whisper.h>
 #include <libwebthree/WebThree.h>
-#include <libaleth/WebThreeServer.h>
+#include <libaleth/AlethWhisper.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "WhisperPeers.h"

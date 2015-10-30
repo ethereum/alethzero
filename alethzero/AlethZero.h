@@ -77,7 +77,7 @@ public:
 	AlethZero();
 	~AlethZero();
 
-	WebThreeServer* web3Server() const override { return m_rpcHost.web3Face(); }
+//	WebThreeServer* web3Server() const override { return m_rpcHost.web3Face(); }
 	SafeHttpServer* web3ServerConnector() const override { return m_rpcHost.httpConnector(); }
 	AlethWhisper* whisperFace() const override { return m_rpcHost.whisperFace(); }
 

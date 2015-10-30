@@ -35,7 +35,6 @@
 #include <libethereum/Client.h>
 #include <libethereum/EthereumHost.h>
 #include <libaleth/SyncView.h>
-#include <libaleth/WebThreeServer.h>
 #include "Connect.h"
 #include "alethzero/BuildInfo.h"
 #include "SettingsDialog.h"
@@ -283,7 +282,8 @@ void AlethZero::onBeneficiaryChanged()
 
 void AlethZero::on_confirm_triggered()
 {
-	web3Server()->ethAccounts()->setEnabled(m_ui->confirm->isChecked());
+//TODO: fix!
+//	web3Server()->ethAccounts()->setEnabled(m_ui->confirm->isChecked());
 }
 
 void AlethZero::on_preview_triggered()

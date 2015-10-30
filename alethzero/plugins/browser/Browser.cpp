@@ -28,7 +28,7 @@
 #include <QtWebEngineWidgets/QWebEngineView>
 #include <QtWebEngineWidgets/QWebEngineCallback>
 #include <QtWebEngineWidgets/QWebEngineSettings>
-#include <libaleth/WebThreeServer.h>
+#include <libaleth/AlethWhisper.h>
 #include <libaleth/AlethFace.h>
 #include <libaleth/DappHost.h>
 #include <libaleth/DappLoader.h>
@@ -79,7 +79,8 @@ Browser::Browser(ZeroFace* _m):
 	dock(Qt::TopDockWidgetArea, "Browser")->setWidget(new QWidget());
 	m_ui->setupUi(dock()->widget());
 
-	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
+//	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
+	std::string adminSessionKey = "";
 	m_dappHost.reset(new DappHost(8081, web3()));
 	m_dappLoader = new DappLoader(this, web3());
 	m_dappLoader->setSessionKey(adminSessionKey);

@@ -22,7 +22,7 @@
 #include "JsConsole.h"
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <QWebEngineView>
-#include <libaleth/WebThreeServer.h>
+#include <libaleth/AlethWhisper.h>
 #include <libaleth/AlethFace.h>
 #include <libaleth/DappLoader.h>
 #include "JsConsoleWidget.h"
@@ -45,7 +45,8 @@ JsConsole::JsConsole(ZeroFace* _m):
 	webView->setVisible(false);
 	jsConsole->setWebView(webView);
 	dock(Qt::BottomDockWidgetArea, "JavaScript Console")->setWidget(jsConsole);
-	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
+//	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
+	std::string adminSessionKey = "";
 
 	QString content = "<script>\n";
 	content += DappLoader::makeJSCode();

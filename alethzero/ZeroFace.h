@@ -77,7 +77,7 @@ public:
 	virtual AlethFace const* aleth() const = 0;
 	virtual AlethFace* aleth() = 0;
 
-	virtual WebThreeServer* web3Server() const = 0;
+//	virtual WebThreeServer* web3Server() const = 0;
 	virtual SafeHttpServer* web3ServerConnector() const = 0;
 	virtual AlethWhisper* whisperFace() const = 0;
 
