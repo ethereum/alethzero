@@ -85,6 +85,7 @@ public:
 
 	virtual void allStop() = 0;
 	virtual void carryOn() = 0;
+	virtual void writeSettings() = 0;
 
 protected:
 	template <class F> void forEach(F const& _f) { for (auto const& p: m_plugins) _f(p.second); }
@@ -92,7 +93,6 @@ protected:
 
 	static std::unordered_map<std::string, PluginFactory>* s_linkedPlugins;
 
-	virtual void writeSettings() = 0;
 
 private:
 	std::unordered_map<std::string, std::shared_ptr<Plugin>> m_plugins;

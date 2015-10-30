@@ -73,6 +73,7 @@ void PrivateChain::setPrivateChain(QString const& _private, bool _forceConfigure
 	CanonBlockChain<Ethash>::forceGenesisGasLimit(m_id.isEmpty() ? u256() : u256(1) << 32);
 	ethereum()->reopenChain();
 	zero()->findChild<QAction*>("usePrivate")->setChecked(!m_id.isEmpty());
+	zero()->writeSettings();
 
 	// Rejig UI bits.
 	zero()->carryOn();
