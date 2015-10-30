@@ -24,7 +24,6 @@
 #include <libdevcore/Guards.h>
 #include <libethcore/CommonJS.h>
 #include <libdevcrypto/Common.h>
-#include <libweb3jsonrpc/WebThreeStubServer.h>
 #include <libweb3jsonrpc/Whisper.h>
 #include "AccountHolder.h"
 
@@ -46,16 +45,6 @@ public:
 
 signals:
 	void onNewId(QString _s);
-};
-
-class WebThreeServer: public QObject, public WebThreeStubServer
-{
-	Q_OBJECT
-
-public:
-	WebThreeServer(AlethFace* _aleth);
-
-	std::shared_ptr<dev::aleth::AccountHolder> ethAccounts() const;
 };
 
 }

@@ -26,8 +26,7 @@
 #include <libethereum/Client.h>
 #include <libwhisper/WhisperHost.h>
 #include <libwebthree/WebThree.h>
-#include <libweb3jsonrpc/WebThreeStubServerBase.h>
-#include <libaleth/WebThreeServer.h>
+#include <libaleth/AlethWhisper.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 #include "ui_WhisperPeers.h"
@@ -251,7 +250,7 @@ void WhisperPeers::refresh(QString const& _topic, bool _timerEvent)
 		shh::Message msg = e.open(web3()->whisper()->fullTopics(w));
 
 		if (!msg)
-			for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
+			for (pair<Public, Secret> const& i: zero()->whisperFace()->ids())
 				if (!!(msg = e.open(bt, i.second)))
 					break;
 
@@ -292,7 +291,7 @@ void WhisperPeers::refreshAll(bool _timerEvent)
 			shh::Message msg = e.open(web3()->whisper()->fullTopics(t->second));
 
 			if (!msg)
-				for (pair<Public, Secret> const& i: zero()->web3Server()->ids())
+				for (pair<Public, Secret> const& i: zero()->whisperFace()->ids())
 					if (!!(msg = e.open(shh::Topics(), i.second)))
 						break;
 

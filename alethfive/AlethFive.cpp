@@ -33,7 +33,7 @@
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include <libwebthree/WebThree.h>
-#include <libaleth/WebThreeServer.h>
+#include <libweb3jsonrpc/SessionManager.h>
 #include "alethzero/BuildInfo.h"
 #include "ui_AlethFive.h"
 using namespace std;
@@ -54,7 +54,7 @@ AlethFive::AlethFive():
 	m_rpcHost.init(&m_aleth);
 	m_dappHost.reset(new DappHost(8081, m_aleth.web3()));
 	m_dappLoader = new DappLoader(this, m_aleth.web3());
-	m_dappLoader->setSessionKey(m_rpcHost.newSession(SessionPermissions{{Privilege::Admin}}));
+	m_dappLoader->setSessionKey(m_rpcHost.sessionManager()->newSession(rpc::SessionPermissions{{rpc::Privilege::Admin}}));
 	connect(m_dappLoader, &DappLoader::dappReady, this, &AlethFive::dappLoaded);
 	connect(m_dappLoader, &DappLoader::pageReady, this, &AlethFive::pageLoaded);
 	connect(m_ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& _url)

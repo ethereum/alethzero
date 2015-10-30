@@ -19,43 +19,46 @@
  * @date 2015
  */
 
-#include "RPCHost.h"
 #include <libdevcore/Log.h>
 #include <libweb3jsonrpc/ModularServer.h>
 #include <libweb3jsonrpc/MemoryDB.h>
 #include <libweb3jsonrpc/SafeHttpServer.h>
 #include <libweb3jsonrpc/Net.h>
 #include <libweb3jsonrpc/Bzz.h>
+#include <libweb3jsonrpc/Web3.h>
+#include <libweb3jsonrpc/Eth.h>
+#include <libweb3jsonrpc/SessionManager.h>
+#include <libweb3jsonrpc/Personal.h>
+#include <libweb3jsonrpc/AdminEth.h>
+#include <libweb3jsonrpc/AdminNet.h>
+#include <libweb3jsonrpc/AdminUtils.h>
 #include <libwebthree/WebThree.h>
-#include "WebThreeServer.h"
+#include <libethereum/GasPricer.h>
+#include "RPCHost.h"
+#include "AlethWhisper.h"
 #include "AlethFace.h"
+#include "AccountHolder.h"
 
 using namespace std;
 using namespace dev;
+using namespace eth;
 using namespace aleth;
 
 void RPCHost::init(AlethFace* _aleth)
 {
-	m_web3Face = new WebThreeServer(_aleth);
+	m_accountHolder.reset(new AccountHolder(_aleth));
+	m_sm.reset(new rpc::SessionManager());
+	m_ethFace = new rpc::Eth(*_aleth->web3()->ethereum(), *m_accountHolder.get());
 	m_whisperFace = new AlethWhisper(*_aleth->web3(), {});
+	auto adminEth = new rpc::AdminEth(*_aleth->web3()->ethereum(), *static_cast<TrivialGasPricer*>(_aleth->ethereum()->gasPricer().get()), _aleth->keyManager(), *m_sm.get());
 	m_rpcServer.reset(new ModularServer<
-					  WebThreeServer,
-					  rpc::DBFace,
-					  rpc::WhisperFace,
-					  rpc::NetFace,
-					  rpc::BzzFace>(m_web3Face, new rpc::MemoryDB(), m_whisperFace, new rpc::Net(*_aleth->web3()), new rpc::Bzz(*_aleth->web3()->swarm())));
+					  rpc::EthFace, rpc::DBFace, rpc::WhisperFace,
+					  rpc::NetFace, rpc::BzzFace, rpc::Web3Face, rpc::PersonalFace,
+					  rpc::AdminEthFace, rpc::AdminNetFace, rpc::AdminUtilsFace
+					  >(m_ethFace, new rpc::MemoryDB(), m_whisperFace, new rpc::Net(*_aleth->web3()), new rpc::Bzz(*_aleth->web3()->swarm()), new rpc::Web3(_aleth->web3()->clientVersion()), new rpc::Personal(_aleth->keyManager()), adminEth, new rpc::AdminNet(*_aleth->web3(), *m_sm.get()), new rpc::AdminUtils(*m_sm.get())));
 	m_httpConnectorId = m_rpcServer->addConnector(new dev::SafeHttpServer(8545, "", "", 4));
 	m_ipcConnectorId = m_rpcServer->addConnector(new dev::IpcServer("geth"));
 	m_rpcServer->StartListening();
-}
-
-RPCHost::~RPCHost()
-{
-}
-
-std::string RPCHost::newSession(SessionPermissions const& _p)
-{
-	return m_web3Face->newSession(_p);
 }
 
 SafeHttpServer* RPCHost::httpConnector() const
@@ -66,4 +69,14 @@ SafeHttpServer* RPCHost::httpConnector() const
 IpcServer* RPCHost::ipcConnector() const
 {
 	return static_cast<dev::IpcServer*>(m_rpcServer->connector(m_ipcConnectorId));
+}
+
+aleth::AccountHolder* RPCHost::accountHolder() const
+{
+	return m_accountHolder.get();
+}
+
+rpc::SessionManager* RPCHost::sessionManager() const
+{
+	return m_sm.get();
 }

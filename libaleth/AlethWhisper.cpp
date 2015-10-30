@@ -19,7 +19,7 @@
  * @date 2014
  */
 
-#include "WebThreeServer.h"
+#include "AlethWhisper.h"
 #include <QMessageBox>
 #include <QAbstractButton>
 #include <libwebthree/WebThree.h>
@@ -34,16 +34,4 @@ string AlethWhisper::shh_newIdentity()
 	KeyPair kp = dev::KeyPair::create();
 	emit onNewId(QString::fromStdString(toJS(kp.sec())));
 	return toJS(kp.pub());
-}
-
-WebThreeServer::WebThreeServer(
-	AlethFace* _aleth
-):
-	WebThreeStubServer(*_aleth->web3(), make_shared<AccountHolder>(_aleth), _aleth->keyManager(), *static_cast<TrivialGasPricer*>(_aleth->ethereum()->gasPricer().get()))
-{
-}
-
-std::shared_ptr<dev::aleth::AccountHolder> WebThreeServer::ethAccounts() const
-{
-	return static_pointer_cast<dev::aleth::AccountHolder>(WebThreeStubServerBase::ethAccounts());
 }
