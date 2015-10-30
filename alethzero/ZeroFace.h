@@ -36,6 +36,8 @@ namespace dev
 
 class SafeHttpServer;
 
+namespace rpc { class SessionManager; }
+
 namespace aleth
 {
 
@@ -77,9 +79,9 @@ public:
 	virtual AlethFace const* aleth() const = 0;
 	virtual AlethFace* aleth() = 0;
 
-//	virtual WebThreeServer* web3Server() const = 0;
 	virtual SafeHttpServer* web3ServerConnector() const = 0;
 	virtual AlethWhisper* whisperFace() const = 0;
+	virtual rpc::SessionManager* sessionManager() const = 0;
 
 	virtual void allStop() = 0;
 	virtual void carryOn() = 0;

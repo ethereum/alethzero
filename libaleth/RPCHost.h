@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <memory>
 #include <libdevcore/Common.h>
 #include <libweb3jsonrpc/IpcServer.h>
 
@@ -29,7 +30,6 @@ template <class... Is> class ModularServer;
 namespace dev
 {
 
-struct SessionPermissions;
 class SafeHttpServer;
 
 namespace rpc
@@ -40,6 +40,11 @@ class WhisperFace;
 class NetFace;
 class BzzFace;
 class Web3Face;
+class SessionManager;
+class PersonalFace;
+class AdminEthFace;
+class AdminNetFace;
+class AdminUtilsFace;
 }
 
 namespace aleth
@@ -54,22 +59,25 @@ class RPCHost
 public:
 	RPCHost() = default;
 	RPCHost(AlethFace* _aleth) { init(_aleth); }
-	~RPCHost();
 
 	void init(AlethFace* _aleth);
-	std::string newSession(SessionPermissions const& _p);
 	rpc::EthFace* ethFace() const { return m_ethFace; }
 	AlethWhisper* whisperFace() const { return m_whisperFace; }
 	SafeHttpServer* httpConnector() const;
 	IpcServer* ipcConnector() const;
+	AccountHolder* accountHolder() const;
+	rpc::SessionManager* sessionManager() const;
 
 private:
 	rpc::EthFace* m_ethFace;
 	AlethWhisper* m_whisperFace;
-	std::shared_ptr<ModularServer<rpc::EthFace, rpc::DBFace, rpc::WhisperFace, rpc::NetFace, rpc::BzzFace, rpc::Web3Face>> m_rpcServer;
+	std::shared_ptr<ModularServer<rpc::EthFace, rpc::DBFace, rpc::WhisperFace,
+	rpc::NetFace, rpc::BzzFace, rpc::Web3Face, rpc::PersonalFace,
+	rpc::AdminEthFace, rpc::AdminNetFace, rpc::AdminUtilsFace>> m_rpcServer;
 	unsigned m_httpConnectorId;
 	unsigned m_ipcConnectorId;
 	std::shared_ptr<AccountHolder> m_accountHolder;
+	std::shared_ptr<rpc::SessionManager> m_sm;
 };
 
 }

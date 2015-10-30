@@ -25,6 +25,7 @@
 #include <libaleth/AlethWhisper.h>
 #include <libaleth/AlethFace.h>
 #include <libaleth/DappLoader.h>
+#include <libweb3jsonrpc/SessionManager.h>
 #include "JsConsoleWidget.h"
 #include "ZeroFace.h"
 using namespace std;
@@ -45,8 +46,7 @@ JsConsole::JsConsole(ZeroFace* _m):
 	webView->setVisible(false);
 	jsConsole->setWebView(webView);
 	dock(Qt::BottomDockWidgetArea, "JavaScript Console")->setWidget(jsConsole);
-//	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
-	std::string adminSessionKey = "";
+	std::string adminSessionKey = zero()->sessionManager()->newSession(rpc::SessionPermissions{{rpc::Privilege::Admin}});
 
 	QString content = "<script>\n";
 	content += DappLoader::makeJSCode();

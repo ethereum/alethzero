@@ -32,6 +32,7 @@
 #include <libaleth/AlethFace.h>
 #include <libaleth/DappHost.h>
 #include <libaleth/DappLoader.h>
+#include <libweb3jsonrpc/SessionManager.h>
 #include "ZeroFace.h"
 #include "ui_Browser.h"
 using namespace std;
@@ -79,8 +80,7 @@ Browser::Browser(ZeroFace* _m):
 	dock(Qt::TopDockWidgetArea, "Browser")->setWidget(new QWidget());
 	m_ui->setupUi(dock()->widget());
 
-//	std::string adminSessionKey = zero()->web3Server()->newSession(SessionPermissions{{Privilege::Admin}});
-	std::string adminSessionKey = "";
+	std::string adminSessionKey = zero()->sessionManager()->newSession(rpc::SessionPermissions{{rpc::Privilege::Admin}});
 	m_dappHost.reset(new DappHost(8081, web3()));
 	m_dappLoader = new DappLoader(this, web3());
 	m_dappLoader->setSessionKey(adminSessionKey);
