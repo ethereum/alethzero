@@ -26,7 +26,7 @@
 #include <jsonrpccpp/client/connectors/httpclient.h>
 #include <libdevcore/Log.h>
 #include <libdevcore/CommonJS.h>
-#include <libethcore/EthashSealEngine.h>
+#include <libethcore/Ethash.h>
 #include "FarmClient.h"
 using namespace std;
 using namespace dev;
@@ -34,7 +34,7 @@ using namespace eth;
 using namespace aleth;
 
 SlaveAux::SlaveAux():
-	m_engine(make_shared<EthashSealEngine>()),
+	m_engine(make_shared<Ethash>()),
 	m_id(h256::random())
 {
 	m_engine->farm().onSolutionFound([&](EthashProofOfWork::Solution const& sol) { return onSolutionFound(sol); });
