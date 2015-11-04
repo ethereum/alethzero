@@ -56,11 +56,7 @@ void dev::aleth::initChromiumDebugTools(int& _argc, char**& _argv)
 	s_port = ((uint16_t)(FixedHash<2>::Arith)FixedHash<2>::random()) % (32768 - 1024) + 1024;
 	cnote << "Web developers: Debugger on 127.0.0.1:" << s_port;
 
-	static string s_addition = "--remote-debugging-port=" + toString(s_port);
-	static vector<char*> s_argv(_argv, _argv + _argc);
-	s_argv.push_back(const_cast<char*>(s_addition.c_str()));
-	_argc++;
-	_argv = const_cast<char**>(s_argv.data());
+	qputenv("QTWEBENGINE_REMOTE_DEBUGGING", QString::number(s_port).toLatin1());
 }
 
 unsigned dev::aleth::chromiumDebugToolsPort()
