@@ -55,7 +55,7 @@ private:
 	Ui::SendDialog* m_ui;
 	AlethFace* m_aleth;
 
-	u256 m_value = UndefinedU256;
+	u256 m_value = Invalid256;
 	Address m_to;
 	bytes m_data;
 };

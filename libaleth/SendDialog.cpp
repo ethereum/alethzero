@@ -71,11 +71,11 @@ void SendDialog::on_value_textChanged(QString _s)
 				m_value = (u256)round(d);
 			}
 			else
-				m_value = UndefinedU256;
+				m_value = Invalid256;
 		}
 		catch (...)
 		{
-			m_value = UndefinedU256;
+			m_value = Invalid256;
 		}
 	}
 	updateProblem();
@@ -97,7 +97,7 @@ void SendDialog::updateProblem()
 	}
 	else
 		m_ui->to->setStyleSheet("background: #ccffcc; font-size: 16pt");
-	if (m_value == UndefinedU256)
+	if (m_value == Invalid256)
 	{
 		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 24pt");
 		m_ui->problem->setStyleSheet("color: #880000");
@@ -106,7 +106,7 @@ void SendDialog::updateProblem()
 	else
 		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 24pt");
 
-	if (m_value != UndefinedU256 && m_to)
+	if (m_value != Invalid256 && m_to)
 	{
 		m_ui->problem->setStyleSheet("");
 		m_ui->problem->setText(QString::fromStdString(formatBalance(m_value) + " to " + m_aleth->toReadable(m_to) + (m_data.empty() ? "" : (" with " + toHex(m_data)))));
