@@ -445,7 +445,7 @@ void TransactDialog::determineGasRequirements()
 		do
 		{
 			m_needsEstimation = false;
-			ExecutionResult er = ethereum()->estimateGas(from, value(), to, m_data, UndefinedU256, gasPrice(), PendingBlock, callback).second;
+			ExecutionResult er = ethereum()->estimateGas(from, value(), to, m_data, Invalid256, gasPrice(), PendingBlock, callback).second;
 			emit gasEstimationComplete(er);
 		}
 		while (m_needsEstimation);
