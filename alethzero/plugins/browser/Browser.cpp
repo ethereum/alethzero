@@ -140,7 +140,7 @@ void Browser::reloadUrl()
 		return;
 	QString s = m_ui->urlEdit->text();
 	QUrl url(s);
-	if (url.scheme().isEmpty() || url.scheme() == "eth" || url.path().endsWith(".dapp"))
+	if (url.scheme().isEmpty() || url.scheme() == "eth" || url.path().endsWith(".dapp") || (url.scheme() == "about" && url.path() == "wallet"))
 	{
 		try
 		{
