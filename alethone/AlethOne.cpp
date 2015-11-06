@@ -30,6 +30,7 @@
 #include <libethcore/Common.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
+#include <libethereum/EthashClient.h>
 #include <libwebthree/WebThree.h>
 #include <libaleth/SendDialog.h>
 #include "alethzero/BuildInfo.h"
@@ -50,7 +51,8 @@ AlethOne::AlethOne():
 	m_ui->setupUi(this);
 	m_aleth.init(Aleth::Nothing, "AlethOne", "anon");
 
-	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier") + QString(" AlethOne v") + QString::fromStdString(niceVersion(dev::Version)));
+	//(c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier") +
+	m_ui->version->setText(QString("AlethOne v") + QString::fromStdString(niceVersion(dev::Version)));
 	m_ui->author->setPlaceholderText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
 	m_ui->sync->setAleth(&m_aleth);
 
@@ -84,8 +86,17 @@ void AlethOne::refresh()
 		u256 r;
 		if (m_aleth)
 		{
-			m = m_aleth.ethereum()->isMining();
-			r = m_aleth.ethereum()->hashrate();
+
+			try
+			{
+				m = asEthashClient(m_aleth.ethereum())->isMining();
+				r = asEthashClient(m_aleth.ethereum())->hashrate();
+			}
+			catch (...)
+			{
+				m = 0;
+				r = 0;
+			}
 		}
 		else
 		{
