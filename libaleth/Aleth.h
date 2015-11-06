@@ -65,6 +65,8 @@ public:
 	eth::KeyManager& keyManager() override { return m_keyManager; }
 	Secret retrieveSecret(Address const& _address) const override;
 
+	eth::ChainParams const& baseParams() const override { return m_baseParams; }
+
 	/// Start the webthree subsystem.
 	bool open(OnInit _open = Bootstrap);
 	/// Stop the webthree subsystem.

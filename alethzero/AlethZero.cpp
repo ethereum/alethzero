@@ -34,6 +34,7 @@
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include <libethereum/EthereumHost.h>
+#include <libethereum/EthashClient.h>
 #include <libaleth/AccountHolder.h>
 #include <libaleth/SyncView.h>
 #include "Connect.h"
@@ -71,11 +72,11 @@ AlethZero::AlethZero():
 	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
 	cerr << "Client database version: " << c_databaseVersion << endl;
 
-	if (c_network == eth::Network::Olympic)
+/*	if (m_aleth.baseParams(). == eth::Network::Olympic)
 		setWindowTitle("AlethZero Olympic");
 	else if (c_network == eth::Network::Frontier)
 		setWindowTitle("AlethZero Frontier");
-
+*/
 	m_ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(aleth()->ethereum()->sealEngine()->name())).arg(aleth()->ethereum()->sealEngine()->revision()).arg(dev::Version));
 
 	createSettingsPages();
@@ -293,8 +294,16 @@ void AlethZero::refreshMining()
 	QString t;
 	if (gp.first != EthashAux::NotGenerating)
 		t = QString("DAG for #%1-#%2: %3% complete; ").arg(gp.first).arg(gp.first + ETHASH_EPOCH_LENGTH - 1).arg(gp.second);
-	WorkingProgress p = aleth()->ethereum()->miningProgress();
-	m_ui->mineStatus->setText(t + (aleth()->ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
+	try
+	{
+		EthashClient* c = asEthashClient(aleth()->ethereum());
+		WorkingProgress p = c->miningProgress();
+		m_ui->mineStatus->setText(t + (c->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
+	}
+	catch (...)
+	{
+		m_ui->mineStatus->setText(t + (aleth()->ethereum()->wouldSeal() ? "Sealing..." : "Not sealing"));
+	}
 }
 
 void AlethZero::refreshBalances()
@@ -394,8 +403,10 @@ void AlethZero::refreshBlockCount()
 //	BlockQueueStatus b = ethereum()->blockQueueStatus();
 //	m_ui->chainStatus->setText(QString("%3 importing %4 ready %5 verifying %6 unverified %7 future %8 unknown %9 bad  %1 #%2")
 //		.arg(m_privateChain.size() ? "[" + m_privateChain + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number).arg(b.importing).arg(b.verified).arg(b.verifying).arg(b.unverified).arg(b.future).arg(b.unknown).arg(b.bad));
-	m_ui->chainStatus->setText(QString("%1 #%2")
-		.arg(/*m_privateChain ? "[" + m_privateChain.id() + "] " :*/ c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier").arg(d.number));		// TODO: some way for the plugin to display this
+//	m_ui->chainStatus->setText(QString("%1 #%2")
+//		.arg(/*m_privateChain ? "[" + m_privateChain.id() + "] " :*/ c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier").arg(d.number));		// TODO: some way for the plugin to display this
+	m_ui->chainStatus->setText(QString("#%2")
+		.arg(d.number));
 }
 
 void AlethZero::refreshAll()

@@ -68,17 +68,16 @@ void PrivateChain::setPrivateChain(QString const& _private, bool _forceConfigure
 
 	m_id = _private;
 
-//	ChainParams p = zero()->defaultChainParams();	// TODO make it work.
+	ChainParams p = aleth()->baseParams();
 	if (!m_id.isEmpty())
 	{
-		ChainParams p(c_network);
 		p.extraData = sha3(m_id.toStdString()).asBytes();
 		p.difficulty = p.u256Param("minimumDifficulty");
 		p.gasLimit = u256(1) << 32;
 		aleth()->reopenChain(p);
 	}
 	else
-		aleth()->reopenChain();
+		aleth()->reopenChain(p);
 	zero()->findChild<QAction*>("usePrivate")->setChecked(!m_id.isEmpty());
 	zero()->writeSettings();
 

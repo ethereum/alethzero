@@ -26,6 +26,7 @@
 #include <libdevcore/Log.h>
 #include <libethcore/EthashAux.h>
 #include <libethereum/Client.h>
+#include <libethereum/EthashClient.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 using namespace std;
@@ -42,7 +43,7 @@ Mining::Mining(ZeroFace* _m):
 	QAction* mine = addMenuItem("Mine", "menuMining", false, "&Mining");
 	mine->setCheckable(true);
 	connect(mine, &QAction::triggered, [=](){
-		if (ethereum()->isMining() != mine->isChecked())
+		if (ethereum()->wouldSeal() != mine->isChecked())
 		{
 			if (mine->isChecked())
 				ethereum()->startSealing();
@@ -74,7 +75,7 @@ Mining::Mining(ZeroFace* _m):
 	{
 		QTimer* t = new QTimer(this);
 		connect(t, &QTimer::timeout, [=](){
-			mine->setChecked(ethereum()->isMining());
+			mine->setChecked(ethereum()->wouldSeal());
 		});
 		t->start(1000);
 	}

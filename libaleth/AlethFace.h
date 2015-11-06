@@ -66,6 +66,7 @@ public:
 	virtual NatSpecFace& natSpec() = 0;
 
 	// Deep Ethereum API
+	virtual eth::ChainParams const& baseParams() const = 0;
 	virtual void reopenChain(eth::ChainParams const& _p) = 0;
 	virtual void reopenChain() = 0;
 	virtual bool isTampered() const = 0;
