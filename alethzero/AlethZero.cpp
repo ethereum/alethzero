@@ -64,7 +64,6 @@ AlethZero::AlethZero():
 	statusBar()->addPermanentWidget(m_ui->chainStatus);
 	statusBar()->addPermanentWidget(m_ui->blockCount);
 
-	connect(&m_aleth, SIGNAL(beneficiaryChanged()), SLOT(onBeneficiaryChanged()));
 	m_aleth.init(Aleth::OpenOnly, "AlethZero", "anon");
 	m_rpcHost.init(&m_aleth);
 
@@ -106,7 +105,6 @@ AlethZero::AlethZero():
 
 	connect(aleth(), SIGNAL(knownAddressesChanged(AccountNamer*)), SLOT(refreshAll()));
 	connect(aleth(), SIGNAL(addressNamesChanged(AccountNamer*)), SLOT(refreshAll()));
-	connect(&m_aleth, &AlethFace::keysChanged, [&](){ refreshBalances(); });
 
 	readSettings(false, true);
 
@@ -176,9 +174,6 @@ void AlethZero::installWatches()
 
 		// update blockchain dependent views.
 		refreshBlockCount();
-
-		// We must update balances since we can't filter updates to basic accounts.
-		refreshBalances();
 	});
 
 	cdebug << "newBlock watch ID: " << newBlockId;
@@ -270,17 +265,6 @@ void AlethZero::onKeysChanged()
 	// TODO: reinstall balance watchers
 }
 
-void AlethZero::onBeneficiaryChanged()
-{
-	Address b = aleth()->beneficiary();
-	for (int i = 0; i < m_ui->ourAccounts->count(); ++i)
-	{
-		auto hba = m_ui->ourAccounts->item(i)->data(Qt::UserRole).toByteArray();
-		auto h = Address((byte const*)hba.data(), Address::ConstructFromPointer);
-		m_ui->ourAccounts->item(i)->setCheckState(h == b ? Qt::Checked : Qt::Unchecked);
-	}
-}
-
 void AlethZero::on_confirm_triggered()
 {
 	m_rpcHost.accountHolder()->setEnabled(m_ui->confirm->isChecked());
@@ -300,56 +284,6 @@ void AlethZero::refreshMining()
 		t = QString("DAG for #%1-#%2: %3% complete; ").arg(gp.first).arg(gp.first + ETHASH_EPOCH_LENGTH - 1).arg(gp.second);
 	WorkingProgress p = aleth()->ethereum()->miningProgress();
 	m_ui->mineStatus->setText(t + (aleth()->ethereum()->isMining() ? p.hashes > 0 ? QString("%1s @ %2kH/s").arg(p.ms / 1000).arg(p.ms ? p.hashes / p.ms : 0) : "Awaiting DAG" : "Not mining"));
-}
-
-void AlethZero::refreshBalances()
-{
-	cwatch << "refreshBalances()";
-	// update all the balance-dependent stuff.
-	m_ui->ourAccounts->clear();
-	u256 totalBalance = 0;
-/*	map<Address, tuple<QString, u256, u256>> altCoins;
-	Address coinsAddr = getCurrencies();
-	for (unsigned i = 0; i < ethereum()->stateAt(coinsAddr, PendingBlock); ++i)
-	{
-		auto n = ethereum()->stateAt(coinsAddr, i + 1);
-		auto addr = right160(ethereum()->stateAt(coinsAddr, n));
-		auto denom = ethereum()->stateAt(coinsAddr, sha3(h256(n).asBytes()));
-		if (denom == 0)
-			denom = 1;
-//		cdebug << n << addr << denom << sha3(h256(n).asBytes());
-		altCoins[addr] = make_tuple(fromRaw(n), 0, denom);
-	}*/
-
-	auto bene = aleth()->beneficiary();
-	for (auto const& address: aleth()->keyManager().accounts())
-	{
-		u256 b = aleth()->ethereum()->balanceAt(address);
-		QListWidgetItem* li = new QListWidgetItem(
-			QString("<%1> %2: %3 [%4]")
-				.arg(aleth()->keyManager().haveKey(address) ? "KEY" : "BRAIN")
-				.arg(QString::fromStdString(aleth()->toReadable(address)))
-				.arg(formatBalance(b).c_str())
-				.arg((unsigned)aleth()->ethereum()->countAt(address))
-			, m_ui->ourAccounts);
-		li->setData(Qt::UserRole, QByteArray((char const*)address.data(), Address::size));
-		li->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-		li->setCheckState(bene == address ? Qt::Checked : Qt::Unchecked);
-		totalBalance += b;
-
-//		for (auto& c: altCoins)
-//			get<1>(c.second) += (u256)ethereum()->stateAt(c.first, (u160)i.address());
-	}
-
-	QString b;
-/*	for (auto const& c: altCoins)
-		if (get<1>(c.second))
-		{
-			stringstream s;
-			s << setw(toString(get<2>(c.second) - 1).size()) << setfill('0') << (get<1>(c.second) % get<2>(c.second));
-			b += QString::fromStdString(toString(get<1>(c.second) / get<2>(c.second)) + "." + s.str() + " ") + get<0>(c.second).toUpper() + " | ";
-		}*/
-	m_ui->balance->setText(b + QString::fromStdString(formatBalance(totalBalance)));
 }
 
 void AlethZero::refreshNetwork()
@@ -406,7 +340,6 @@ void AlethZero::refreshBlockCount()
 void AlethZero::refreshAll()
 {
 	refreshBlockCount();
-	refreshBalances();
 	noteAllChange();
 }
 
@@ -509,82 +442,6 @@ void AlethZero::on_connect_triggered()
 
 
 //////////////////////// ACCOUNT MANAGEMENT /////////////////////////////////
-
-
-void AlethZero::on_ourAccounts_doubleClicked()
-{
-	auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
-	auto h = Address((byte const*)hba.data(), Address::ConstructFromPointer);
-	qApp->clipboard()->setText(QString::fromStdString(ICAP(h).encoded()) + " (" + QString::fromStdString(h.hex()) + ")");
-}
-
-void AlethZero::on_ourAccounts_itemClicked(QListWidgetItem* _i)
-{
-	auto hba = _i->data(Qt::UserRole).toByteArray();
-	aleth()->setBeneficiary(Address((byte const*)hba.data(), Address::ConstructFromPointer));
-}
-
-void AlethZero::on_exportKey_triggered()
-{
-	if (m_ui->ourAccounts->currentRow() >= 0)
-	{
-		auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
-		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
-		Secret s = aleth()->retrieveSecret(h);
-		QMessageBox::information(this, "Export Account Key", "Secret key to account " + QString::fromStdString(aleth()->toReadable(h) + " is:\n" + s.makeInsecure().hex()));
-	}
-}
-
-void AlethZero::on_killAccount_triggered()
-{
-	if (m_ui->ourAccounts->currentRow() >= 0)
-	{
-		auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
-		Address h((byte const*)hba.data(), Address::ConstructFromPointer);
-		QString s = QInputDialog::getText(this, QString::fromStdString("Kill Account " + aleth()->keyManager().accountName(h) + "?!"),
-			QString::fromStdString("Account " + aleth()->keyManager().accountName(h) + " (" + aleth()->toReadable(h) + ") has " + formatBalance(aleth()->ethereum()->balanceAt(h)) + " in it.\r\nIt, and any contract that this account can access, will be lost forever if you continue. Do NOT continue unless you know what you are doing.\n"
-			"Are you sure you want to continue? \r\n If so, type 'YES' to confirm."),
-			QLineEdit::Normal, "NO");
-		if (s != "YES")
-			return;
-		aleth()->keyManager().kill(h);
-		if (aleth()->keyManager().accounts().empty())
-			aleth()->keyManager().import(Secret::random(), "Default account");
-		aleth()->noteKeysChanged();
-		if (aleth()->beneficiary() == h)
-			aleth()->setBeneficiary(aleth()->keyManager().accounts().front());
-	}
-}
-
-void AlethZero::on_reencryptKey_triggered()
-{
-	if (m_ui->ourAccounts->currentRow() >= 0)
-	{
-		auto hba = m_ui->ourAccounts->currentItem()->data(Qt::UserRole).toByteArray();
-		Address a((byte const*)hba.data(), Address::ConstructFromPointer);
-		QStringList kdfs = {"PBKDF2-SHA256", "Scrypt"};
-		bool ok = true;
-		KDF kdf = (KDF)kdfs.indexOf(QInputDialog::getItem(this, "Re-Encrypt Key", "Select a key derivation function to use for storing your key:", kdfs, kdfs.size() - 1, false, &ok));
-		if (!ok)
-			return;
-		std::string hint;
-		std::string password = getPassword("Create Account", "Enter the password you would like to use for this key. Don't forget it!\nEnter nothing to use your Master password.", &hint, &ok);
-		if (!ok)
-			return;
-		try {
-			auto pw = [&](){
-				auto p = QInputDialog::getText(this, "Re-Encrypt Key", "Enter the original password for this key.\nHint: " + QString::fromStdString(aleth()->keyManager().passwordHint(a)), QLineEdit::Password, QString()).toStdString();
-				if (p.empty())
-					throw PasswordUnknown();
-				return p;
-			};
-			while (!(password.empty() ? aleth()->keyManager().recode(a, SemanticPassword::Master, pw, kdf) : aleth()->keyManager().recode(a, password, hint, pw, kdf)))
-				if (QMessageBox::question(this, "Re-Encrypt Key", "Password given is incorrect. Would you like to try again?", QMessageBox::Retry, QMessageBox::Cancel) == QMessageBox::Cancel)
-					return;
-		}
-		catch (PasswordUnknown&) {}
-	}
-}
 
 void AlethZero::on_reencryptAll_triggered()
 {

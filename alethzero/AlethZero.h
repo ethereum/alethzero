@@ -107,19 +107,12 @@ private slots:
 	void on_preview_triggered();
 
 	// Account management
-	void on_killAccount_triggered();
-	void on_reencryptKey_triggered();
 	void on_reencryptAll_triggered();
-	void on_exportKey_triggered();
-	void on_ourAccounts_itemClicked(QListWidgetItem* _i);
-	void on_ourAccounts_doubleClicked();
 
 	// Special (debug) stuff
 	void on_confirm_triggered();
 	void on_settings_triggered();
 	void refreshAll();
-
-	void onBeneficiaryChanged();
 
 private:
 	void allStop() override;
