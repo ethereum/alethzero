@@ -30,7 +30,7 @@
 #include <libethcore/Common.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
-#include <libethereum/EthashClient.h>
+#include <libethashseal/EthashClient.h>
 #include <libwebthree/WebThree.h>
 #include <libaleth/SendDialog.h>
 #include "alethzero/BuildInfo.h"

@@ -70,7 +70,6 @@ public:
 	virtual void reopenChain(eth::ChainParams const& _p) = 0;
 	virtual void reopenChain() = 0;
 	virtual bool isTampered() const = 0;
-	virtual bool isStandard() const = 0;
 
 	// Watch API
 	virtual unsigned installWatch(dev::eth::LogFilter const& _tf, WatchHandler const& _f) = 0;

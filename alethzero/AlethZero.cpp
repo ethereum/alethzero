@@ -30,11 +30,11 @@
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QInputDialog>
 #include <QtWidgets/QListWidgetItem>
-#include <libethcore/EthashAux.h>
+#include <libethashseal/EthashAux.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
 #include <libethereum/EthereumHost.h>
-#include <libethereum/EthashClient.h>
+#include <libethashseal/EthashClient.h>
 #include <libaleth/AccountHolder.h>
 #include <libaleth/SyncView.h>
 #include "Connect.h"
@@ -245,8 +245,8 @@ void AlethZero::setNetPrefs(NetworkSettings const& _settings)
 {
 	aleth()->web3()->setIdealPeerCount(_settings.idealPeers);
 	auto p = _settings.p2pSettings;
-	p.discovery = p.discovery && aleth()->isStandard();
-	p.pin = p.pin || !aleth()->isStandard();
+	p.discovery = p.discovery && !aleth()->isTampered();
+	p.pin = p.pin || aleth()->isTampered();
 	aleth()->web3()->setNetworkPreferences(p, _settings.dropPeers);
 	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", _settings.clientName.toStdString()));
 	QSettings s("ethereum", "alethzero");

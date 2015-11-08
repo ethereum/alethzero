@@ -25,7 +25,7 @@
 #include <QStringList>
 #include <libdevcore/Common.h>
 #include <libethcore/Common.h>
-#include <libethcore/EthashAux.h>
+#include <libethashseal/EthashAux.h>
 
 Q_DECLARE_METATYPE(dev::h256)
 Q_DECLARE_METATYPE(dev::eth::EthashProofOfWork::Solution)

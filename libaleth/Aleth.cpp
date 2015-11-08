@@ -28,6 +28,7 @@
 #include <libp2p/Host.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
+#include <libethashseal/GenesisInfo.h>
 #include "ui_GetPassword.h"
 using namespace std;
 using namespace dev;
@@ -69,18 +70,21 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 
 	// Get options
 	m_dbPath = getDataDir();
+
+	eth::Network network = eth::Network::Frontier;
+
 	for (int i = 1; i < qApp->arguments().size(); ++i)
 	{
 		QString arg = qApp->arguments()[i];
 		if (arg == "--frontier")
-			m_network = eth::Network::Frontier;
+			network = eth::Network::Frontier;
 		else if (arg == "--olympic")
-			m_network = eth::Network::Olympic;
+			network = eth::Network::Olympic;
 		else if (arg == "--morden" || arg == "--testnet")
-			m_network = eth::Network::Morden;
+			network = eth::Network::Morden;
 		else if (arg == "--genesis-json" && i + 1 < qApp->arguments().size())
 		{
-			m_network = eth::Network::Special;
+			network = eth::Network::Special;
 			m_baseParams = ChainParams(contentsString(qApp->arguments()[++i].toStdString()));
 		}
 		else if ((arg == "--db-path" || arg == "-d") && i + 1 < qApp->arguments().size())
@@ -90,10 +94,10 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 	if (!dev::contents(m_dbPath + "/genesis.json").empty())
 	{
 		m_baseParams = ChainParams(contentsString(m_dbPath + "/genesis.json"));
-		m_network = eth::Network::Special;
+		network = eth::Network::Special;
 	}
-	if (m_network != eth::Network::Special)
-		m_baseParams = ChainParams(m_network);
+	if (network != eth::Network::Special)
+		m_baseParams = ChainParams(genesisInfo(network), genesisStateRoot(network));
 
 	// Open Key Store
 	if (keyManager().exists())

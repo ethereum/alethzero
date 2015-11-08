@@ -26,7 +26,7 @@
 #include <jsonrpccpp/client/connectors/httpclient.h>
 #include <libdevcore/Log.h>
 #include <libdevcore/CommonJS.h>
-#include <libethcore/Ethash.h>
+#include <libethashseal/Ethash.h>
 #include "FarmClient.h"
 using namespace std;
 using namespace dev;

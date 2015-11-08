@@ -25,7 +25,7 @@
 #include <QTimer>
 #include <libdevcore/Log.h>
 #include <libethereum/Client.h>
-#include <libethcore/EthashAux.h>
+#include <libethashseal/EthashAux.h>
 #include <libaleth/Debugger.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
@@ -216,7 +216,7 @@ void BlockList::refreshInfo()
 		BlockDetails details;
 		bytes blockData;
 		RLP block;
-		BlockInfo header;
+		BlockHeader header;
 		if (h == PendingBlockHash)
 		{
 			header = ethereum()->pendingInfo();
@@ -227,7 +227,7 @@ void BlockList::refreshInfo()
 			details = ethereum()->blockChain().details(h);
 			blockData = ethereum()->blockChain().block(h);
 			block = RLP(blockData);
-			header = BlockInfo(blockData);
+			header = BlockHeader(blockData);
 		}
 
 		if (item->data(Qt::UserRole + 1).isNull())
@@ -281,7 +281,7 @@ void BlockList::refreshInfo()
 			if (h != PendingBlockHash)
 				for (auto u: block[2])
 				{
-					BlockInfo uncle(u.data(), HeaderData);
+					BlockHeader uncle(u.data(), HeaderData);
 					char const* line = "<div><span style=\"margin-left: 2em\">&nbsp;</span>";
 					s << line << "Hash: <b>" << uncle.hash() << "</b>" << "</div>";
 					s << line << "Parent: <b>" << uncle.parentHash() << "</b>" << "</div>";
@@ -295,7 +295,7 @@ void BlockList::refreshInfo()
 //					s << line << "Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / uncle.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
 				}
 			if (header.parentHash())
-				s << "<div>Pre: <b>" << BlockInfo(ethereum()->blockChain().block(header.parentHash())).stateRoot() << "</b>" << "</div>";
+				s << "<div>Pre: <b>" << BlockHeader(ethereum()->blockChain().block(header.parentHash())).stateRoot() << "</b>" << "</div>";
 			else
 				s << "<div>Pre: <b><i>Nothing is before Phil</i></b>" << "</div>";
 
@@ -377,7 +377,7 @@ void BlockList::debugCurrent()
 
 			bytes t = h == PendingBlockHash ? ethereum()->pending()[txi].rlp() : ethereum()->blockChain().transaction(h, txi);
 			State s = h == PendingBlockHash ? ethereum()->state(txi) : ethereum()->state(txi, h);
-			BlockInfo bi = h == PendingBlockHash ? ethereum()->pendingInfo() : ethereum()->blockChain().info(h);
+			BlockHeader bi = h == PendingBlockHash ? ethereum()->pendingInfo() : ethereum()->blockChain().info(h);
 			Executive e(s, EnvInfo(bi, ethereum()->blockChain().lastHashes(bi.parentHash())));
 			Debugger dw(aleth(), zero());
 			dw.populate(e, Transaction(t, CheckTransaction::Everything));

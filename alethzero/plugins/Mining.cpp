@@ -24,9 +24,9 @@
 #include <QTimer>
 #include <QActionGroup>
 #include <libdevcore/Log.h>
-#include <libethcore/EthashAux.h>
+#include <libethashseal/EthashAux.h>
 #include <libethereum/Client.h>
-#include <libethereum/EthashClient.h>
+#include <libethashseal/EthashClient.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 using namespace std;
