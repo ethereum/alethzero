@@ -67,7 +67,7 @@ namespace zero
 {
 
 class SettingsDialog;
-class NetworkSettings;
+struct NetworkSettings;
 
 class AlethZero: public ZeroFace
 {
@@ -81,8 +81,8 @@ public:
 	AlethWhisper* whisperFace() const override { return m_rpcHost.whisperFace(); }
 	rpc::SessionManager* sessionManager() const override { return m_rpcHost.sessionManager(); }
 
-	AlethFace const* aleth() const { return &m_aleth; }
-	AlethFace* aleth() { return &m_aleth; }
+	AlethFace const* aleth() const override { return &m_aleth; }
+	AlethFace* aleth() override { return &m_aleth; }
 
 public slots:
 	void note(QString _entry);
@@ -137,7 +137,7 @@ private:
 	NetworkSettings netPrefs() const;
 
 	void readSettings(bool _skipGeometry = false, bool _onlyGeometry = false);
-	void writeSettings();
+	void writeSettings() override;
 
 	// Probably unnecessary once everything is pluginified.
 	void installWatches();
