@@ -24,8 +24,9 @@
 #include <QTimer>
 #include <QActionGroup>
 #include <libdevcore/Log.h>
-#include <libethcore/EthashAux.h>
+#include <libethashseal/EthashAux.h>
 #include <libethereum/Client.h>
+#include <libethashseal/EthashClient.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
 using namespace std;
@@ -42,12 +43,12 @@ Mining::Mining(ZeroFace* _m):
 	QAction* mine = addMenuItem("Mine", "menuMining", false, "&Mining");
 	mine->setCheckable(true);
 	connect(mine, &QAction::triggered, [=](){
-		if (ethereum()->isMining() != mine->isChecked())
+		if (ethereum()->wouldSeal() != mine->isChecked())
 		{
 			if (mine->isChecked())
-				ethereum()->startMining();
+				ethereum()->startSealing();
 			else
-				ethereum()->stopMining();
+				ethereum()->stopSealing();
 		}
 	});
 	connect(addMenuItem("Prepare Next DAG", "menuMining"), &QAction::triggered, [&](){
@@ -74,7 +75,7 @@ Mining::Mining(ZeroFace* _m):
 	{
 		QTimer* t = new QTimer(this);
 		connect(t, &QTimer::timeout, [=](){
-			mine->setChecked(ethereum()->isMining());
+			mine->setChecked(ethereum()->wouldSeal());
 		});
 		t->start(1000);
 	}
