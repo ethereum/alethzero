@@ -14,6 +14,6 @@ eth_add_executable(${EXECUTABLE}
 target_include_directories(${EXECUTABLE} PUBLIC ..)
 set_target_properties(${EXECUTABLE} PROPERTIES AUTOUIC ON AUTOMOC ON AUTORCC ON)
 target_link_libraries(${EXECUTABLE} aleth)
-eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Eth::ethereum)
+eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Eth::ethereum Eth::ethashseal)
 
 eth_install_executable(${EXECUTABLE})
