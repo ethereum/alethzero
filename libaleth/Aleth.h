@@ -75,7 +75,7 @@ public:
 	// Deep Ethereum API
 	virtual void reopenChain(eth::ChainParams const& _p) override;
 	virtual void reopenChain() override;
-	virtual bool isTampered() const { return m_isTampered; }
+	virtual bool isTampered() const override { return m_isTampered; }
 
 	// Watch API
 	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
