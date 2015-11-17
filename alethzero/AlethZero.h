@@ -67,7 +67,7 @@ namespace zero
 {
 
 class SettingsDialog;
-class NetworkSettings;
+struct NetworkSettings;
 
 class AlethZero: public ZeroFace
 {
