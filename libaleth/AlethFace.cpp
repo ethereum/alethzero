@@ -48,7 +48,8 @@ Address AlethFace::author() const
 
 void AlethFace::setAuthor(Address const& _a)
 {
-	if (_a != ethereum()->author())
+	cdebug << "Setting author" << _a;
+	if (ethereum()->author() != _a)
 	{
 		ethereum()->setAuthor(_a);
 		emit beneficiaryChanged();

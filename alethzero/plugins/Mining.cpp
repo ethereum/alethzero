@@ -45,6 +45,7 @@ Mining::Mining(ZeroFace* _m):
 	connect(mine, &QAction::triggered, [=](){
 		if (ethereum()->wouldSeal() != mine->isChecked())
 		{
+			cdebug << "Author" << ethereum()->author() << "(" << aleth()->author() << ")";
 			if (mine->isChecked())
 				ethereum()->startSealing();
 			else
