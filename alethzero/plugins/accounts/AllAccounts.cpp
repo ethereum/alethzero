@@ -115,7 +115,7 @@ void AllAccounts::save()
 		else if (account.second.isEdited)
 		{
 			if (account.second.isDefault)
-				aleth()->setBeneficiary(account.first);
+				aleth()->setAuthor(account.first);
 
 			aleth()->keyManager().changeName(account.first, account.second.name.toStdString());
 		}
@@ -124,7 +124,7 @@ void AllAccounts::save()
 	if (aleth()->keyManager().accounts().empty())
 		aleth()->keyManager().import(Secret::random(), "Default account");
 	if (deletedBeneficiary)
-		aleth()->setBeneficiary(aleth()->keyManager().accounts().front());
+		aleth()->setAuthor(aleth()->keyManager().accounts().front());
 	aleth()->noteKeysChanged();
 	aleth()->beneficiaryChanged();
 }
@@ -162,7 +162,7 @@ void AllAccounts::refresh()
 		data.address = i;
 		data.name = QString::fromStdString(aleth()->toName(i));
 		data.isContract = isContract;
-		data.isDefault = aleth()->beneficiary() == i;
+		data.isDefault = aleth()->author() == i;
 		data.isDeleted = false;
 		newAccounts[i] = data;
 	}

@@ -22,7 +22,6 @@
 #include "PrivateChain.h"
 #include <QInputDialog>
 #include <QSettings>
-#include <libethereum/CanonBlockChain.h>
 #include <libethereum/Client.h>
 #include <libaleth/AlethFace.h>
 #include "ZeroFace.h"
@@ -68,10 +67,17 @@ void PrivateChain::setPrivateChain(QString const& _private, bool _forceConfigure
 	zero()->allStop();
 
 	m_id = _private;
-	CanonBlockChain<Ethash>::forceGenesisExtraData(m_id.isEmpty() ? bytes() : sha3(m_id.toStdString()).asBytes());
-	CanonBlockChain<Ethash>::forceGenesisDifficulty(m_id.isEmpty() ? u256() : c_minimumDifficulty);
-	CanonBlockChain<Ethash>::forceGenesisGasLimit(m_id.isEmpty() ? u256() : u256(1) << 32);
-	ethereum()->reopenChain();
+
+	ChainParams p = aleth()->baseParams();
+	if (!m_id.isEmpty())
+	{
+		p.extraData = sha3(m_id.toStdString()).asBytes();
+		p.difficulty = p.u256Param("minimumDifficulty");
+		p.gasLimit = u256(1) << 32;
+		aleth()->reopenChain(p);
+	}
+	else
+		aleth()->reopenChain(p);
 	zero()->findChild<QAction*>("usePrivate")->setChecked(!m_id.isEmpty());
 	zero()->writeSettings();
 

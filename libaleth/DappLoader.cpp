@@ -120,8 +120,7 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 		bytes package(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
 		cdapp << "Package arrived: " << package.size();
 		cdapp << "Expecting (key): " << expected;
-		Secp256k1PP dec;
-		dec.decrypt(Secret(expected), package);
+		Secp256k1PP::get()->decrypt(Secret(expected), package);
 		h256 got = sha3(package);
 		cdapp << "As binary, package contains: " << got;
 		if (got != expected)
@@ -129,7 +128,7 @@ void DappLoader::downloadComplete(QNetworkReply* _reply)
 			//try base64
 			data = QByteArray::fromBase64(data);
 			package = bytes(reinterpret_cast<unsigned char const*>(data.constData()), reinterpret_cast<unsigned char const*>(data.constData() + data.size()));
-			dec.decrypt(Secret(expected), package);
+			Secp256k1PP::get()->decrypt(Secret(expected), package);
 			got = sha3(package);
 			cdapp << "As base-64, package contains: " << got;
 			if (got != expected)

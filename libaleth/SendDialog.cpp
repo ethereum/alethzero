@@ -118,7 +118,7 @@ void SendDialog::updateProblem()
 
 void SendDialog::on_send_clicked()
 {
-	if (Secret sender = m_aleth->retrieveSecret(m_aleth->beneficiary()))
+	if (Secret sender = m_aleth->retrieveSecret(m_aleth->author()))
 	{
 		m_aleth->ethereum()->submitTransaction(sender, m_value, m_to, m_data);
 		accept();
