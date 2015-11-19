@@ -65,10 +65,17 @@ public:
 	eth::KeyManager& keyManager() override { return m_keyManager; }
 	Secret retrieveSecret(Address const& _address) const override;
 
+	eth::ChainParams const& baseParams() const override { return m_baseParams; }
+
 	/// Start the webthree subsystem.
 	bool open(OnInit _open = Bootstrap);
 	/// Stop the webthree subsystem.
 	void close();
+
+	// Deep Ethereum API
+	virtual void reopenChain(eth::ChainParams const& _p) override;
+	virtual void reopenChain() override;
+	virtual bool isTampered() const override { return m_isTampered; }
 
 	// Watch API
 	unsigned installWatch(eth::LogFilter const& _tf, WatchHandler const& _f) override;
@@ -102,6 +109,8 @@ private:
 	std::unordered_set<AccountNamer*> m_namers;
 
 	bool m_destructing = false;
+	eth::ChainParams m_baseParams;
+	bool m_isTampered;
 	std::string m_dbPath;
 	std::string m_clientVersion;
 	std::string m_nodeName;

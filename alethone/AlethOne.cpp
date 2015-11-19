@@ -30,6 +30,7 @@
 #include <libethcore/Common.h>
 #include <libethcore/ICAP.h>
 #include <libethereum/Client.h>
+#include <libethashseal/EthashClient.h>
 #include <libwebthree/WebThree.h>
 #include <libaleth/SendDialog.h>
 #include "alethzero/BuildInfo.h"
@@ -50,8 +51,9 @@ AlethOne::AlethOne():
 	m_ui->setupUi(this);
 	m_aleth.init(Aleth::Nothing, "AlethOne", "anon");
 
-	m_ui->version->setText((c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier") + QString(" AlethOne v") + QString::fromStdString(niceVersion(dev::Version)));
-	m_ui->beneficiary->setPlaceholderText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
+	//(c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier") +
+	m_ui->version->setText(QString("AlethOne v") + QString::fromStdString(niceVersion(dev::Version)));
+	m_ui->author->setPlaceholderText(QString::fromStdString(ICAP(m_aleth.keyManager().accounts().front()).encoded()));
 	m_ui->sync->setAleth(&m_aleth);
 
 	{
@@ -84,8 +86,17 @@ void AlethOne::refresh()
 		u256 r;
 		if (m_aleth)
 		{
-			m = m_aleth.ethereum()->isMining();
-			r = m_aleth.ethereum()->hashrate();
+
+			try
+			{
+				m = asEthashClient(m_aleth.ethereum())->isMining();
+				r = asEthashClient(m_aleth.ethereum())->hashrate();
+			}
+			catch (...)
+			{
+				m = 0;
+				r = 0;
+			}
 		}
 		else
 		{
@@ -137,7 +148,7 @@ void AlethOne::readSettings()
 	else
 		m_ui->pool->setChecked(true);
 	m_ui->url->setText(s.value("url", "http://127.0.0.1:8545").toString());
-	m_ui->beneficiary->setText(s.value("beneficiary", "").toString());
+	m_ui->author->setText(s.value("author", "").toString());
 }
 
 void AlethOne::writeSettings()
@@ -145,7 +156,7 @@ void AlethOne::writeSettings()
 	QSettings s("ethereum", "alethone");
 	s.setValue("mode", m_ui->local->isChecked() ? "solo" : "pool");
 	s.setValue("url", m_ui->url->text());
-	s.setValue("beneficiary", m_ui->beneficiary->text());
+	s.setValue("author", m_ui->author->text());
 }
 
 void AlethOne::on_copy_clicked()
@@ -154,23 +165,23 @@ void AlethOne::on_copy_clicked()
 	if (m_aleth)
 	{
 		if (t.elapsed() > 500)
-			qApp->clipboard()->setText(QString::fromStdString(ICAP(m_aleth.beneficiary()).encoded()));
+			qApp->clipboard()->setText(QString::fromStdString(ICAP(m_aleth.author()).encoded()));
 		else
-			qApp->clipboard()->setText(QString::fromStdString(m_aleth.beneficiary().hex()));
+			qApp->clipboard()->setText(QString::fromStdString(m_aleth.author().hex()));
 		t.restart();
 	}
 }
 
 void AlethOne::on_beneficiary_textEdited()
 {
-	QString addrText = m_ui->beneficiary->text().isEmpty() ? m_ui->beneficiary->placeholderText() : m_ui->beneficiary->text();
+	QString addrText = m_ui->author->text().isEmpty() ? m_ui->author->placeholderText() : m_ui->author->text();
 	pair<Address, bytes> a = m_aleth.readAddress(addrText.toStdString());
 	if (!a.second.empty() || !a.first)
-		m_ui->beneficiary->setStyleSheet("background: #fcc");
+		m_ui->author->setStyleSheet("background: #fcc");
 	else
 	{
-		m_aleth.setBeneficiary(a.first);
-		m_ui->beneficiary->setStyleSheet("");
+		m_aleth.setAuthor(a.first);
+		m_ui->author->setStyleSheet("");
 	}
 }
 
@@ -186,7 +197,7 @@ void AlethOne::on_mining_toggled(bool _on)
 		if (m_ui->local->isChecked())
 		{
 			m_aleth.ethereum()->setSealer(sealer);
-			m_aleth.ethereum()->startMining();
+			m_aleth.ethereum()->startSealing();
 		}
 		else if (m_ui->pool->isChecked())
 		{
@@ -198,13 +209,13 @@ void AlethOne::on_mining_toggled(bool _on)
 	else
 	{
 		if (m_aleth)
-			m_aleth.ethereum()->stopMining();
+			m_aleth.ethereum()->stopSealing();
 		m_slave.stop();
 	}
 	m_ui->local->setEnabled(!_on);
 	m_ui->pool->setEnabled(!_on);
 	m_ui->url->setEnabled(!_on);
-	m_ui->beneficiary->setEnabled(!_on);
+	m_ui->author->setEnabled(!_on);
 	refresh();
 }
 
