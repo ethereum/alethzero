@@ -259,11 +259,7 @@ void BlockList::refreshInfo()
 					s << "<div>" << i.first << ": <b>" << htmlEscaped(i.second) << "</b>" << "</div>";
 				s << "<div>Hash w/o nonce: <b>" << header.hash(WithoutSeal) << "</b>" << "</div>";
 				if (header.number())
-				{
-//					auto e = EthashAux::eval(header.seedHash(), header.hash(WithoutSeal), header.nonce());
-//					s << "<div>Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / header.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
 					s << "<div>Parent: <b>" << header.parentHash() << "</b>" << "</div>";
-				}
 				else
 				{
 					s << "<div>Proof-of-Work: <b><i>Phil has nothing to prove</i></b></div>";
@@ -291,8 +287,6 @@ void BlockList::refreshInfo()
 						s << line << i.first << ": <b>" << htmlEscaped(i.second) << "</b>" << "</div>";
 					s << line << "Hash w/o nonce: <b>" << uncle.hash(WithoutSeal) << "</b>" << "</div>";
 					s << line << "Difficulty: <b>" << uncle.difficulty() << "</b>" << "</div>";
-//					auto e = EthashAux::eval(uncle.seedHash(), uncle.hash(WithoutSeal), uncle.nonce());
-//					s << line << "Proof-of-Work: <b>" << e.value << " &lt;= " << (h256)u256((bigint(1) << 256) / uncle.difficulty()) << "</b> (mixhash: " << e.mixHash.abridged() << ")" << "</div>";
 				}
 			if (header.parentHash())
 				s << "<div>Pre: <b>" << BlockHeader(ethereum()->blockChain().block(header.parentHash())).stateRoot() << "</b>" << "</div>";

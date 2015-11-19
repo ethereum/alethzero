@@ -72,11 +72,6 @@ AlethZero::AlethZero():
 	cerr << "eth Network protocol version: " << eth::c_protocolVersion << endl;
 	cerr << "Client database version: " << c_databaseVersion << endl;
 
-/*	if (m_aleth.baseParams(). == eth::Network::Olympic)
-		setWindowTitle("AlethZero Olympic");
-	else if (c_network == eth::Network::Frontier)
-		setWindowTitle("AlethZero Frontier");
-*/
 	m_ui->blockCount->setText(QString("PV%1.%2 D%3 %4-%5 v%6").arg(eth::c_protocolVersion).arg(eth::c_minorProtocolVersion).arg(c_databaseVersion).arg(QString::fromStdString(aleth()->ethereum()->sealEngine()->name())).arg(aleth()->ethereum()->sealEngine()->revision()).arg(dev::Version));
 
 	createSettingsPages();
@@ -400,11 +395,11 @@ void AlethZero::refreshBlockCount()
 	if (sync.state == SyncState::Blocks || sync.state == SyncState::NewBlocks)
 		syncStatus += QString(": %1/%2").arg(sync.blocksReceived).arg(sync.blocksTotal);
 	m_ui->syncStatus->setText(syncStatus);
+	// TODO: allow a plugin to display this.
 //	BlockQueueStatus b = ethereum()->blockQueueStatus();
 //	m_ui->chainStatus->setText(QString("%3 importing %4 ready %5 verifying %6 unverified %7 future %8 unknown %9 bad  %1 #%2")
 //		.arg(m_privateChain.size() ? "[" + m_privateChain + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number).arg(b.importing).arg(b.verified).arg(b.verifying).arg(b.unverified).arg(b.future).arg(b.unknown).arg(b.bad));
-//	m_ui->chainStatus->setText(QString("%1 #%2")
-//		.arg(/*m_privateChain ? "[" + m_privateChain.id() + "] " :*/ c_network == eth::Network::Olympic ? "Olympic" : c_network == eth::Network::Morden ? "Morden" : "Frontier").arg(d.number));		// TODO: some way for the plugin to display this
+	// TODO: allow chain description here, probably from a plugin.
 	m_ui->chainStatus->setText(QString("#%2")
 		.arg(d.number));
 }
