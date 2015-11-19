@@ -391,10 +391,8 @@ void AlethZero::refreshBlockCount()
 	auto d = aleth()->ethereum()->blockChain().details();
 	SyncStatus sync = aleth()->ethereum()->syncStatus();
 	QString syncStatus = QString("PV%1 %2").arg(sync.protocolVersion).arg(EthereumHost::stateName(sync.state));
-	if (sync.state == SyncState::Hashes)
-		syncStatus += QString(": %1/%2%3").arg(sync.hashesReceived).arg(sync.hashesEstimated ? "~" : "").arg(sync.hashesTotal);
 	if (sync.state == SyncState::Blocks || sync.state == SyncState::NewBlocks)
-		syncStatus += QString(": %1/%2").arg(sync.blocksReceived).arg(sync.blocksTotal);
+		syncStatus += QString(": %1/%2").arg(sync.currentBlockNumber).arg(sync.highestBlockNumber);
 	m_ui->syncStatus->setText(syncStatus);
 //	BlockQueueStatus b = ethereum()->blockQueueStatus();
 //	m_ui->chainStatus->setText(QString("%3 importing %4 ready %5 verifying %6 unverified %7 future %8 unknown %9 bad  %1 #%2")

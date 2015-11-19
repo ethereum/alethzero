@@ -54,7 +54,6 @@ void SyncView::paintEvent(QPaintEvent*)
 
 	auto client = m_aleth->ethereum();
 
-	DownloadMan const* man = client->downloadMan();
 	BlockQueueStatus bqs = client->blockQueueStatus();
 	SyncStatus sync = client->syncStatus();
 
@@ -67,35 +66,20 @@ void SyncView::paintEvent(QPaintEvent*)
 	unsigned syncCount = syncUnverified + bqs.unknown - syncFrom;
 
 	// best effort guess. assumes there's no forks.
-	unsigned downloadFrom = sync.state == SyncState::Idle ? m_lastSyncFrom : client->numberFromHash(client->isKnown(man->firstBlock()) ? man->firstBlock() : PendingBlockHash);
+	unsigned downloadFrom = sync.state == SyncState::Idle ? m_lastSyncFrom : sync.startBlockNumber;
 	unsigned downloadCount = sync.state == SyncState::Idle ? m_lastSyncCount : sync.blocksTotal;
 	unsigned downloadDone = downloadFrom + (sync.state == SyncState::Idle ? m_lastSyncCount : sync.blocksReceived);
-	unsigned downloadPoint = downloadFrom + (sync.state == SyncState::Idle ? m_lastSyncCount : man->overview().lastComplete);
-
-	unsigned hashFrom = sync.state == SyncState::Hashes ? client->numberFromHash(PendingBlockHash) : downloadFrom;
-	unsigned hashCount = sync.state == SyncState::Hashes ? sync.hashesTotal : downloadCount;
-	unsigned hashDone = hashFrom + (sync.state == SyncState::Hashes ? sync.hashesReceived : hashCount);
+	unsigned downloadPoint = downloadFrom + (sync.state == SyncState::Idle ? m_lastSyncCount : sync.startBlockNumber + sync.blocksReceived);
 
 	QString labelText = QString("PV%1").arg(sync.protocolVersion);
 	QColor labelBack = QColor::fromHsv(sync.protocolVersion == 60 ? 30 : sync.protocolVersion == 61 ? 120 : 240, 25, 200);
 	QColor labelFore = labelBack.darker();
 	switch (sync.state)
 	{
-	case SyncState::Hashes:
-		if (!syncCount || !sync.hashesEstimated)
-		{
-			m_lastSyncFrom = min(hashFrom, m_lastSyncFrom);
-			m_lastSyncCount = max(hashFrom + hashCount, m_lastSyncFrom + m_lastSyncCount) - m_lastSyncFrom;
-			m_wasEstimate = sync.hashesEstimated;
-		}
-		break;
 	case SyncState::Blocks:
-		if (m_wasEstimate)
-		{
-			m_lastSyncFrom = downloadFrom;
-			m_lastSyncCount = downloadCount;
-			m_wasEstimate = false;
-		}
+		m_lastSyncFrom = downloadFrom;
+		m_lastSyncCount = downloadCount;
+		m_wasEstimate = false;
 		break;
 	case SyncState::Idle:
 		if (!syncCount)
@@ -109,8 +93,8 @@ void SyncView::paintEvent(QPaintEvent*)
 	default: break;
 	}
 
-	unsigned from = min(min(hashFrom, downloadFrom), min(syncFrom, m_lastSyncFrom));
-	unsigned count = max(max(hashFrom + hashCount, downloadFrom + downloadCount), max(syncFrom + syncCount, m_lastSyncFrom + m_lastSyncCount)) - from;
+	unsigned from = min(downloadFrom, min(syncFrom, m_lastSyncFrom));
+	unsigned count = max(downloadFrom + downloadCount, max(syncFrom + syncCount, m_lastSyncFrom + m_lastSyncCount)) - from;
 
 /*	cnote << "Range " << from << "-" << (from + count) << "(" << hashFrom << "+" << hashCount << "," << downloadFrom << "+" << downloadCount << "," << syncFrom << "+" << syncCount << ")";
 	auto r = [&](unsigned u) {
@@ -195,7 +179,7 @@ void SyncView::paintEvent(QPaintEvent*)
 
 	if (sync.state != SyncState::Idle)
 	{
-		progress(0, 0, 220, 0.4f, 0.02f, from, hashDone - from);							// Download rail
+		//progress(0, 0, 220, 0.4f, 0.02f, from, hashDone - from);							// Download rail
 		progress(240, 25, 170, 0.4f, 0.02f, downloadDone, downloadPoint - downloadDone);	// Latest download point
 		progress(240, 50, 120, 0.4f, 0.04f, from, downloadDone - from);						// Downloaded
 	}
