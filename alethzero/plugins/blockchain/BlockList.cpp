@@ -378,7 +378,7 @@ void BlockList::debugCurrent()
 			bytes t = h == PendingBlockHash ? ethereum()->pending()[txi].rlp() : ethereum()->blockChain().transaction(h, txi);
 			State s = h == PendingBlockHash ? ethereum()->state(txi) : ethereum()->state(txi, h);
 			BlockHeader bi = h == PendingBlockHash ? ethereum()->pendingInfo() : ethereum()->blockChain().info(h);
-			Executive e(s, EnvInfo(bi, ethereum()->blockChain().lastHashes(bi.parentHash())));
+			Executive e(s, EnvInfo(bi, ethereum()->blockChain().lastHashes(bi.parentHash())), aleth()->ethereum()->sealEngine());
 			Debugger dw(aleth(), zero());
 			dw.populate(e, Transaction(t, CheckTransaction::Everything));
 			dw.exec();
