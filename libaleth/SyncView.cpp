@@ -22,7 +22,6 @@
 #include "SyncView.h"
 #include <QtWidgets>
 #include <QtCore>
-#include <libethereum/DownloadMan.h>
 #include "AlethFace.h"
 #include "Grapher.h"
 using namespace std;

@@ -391,7 +391,7 @@ void AlethZero::refreshBlockCount()
 	SyncStatus sync = aleth()->ethereum()->syncStatus();
 	QString syncStatus = QString("PV%1 %2").arg(sync.protocolVersion).arg(EthereumHost::stateName(sync.state));
 	if (sync.state == SyncState::Blocks || sync.state == SyncState::NewBlocks)
-		syncStatus += QString(": %1/%2").arg(sync.currentBlockNumber).arg(sync.highestBlockNumber);
+		syncStatus += QString(": %1/%2").arg(sync.startBlockNumber + sync.blocksReceived).arg(sync.highestBlockNumber);
 	m_ui->syncStatus->setText(syncStatus);
 	// TODO: allow a plugin to display this.
 //	BlockQueueStatus b = ethereum()->blockQueueStatus();
