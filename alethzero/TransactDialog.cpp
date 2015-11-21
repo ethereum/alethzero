@@ -372,7 +372,9 @@ void TransactDialog::updateBounds()
 
 void TransactDialog::finaliseBounds(ExecutionResult const& _er)
 {
-	quint64 baseGas = (quint64)Transaction::gasRequired(m_data, 0);
+	EVMSchedule schedule;	// TODO: populate properly
+
+	quint64 baseGas = (quint64)Transaction::gasRequired(&m_data, 0);
 	m_ui->progressGas->setVisible(false);
 
 	quint64 executionGas = m_upperBound - baseGas;
@@ -405,7 +407,7 @@ void TransactDialog::finaliseBounds(ExecutionResult const& _er)
 	}
 	if (_er.codeDeposit == CodeDeposit::Failed)
 	{
-		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Code deposit failed due to insufficient gas; " + QString::fromStdString(toString(_er.gasForDeposit)) + " GAS &lt; " + QString::fromStdString(toString(_er.depositSize)) + " bytes * " + QString::fromStdString(toString(c_createDataGas)) + "GAS/byte</div>");
+		bail("<div class=\"error\"><span class=\"icon\">ERROR</span> Code deposit failed due to insufficient gas; " + QString::fromStdString(toString(_er.gasForDeposit)) + " GAS &lt; " + QString::fromStdString(toString(_er.depositSize)) + " bytes * " + QString::fromStdString(toString(schedule.createDataGas)) + "GAS/byte</div>");
 		return;
 	}
 
