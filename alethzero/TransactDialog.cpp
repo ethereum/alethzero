@@ -374,7 +374,7 @@ void TransactDialog::finaliseBounds(ExecutionResult const& _er)
 {
 	EVMSchedule schedule;	// TODO: populate properly
 
-	quint64 baseGas = (quint64)Transaction::gasRequired(&m_data, 0);
+	quint64 baseGas = (quint64)Transaction::gasRequired(&m_data, m_aleth->ethereum()->evmSchedule(), 0);
 	m_ui->progressGas->setVisible(false);
 
 	quint64 executionGas = m_upperBound - baseGas;
