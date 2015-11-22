@@ -22,6 +22,7 @@
 #pragma once
 
 #include <queue>
+#include <unordered_map>
 #include <QObject>
 #include <libdevcore/Guards.h>
 #include <libweb3jsonrpc/AccountHolder.h>
@@ -32,6 +33,23 @@ namespace aleth
 {
 
 class AlethFace;
+
+enum class TransactionRepersussion
+{
+	Unknown,
+	UnknownAccount,
+	Locked,
+	Refused,
+	ProxySuccess,
+	Success
+};
+
+struct TransactionNotification
+{
+	TransactionRepersussion r;
+	h256 hash;
+	Address created;
+};
 
 class AccountHolder: public QObject, public eth::AccountHolder
 {
@@ -61,8 +79,11 @@ private:
 
 	bool m_isEnabled = true;
 
-	std::queue<eth::TransactionSkeleton> m_queued;
+	std::queue<std::pair<eth::TransactionSkeleton, unsigned>> m_queued;
+	std::unordered_map<unsigned, TransactionNotification> m_queueOutput;
+	unsigned m_nextQueueID = 0;
 	Mutex x_queued;
+	std::condition_variable m_queueCondition;
 
 	AlethFace* m_aleth;
 };

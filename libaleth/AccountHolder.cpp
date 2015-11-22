@@ -53,9 +53,14 @@ bool aleth::AccountHolder::showAuthenticationPopup(string const& _title, string 
 
 h256 aleth::AccountHolder::authenticate(TransactionSkeleton const& _t)
 {
-	Guard l(x_queued);
-	m_queued.push(_t);
-	return h256();
+	UniqueGuard l(x_queued);
+	auto id = m_nextQueueID++;
+	m_queued.push(make_pair(_t, id));
+	while (!m_queueOutput.count(id))
+		m_queueCondition.wait(l);
+	TransactionNotification ret = m_queueOutput[id];
+	m_queueOutput.erase(id);
+	return ret.hash;
 }
 
 void aleth::AccountHolder::doValidations()
@@ -63,28 +68,46 @@ void aleth::AccountHolder::doValidations()
 	Guard l(x_queued);
 	while (!m_queued.empty())
 	{
-		auto t = m_queued.front();
+		TransactionSkeleton t;
+		unsigned id;
+		tie(t, id) = m_queued.front();
 		m_queued.pop();
 
+		TransactionNotification n;
 		bool proxy = isProxyAccount(t.from);
 		if (!proxy && !isRealAccount(t.from))
 		{
 			cwarn << "Trying to send from non-existant account" << t.from;
-			return;
+			n.r = TransactionRepersussion::UnknownAccount;
+		}
+		else
+		{
+			// TODO: determine gas price.
+			if (validateTransaction(t, proxy))
+			{
+				if (proxy)
+				{
+					queueTransaction(t);
+					n.r = TransactionRepersussion::ProxySuccess;
+				}
+				else
+				{
+					// sign and submit.
+					if (Secret s = m_aleth->retrieveSecret(t.from))
+					{
+						tie(n.hash, n.created) = m_aleth->ethereum()->submitTransaction(t, s);
+						n.r = TransactionRepersussion::Success;
+					}
+					else
+						n.r = TransactionRepersussion::Locked;
+				}
+			}
+			n.r = TransactionRepersussion::Refused;
 		}
 
-		// TODO: determine gas price.
-
-		if (!validateTransaction(t, proxy))
-			return;
-
-		if (proxy)
-			queueTransaction(t);
-		else
-			// sign and submit.
-			if (Secret s = m_aleth->retrieveSecret(t.from))
-				m_aleth->ethereum()->submitTransaction(t, s);
+		m_queueOutput[id] = n;
 	}
+	m_queueCondition.notify_all();
 }
 
 AddressHash aleth::AccountHolder::realAccounts() const
