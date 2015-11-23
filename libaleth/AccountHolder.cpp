@@ -51,7 +51,7 @@ bool aleth::AccountHolder::showAuthenticationPopup(string const& _title, string 
 	return userInput.exec() == QMessageBox::Ok;
 }
 
-h256 aleth::AccountHolder::authenticate(TransactionSkeleton const& _t)
+TransactionNotification aleth::AccountHolder::authenticate(TransactionSkeleton const& _t)
 {
 	UniqueGuard l(x_queued);
 	auto id = m_nextQueueID++;
@@ -60,7 +60,7 @@ h256 aleth::AccountHolder::authenticate(TransactionSkeleton const& _t)
 		m_queueCondition.wait(l);
 	TransactionNotification ret = m_queueOutput[id];
 	m_queueOutput.erase(id);
-	return ret.hash;
+	return ret;
 }
 
 void aleth::AccountHolder::doValidations()

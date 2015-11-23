@@ -34,23 +34,6 @@ namespace aleth
 
 class AlethFace;
 
-enum class TransactionRepersussion
-{
-	Unknown,
-	UnknownAccount,
-	Locked,
-	Refused,
-	ProxySuccess,
-	Success
-};
-
-struct TransactionNotification
-{
-	TransactionRepersussion r;
-	h256 hash;
-	Address created;
-};
-
 class AccountHolder: public QObject, public eth::AccountHolder
 {
 	Q_OBJECT
@@ -68,7 +51,7 @@ protected:
 	// easiest to return keyManager.addresses();
 	virtual dev::AddressHash realAccounts() const override;
 	// use web3 to submit a signed transaction to accept
-	virtual dev::h256 authenticate(dev::eth::TransactionSkeleton const& _t) override;
+	virtual eth::TransactionNotification authenticate(eth::TransactionSkeleton const& _t) override;
 
 	void timerEvent(QTimerEvent*) override;
 
@@ -80,7 +63,7 @@ private:
 	bool m_isEnabled = true;
 
 	std::queue<std::pair<eth::TransactionSkeleton, unsigned>> m_queued;
-	std::unordered_map<unsigned, TransactionNotification> m_queueOutput;
+	std::unordered_map<unsigned, eth::TransactionNotification> m_queueOutput;
 	unsigned m_nextQueueID = 0;
 	Mutex x_queued;
 	std::condition_variable m_queueCondition;
