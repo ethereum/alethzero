@@ -82,7 +82,7 @@ void Aleth::init(OnInit _onInit, string const& _clientVersion, string const& _no
 			network = eth::Network::Olympic;
 		else if (arg == "--morden" || arg == "--testnet")
 			network = eth::Network::Morden;
-		else if (arg == "--genesis-json" && i + 1 < qApp->arguments().size())
+		else if ((arg == "--genesis-json" || arg == "--genesis" || arg == "--config") && i + 1 < qApp->arguments().size())
 		{
 			network = eth::Network::Special;
 			m_baseParams = ChainParams(contentsString(qApp->arguments()[++i].toStdString()));
