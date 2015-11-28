@@ -56,6 +56,8 @@ private slots:
 	void loadJs();
 
 private:
+	void init();
+
 	Ui::Browser* m_ui;
 	std::unique_ptr<DappHost> m_dappHost;
 	DappLoader* m_dappLoader = nullptr;
