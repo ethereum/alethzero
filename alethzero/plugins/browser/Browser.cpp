@@ -55,7 +55,12 @@ static void getDebuggerURL(QWebEngineView* _v, function<void(QUrl)> const& _cb)
 	};
 	manager->connect(manager, &QNetworkAccessManager::finished, [=](QNetworkReply* _r) {
 		auto jsonDump = _r->readAll();
-		qDebug() << "Chromium received:" << QString::fromUtf8(jsonDump);
+		if (jsonDump.isEmpty())
+		{
+			qDebug() << "Failed to set up Chromium debug tools. Get Qt-5.5.";
+			_cb(QUrl());
+			return;
+		}
 		QJsonDocument d = QJsonDocument::fromJson(jsonDump);
 		for (QJsonValue i: d.array())
 		{
@@ -88,38 +93,50 @@ Browser::Browser(ZeroFace* _m):
 	connect(addMenuItem("Load Javascript...", "menuSpecial", true), &QAction::triggered, this, &Browser::loadJs);
 
 	m_ui->jsConsole->setVisible(false);
+	m_ui->consoleToggle->setEnabled(false);
+	m_ui->consoleToggle->setToolTip("Chromium developer tools disabled. Get Qt-5.5 for this to work!");
 
 	m_finding = true;
 	getDebuggerURL(m_ui->webView, [=](QUrl u){
-		m_ui->jsConsole->setUrl(u);
-		connect(m_dappLoader, &DappLoader::dappReady, this, &Browser::dappLoaded);
-		connect(m_dappLoader, &DappLoader::pageReady, this, &Browser::pageLoaded);
-		connect(m_ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& _url)
+		if (!u.isEmpty())
 		{
-			// ignore our "discovery" URLs - they are delayed until after the real page is loaded
-			// due to being initiated in a different thread.
-			if (_url.scheme() == "magic")
-				return;
-			if (!m_dappHost->servesUrl(_url))
-				m_ui->urlEdit->setText(_url.toString());
-		});
-		connect(m_ui->urlEdit, &QLineEdit::returnPressed, this, &Browser::reloadUrl);
-		connect(m_ui->webView, &QWebEngineView::titleChanged, [=]()
-		{
-//			m_ui->tabWidget->setTabText(0, m_ui->webView->title());
-		});
-		connect(m_ui->consoleToggle, &QToolButton::clicked, [this]()
-		{
-			m_ui->jsConsole->setVisible(!m_ui->jsConsole->isVisible());
-			m_ui->consoleToggle->setChecked(m_ui->jsConsole->isVisible());
-		});
+			m_ui->jsConsole->setUrl(u);
+			m_ui->consoleToggle->setEnabled(true);
+			connect(m_ui->consoleToggle, &QToolButton::clicked, [this]()
+			{
+				m_ui->jsConsole->setVisible(!m_ui->jsConsole->isVisible());
+				m_ui->consoleToggle->setChecked(m_ui->jsConsole->isVisible());
+			});
+		}
 		m_finding = false;
-		reloadUrl();
+		init();
 	});
+
 }
 
 Browser::~Browser()
 {
+}
+
+void Browser::init()
+{
+	connect(m_ui->webView, &QWebEngineView::urlChanged, [=](QUrl const& url)
+	{
+		// ignore our "discovery" URLs - they are delayed until after the real page is loaded
+		// due to being initiated in a different thread.
+		if (url.scheme() == "magic")
+			return;
+		if (!m_dappHost->servesUrl(url))
+			m_ui->urlEdit->setText(url.toString());
+	});
+	connect(m_dappLoader, &DappLoader::dappReady, this, &Browser::dappLoaded);
+	connect(m_dappLoader, &DappLoader::pageReady, this, &Browser::pageLoaded);
+	connect(m_ui->urlEdit, &QLineEdit::returnPressed, this, &Browser::reloadUrl);
+	connect(m_ui->webView, &QWebEngineView::titleChanged, [=]()
+	{
+//			m_ui->tabWidget->setTabText(0, m_ui->webView->title());
+	});
+	reloadUrl();
 }
 
 void Browser::readSettings(QSettings const& _s)
