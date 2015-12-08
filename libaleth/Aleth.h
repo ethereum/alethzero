@@ -110,7 +110,7 @@ private:
 
 	bool m_destructing = false;
 	eth::ChainParams m_baseParams;
-	bool m_isTampered;
+	bool m_isTampered = false;
 	std::string m_dbPath;
 	std::string m_clientVersion;
 	std::string m_nodeName;
