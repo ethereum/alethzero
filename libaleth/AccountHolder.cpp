@@ -102,7 +102,8 @@ void aleth::AccountHolder::doValidations()
 						n.r = TransactionRepersussion::Locked;
 				}
 			}
-			n.r = TransactionRepersussion::Refused;
+			else
+			    n.r = TransactionRepersussion::Refused;
 		}
 
 		m_queueOutput[id] = n;
