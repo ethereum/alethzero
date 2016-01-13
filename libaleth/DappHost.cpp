@@ -67,7 +67,7 @@ void DappHost::stopListening()
 
 void DappHost::sendOptionsResponse(MHD_Connection* _connection)
 {
-	MHD_Response *result = MHD_create_response_from_data(0, NULL, 0, 1);
+	MHD_Response *result = MHD_create_response_from_buffer(0, nullptr, MHD_RESPMEM_MUST_COPY);
 	MHD_add_response_header(result, "Allow", "GET, OPTIONS");
 	MHD_add_response_header(result, "Access-Control-Allow-Headers", "origin, content-type, accept");
 	MHD_add_response_header(result, "DAV", "1");
@@ -77,7 +77,7 @@ void DappHost::sendOptionsResponse(MHD_Connection* _connection)
 
 void DappHost::sendNotAllowedResponse(MHD_Connection* _connection)
 {
-	MHD_Response *result = MHD_create_response_from_data(0, NULL, 0, 1);
+	MHD_Response *result = MHD_create_response_from_buffer(0, nullptr, MHD_RESPMEM_MUST_COPY);
 	MHD_add_response_header(result, "Allow", "GET, OPTIONS");
 	MHD_queue_response(_connection, MHD_HTTP_METHOD_NOT_ALLOWED, result);
 	MHD_destroy_response(result);
@@ -114,7 +114,11 @@ void DappHost::sendResponse(std::string const& _url, MHD_Connection* _connection
 		path = path.mid(0, path.lastIndexOf('/'));
 	}
 
-	MHD_Response* result = MHD_create_response_from_data(response.size(), const_cast<byte*>(response.data()), 0, 1);
+	MHD_Response* result = MHD_create_response_from_buffer(
+		response.size(),
+		const_cast<byte*>(response.data()),
+		MHD_RESPMEM_MUST_COPY
+	);
 	if (!contentType.empty())
 		MHD_add_response_header(result, "Content-Type", contentType.c_str());
 	MHD_queue_response(_connection, code, result);
