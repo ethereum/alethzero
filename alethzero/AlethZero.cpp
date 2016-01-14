@@ -402,7 +402,7 @@ void AlethZero::refreshBlockCount()
 	auto const& blockInfo = aleth()->ethereum()->blockChain().info();
 	char timestamp[64];
 	time_t rawTime = (time_t)(uint64_t)blockInfo.timestamp();
-	strftime(timestamp, 64, "%F %T %Z", localtime(&rawTime));
+	strftime(timestamp, 64, "%c", localtime(&rawTime));
 	m_ui->chainStatus->setText(
 		QString("#%1 (%2)")
 		.arg(unsigned(blockInfo.number()))
