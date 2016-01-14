@@ -387,7 +387,6 @@ void AlethZero::refreshNetwork()
 
 void AlethZero::refreshBlockCount()
 {
-	auto d = aleth()->ethereum()->blockChain().details();
 	SyncStatus sync = aleth()->ethereum()->syncStatus();
 	QString syncStatus = QString("PV%1 %2").arg(sync.protocolVersion).arg(EthereumHost::stateName(sync.state));
 	if (sync.state == SyncState::Hashes)
@@ -400,8 +399,15 @@ void AlethZero::refreshBlockCount()
 //	m_ui->chainStatus->setText(QString("%3 importing %4 ready %5 verifying %6 unverified %7 future %8 unknown %9 bad  %1 #%2")
 //		.arg(m_privateChain.size() ? "[" + m_privateChain + "] " : c_network == eth::Network::Olympic ? "Olympic" : "Frontier").arg(d.number).arg(b.importing).arg(b.verified).arg(b.verifying).arg(b.unverified).arg(b.future).arg(b.unknown).arg(b.bad));
 	// TODO: allow chain description here, probably from a plugin.
-	m_ui->chainStatus->setText(QString("#%2")
-		.arg(d.number));
+	auto const& blockInfo = aleth()->ethereum()->blockChain().info();
+	char timestamp[64];
+	time_t rawTime = (time_t)(uint64_t)blockInfo.timestamp();
+	strftime(timestamp, 64, "%F %T %Z", localtime(&rawTime));
+	m_ui->chainStatus->setText(
+		QString("#%1 (%2)")
+		.arg(unsigned(blockInfo.number()))
+		.arg(QString(timestamp))
+	);
 }
 
 void AlethZero::refreshAll()
