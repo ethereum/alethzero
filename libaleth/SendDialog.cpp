@@ -99,12 +99,12 @@ void SendDialog::updateProblem()
 		m_ui->to->setStyleSheet("background: #ccffcc; font-size: 16pt");
 	if (m_value == Invalid256)
 	{
-		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 24pt");
+		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 16pt");
 		m_ui->problem->setStyleSheet("color: #880000");
 		m_ui->problem->setText("Invalid value");
 	}
 	else
-		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 24pt");
+		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 16pt");
 
 	if (m_value != Invalid256 && m_to)
 	{
