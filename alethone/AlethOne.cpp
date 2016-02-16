@@ -172,7 +172,7 @@ void AlethOne::on_copy_clicked()
 	}
 }
 
-void AlethOne::on_beneficiary_textEdited()
+void AlethOne::on_author_textEdited()
 {
 	QString addrText = m_ui->author->text().isEmpty() ? m_ui->author->placeholderText() : m_ui->author->text();
 	pair<Address, bytes> a = m_aleth.readAddress(addrText.toStdString());
