@@ -69,7 +69,6 @@ public:
 	u256 hashrate() const { return m_hashrate; }
 
 signals:
-	void newWork(eth::EthashProofOfWork::WorkPackage _work);
 	void generatingDAG(unsigned _pc);
 	void solutionFound(eth::EthashProofOfWork::Solution _sol);
 	void dagGenerationFailed();
@@ -121,7 +120,6 @@ public:
 	QStringList sealers() const { return m_aux->sealers(); }
 
 signals:
-	void newWork(eth::EthashProofOfWork::WorkPackage _work);
 	void generatingDAG(unsigned _pc);
 	void solutionFound(eth::EthashProofOfWork::Solution _sol);
 	void dagGenerationFailed();
