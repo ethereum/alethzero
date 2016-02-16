@@ -179,7 +179,6 @@ void SlaveAux::onNewWork(eth::EthashProofOfWork::WorkPackage const& _work)
 	cnote << "  Seedhash:" << _work.seedHash.hex();
 	cnote << "  Target: " << h256(_work.boundary).hex();
 	m_engine->farm().setWork(_work);
-	emit newWork(_work);
 }
 
 void SlaveAux::onGeneratingDAG(unsigned _pc)
@@ -239,7 +238,6 @@ Slave::Slave():
 	qRegisterMetaType<dev::eth::EthashProofOfWork::WorkPackage>();
 	m_aux->moveToThread(&m_worker);
 	connect(m_aux, SIGNAL(solutionFound(eth::EthashProofOfWork::Solution)), SIGNAL(solutionFound(eth::EthashProofOfWork::Solution)));
-	connect(m_aux, SIGNAL(newWork(eth::EthashProofOfWork::WorkPackage)), SIGNAL(newWork(eth::EthashProofOfWork::WorkPackage)));
 	connect(m_aux, SIGNAL(generatingDAG(unsigned)), SIGNAL(generatingDAG(unsigned)));
 	connect(m_aux, SIGNAL(dagGenerationFailed()), SIGNAL(dagGenerationFailed()));
 	m_worker.start();
