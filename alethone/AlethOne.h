@@ -49,7 +49,7 @@ private slots:
 	void on_local_toggled(bool _on);
 	void on_mining_toggled(bool _on);
 	void on_copy_clicked();
-	void on_beneficiary_textEdited();
+	void on_author_textEdited();
 
 	void refresh();
 
