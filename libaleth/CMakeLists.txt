@@ -19,4 +19,4 @@ set(EXECUTABLE aleth)
 add_library(${EXECUTABLE} STATIC ${SRC_LIST} ${JSRES} ${HEADERS} ${UI_RESOURCES})
 
 set_target_properties(${EXECUTABLE} PROPERTIES AUTOUIC ON AUTOMOC ON)
-eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::Network Web3::webthree Eth::ethcore Eth::p2p Eth::devcrypto Eth::ethereum Web3::web3jsonrpc Eth::natspec Eth::ethashseal)
+eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Qt::Network Web3::webthree Eth::ethcore Eth::p2p Eth::devcrypto Eth::ethereum Web3::web3jsonrpc JsonRpc::Server JsonRpc::Client Eth::natspec Eth::ethashseal)
