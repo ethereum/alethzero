@@ -51,6 +51,7 @@ private slots:
 
 private:
 	void updateProblem();
+	void adjustDialogWidth();
 
 	Ui::SendDialog* m_ui;
 	AlethFace* m_aleth;

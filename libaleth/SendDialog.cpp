@@ -34,6 +34,17 @@ SendDialog::SendDialog(QWidget* _parent, AlethFace* _aleth):
 	m_aleth(_aleth)
 {
 	m_ui->setupUi(this);
+	adjustDialogWidth();
+}
+
+void SendDialog::adjustDialogWidth()
+{
+	QString str("0x42e6723a0c884e922240e56d7b618bec96f35800"); //just some ethereum address
+	QFont defaultFont("Sans Serif", 16);
+	QFontMetrics fm(defaultFont);
+	int width = fm.width(str) + m_ui->label->width();
+	setMaximumWidth(width);
+	setMinimumWidth(width);
 }
 
 SendDialog::~SendDialog()
