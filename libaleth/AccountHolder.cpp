@@ -78,7 +78,7 @@ void aleth::AccountHolder::doValidations()
 		if (!proxy && !isRealAccount(t.from))
 		{
 			cwarn << "Trying to send from non-existant account" << t.from;
-			n.r = TransactionRepersussion::UnknownAccount;
+			n.r = TransactionRepercussion::UnknownAccount;
 		}
 		else
 		{
@@ -88,7 +88,7 @@ void aleth::AccountHolder::doValidations()
 				if (proxy)
 				{
 					queueTransaction(t);
-					n.r = TransactionRepersussion::ProxySuccess;
+					n.r = TransactionRepercussion::ProxySuccess;
 				}
 				else
 				{
@@ -96,14 +96,14 @@ void aleth::AccountHolder::doValidations()
 					if (Secret s = m_aleth->retrieveSecret(t.from))
 					{
 						tie(n.hash, n.created) = m_aleth->ethereum()->submitTransaction(t, s);
-						n.r = TransactionRepersussion::Success;
+						n.r = TransactionRepercussion::Success;
 					}
 					else
-						n.r = TransactionRepersussion::Locked;
+						n.r = TransactionRepercussion::Locked;
 				}
 			}
 			else
-			    n.r = TransactionRepersussion::Refused;
+			    n.r = TransactionRepercussion::Refused;
 		}
 
 		m_queueOutput[id] = n;
