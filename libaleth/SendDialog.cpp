@@ -34,6 +34,17 @@ SendDialog::SendDialog(QWidget* _parent, AlethFace* _aleth):
 	m_aleth(_aleth)
 {
 	m_ui->setupUi(this);
+	adjustDialogWidth();
+}
+
+void SendDialog::adjustDialogWidth()
+{
+	QString str("0x42e6723a0c884e922240e56d7b618bec96f35800"); //just some ethereum address
+	QFont defaultFont("Sans Serif", 16);
+	QFontMetrics fm(defaultFont);
+	int width = fm.width(str) + m_ui->label->width();
+	setMaximumWidth(width);
+	setMinimumWidth(width);
 }
 
 SendDialog::~SendDialog()
@@ -99,12 +110,12 @@ void SendDialog::updateProblem()
 		m_ui->to->setStyleSheet("background: #ccffcc; font-size: 16pt");
 	if (m_value == Invalid256)
 	{
-		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 24pt");
+		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 16pt");
 		m_ui->problem->setStyleSheet("color: #880000");
 		m_ui->problem->setText("Invalid value");
 	}
 	else
-		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 24pt");
+		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 16pt");
 
 	if (m_value != Invalid256 && m_to)
 	{
