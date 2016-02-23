@@ -75,7 +75,6 @@ AlethOne::~AlethOne()
 
 void AlethOne::refresh()
 {
-	m_ui->peers->setValue(m_aleth ? m_aleth.web3()->peerCount() : 0);
 	bool s = m_aleth ? m_aleth.ethereum()->isSyncing() : false;
 	pair<uint64_t, unsigned> gp = EthashAux::fullGeneratingProgress();
 	m_ui->stack->setCurrentIndex(1);

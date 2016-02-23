@@ -2,14 +2,6 @@
 <ui version="4.0">
  <class>AlethOne</class>
  <widget class="QDialog" name="AlethOne">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>369</width>
-    <height>382</height>
-   </rect>
-  </property>
   <property name="windowTitle">
    <string>AlethOne</string>
   </property>
@@ -594,30 +586,9 @@ font-size: 9pt</string>
                </widget>
               </item>
               <item>
-               <widget class="QProgressBar" name="peers">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>16777215</width>
-                  <height>8</height>
-                 </size>
-                </property>
-                <property name="maximum">
-                 <number>11</number>
-                </property>
-                <property name="value">
-                 <number>4</number>
-                </property>
-                <property name="textVisible">
-                 <bool>false</bool>
-                </property>
-                <property name="format">
-                 <string>%p% signal</string>
+               <widget class="QLabel" name="status">
+                <property name="text">
+                 <string>Syncing...</string>
                 </property>
                </widget>
               </item>
