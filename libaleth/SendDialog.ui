@@ -2,40 +2,14 @@
 <ui version="4.0">
  <class>SendDialog</class>
  <widget class="QDialog" name="SendDialog">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>640</width>
-    <height>150</height>
-   </rect>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>640</width>
-    <height>150</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>640</width>
-    <height>150</height>
-   </size>
-  </property>
   <property name="windowTitle">
    <string>Send Transaction</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetFixedSize</enum>
-     </property>
      <item row="0" column="0" rowspan="2">
       <widget class="QLabel" name="label_2">
-       <property name="styleSheet">
-        <string notr="true">font-size: 16pt</string>
-       </property>
        <property name="text">
         <string>&amp;Send</string>
        </property>
@@ -49,9 +23,6 @@
      </item>
      <item row="2" column="0" rowspan="2">
       <widget class="QLabel" name="label">
-       <property name="styleSheet">
-        <string notr="true">font-size: 16pt</string>
-       </property>
        <property name="text">
         <string>&amp;To</string>
        </property>
@@ -62,9 +33,6 @@
      </item>
      <item row="0" column="1" rowspan="2">
       <widget class="QLineEdit" name="value">
-       <property name="styleSheet">
-        <string notr="true">font-size: 16pt</string>
-       </property>
        <property name="inputMask">
         <string/>
        </property>
@@ -78,9 +46,6 @@
      </item>
      <item row="2" column="1" rowspan="2">
       <widget class="QLineEdit" name="to">
-       <property name="styleSheet">
-        <string notr="true">font-size: 16pt</string>
-       </property>
        <property name="text">
         <string/>
        </property>
@@ -95,12 +60,6 @@
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>9</height>
-      </size>
      </property>
     </spacer>
    </item>
@@ -120,12 +79,6 @@
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
        </property>
       </spacer>
      </item>
