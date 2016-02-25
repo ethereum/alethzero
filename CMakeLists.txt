@@ -30,7 +30,5 @@ configure_project(SOLIDITY)
 find_package(Qt5Widgets)
 
 add_subdirectory(libaleth)
-add_subdirectory(alethfive)
 add_subdirectory(alethone)
-add_subdirectory(alethzero)
 
