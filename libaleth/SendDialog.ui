@@ -93,6 +93,9 @@
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QLabel" name="problem">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="styleSheet">
         <string notr="true">color: darkred</string>
        </property>
