@@ -6,19 +6,25 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>630</width>
-    <height>150</height>
+    <width>216</width>
+    <height>162</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
-    <width>630</width>
+    <width>0</width>
     <height>150</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>630</width>
+    <width>216</width>
     <height>162</height>
    </size>
   </property>
@@ -127,7 +133,7 @@
      <item>
       <widget class="QPushButton" name="send">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="minimumSize">
         <size>

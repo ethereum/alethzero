@@ -52,6 +52,7 @@ private slots:
 private:
 	void updateProblem();
 	void adjustDialogWidth();
+	void updateStatus();
 
 	Ui::SendDialog* m_ui;
 	AlethFace* m_aleth;
@@ -59,6 +60,7 @@ private:
 	u256 m_value = Invalid256;
 	Address m_to;
 	bytes m_data;
+	bool m_okPressed = false;
 };
 
 }

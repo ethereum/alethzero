@@ -31,9 +31,11 @@ using namespace aleth;
 SendDialog::SendDialog(QWidget* _parent, AlethFace* _aleth):
 	QDialog(_parent),
 	m_ui(new Ui::SendDialog),
-	m_aleth(_aleth)
+	m_aleth(_aleth),
+	m_okPressed(false)
 {
 	m_ui->setupUi(this);
+	m_ui->send->setEnabled(true);
 	adjustDialogWidth();
 }
 
@@ -43,7 +45,6 @@ void SendDialog::adjustDialogWidth()
 	QFont defaultFont("Sans Serif", 16);
 	QFontMetrics fm(defaultFont);
 	int width = fm.width(str) + m_ui->label->width();
-	setMaximumWidth(width);
 	setMinimumWidth(width);
 }
 
@@ -100,6 +101,10 @@ void SendDialog::on_to_textChanged(QString _s)
 
 void SendDialog::updateProblem()
 {
+	updateStatus();
+	if(!m_okPressed)
+		return;
+
 	if (!m_to)
 	{
 		m_ui->to->setStyleSheet("background: #ffcccc; font-size: 16pt");
@@ -108,6 +113,7 @@ void SendDialog::updateProblem()
 	}
 	else
 		m_ui->to->setStyleSheet("background: #ccffcc; font-size: 16pt");
+
 	if (m_value == Invalid256)
 	{
 		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 16pt");
@@ -116,27 +122,41 @@ void SendDialog::updateProblem()
 	}
 	else
 		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 16pt");
+}
 
+void SendDialog::updateStatus()
+{
 	if (m_value != Invalid256 && m_to)
 	{
 		m_ui->problem->setStyleSheet("");
-		m_ui->problem->setText(QString::fromStdString(formatBalance(m_value) + " to " + m_aleth->toReadable(m_to) + (m_data.empty() ? "" : (" with " + toHex(m_data)))));
+		m_ui->problem->setText(QString::fromStdString(
+			formatBalance(m_value) +
+			" to " +
+			m_aleth->toReadable(m_to) +
+			(m_data.empty() ? "" : (" with " + toHex(m_data))))
+		);
 		m_ui->send->setEnabled(true);
 	}
 	else
 		m_ui->send->setEnabled(false);
 }
 
+
 void SendDialog::on_send_clicked()
 {
-	if (Secret sender = m_aleth->retrieveSecret(m_aleth->author()))
-	{
-		m_aleth->ethereum()->submitTransaction(sender, m_value, m_to, m_data);
-		accept();
-	}
+	m_okPressed = true;
+	if (!m_to || m_value == Invalid256)
+		updateProblem();
+	else
+		if (Secret sender = m_aleth->retrieveSecret(m_aleth->author()))
+		{
+			m_aleth->ethereum()->submitTransaction(sender, m_value, m_to, m_data);
+			accept();
+		}
 }
 
 void SendDialog::on_cancel_clicked()
 {
 	reject();
+	m_okPressed = false;
 }
