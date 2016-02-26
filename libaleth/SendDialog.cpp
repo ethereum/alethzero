@@ -55,6 +55,12 @@ SendDialog::~SendDialog()
 
 void SendDialog::on_value_textChanged(QString _s)
 {
+	if (_s.isEmpty())
+	{
+		m_value = Invalid256;
+		updateProblem();
+		return;
+	}
 	u256 mult = ether;
 	for (auto const& i: units())
 		if (_s.endsWith(QString::fromStdString(i.second)))
