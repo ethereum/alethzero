@@ -243,7 +243,7 @@ void AlethZero::setNetPrefs(NetworkSettings const& _settings)
 	p.discovery = p.discovery && !aleth()->isTampered();
 	p.pin = p.pin || aleth()->isTampered();
 	aleth()->web3()->setNetworkPreferences(p, _settings.dropPeers);
-	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero", _settings.clientName.toStdString()));
+	aleth()->web3()->setClientVersion(WebThreeDirect::composeClientVersion("AlethZero"));
 	QSettings s("ethereum", "alethzero");
 	_settings.write(s);
 }
