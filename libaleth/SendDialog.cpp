@@ -34,7 +34,8 @@ SendDialog::SendDialog(QWidget* _parent, AlethFace* _aleth):
 	m_aleth(_aleth)
 {
 	m_ui->setupUi(this);
-	m_ui->send->setEnabled(true);
+	m_ui->send->setEnabled(false);
+	m_ui->send->setStyleSheet("color: grey");
 	adjustDialogWidth();
 }
 
