@@ -46,8 +46,6 @@ void SendDialog::adjustDialogWidth()
 	QFontMetrics fm(defaultFont);
 	int width = fm.width(str) + m_ui->label->width();
 	setMinimumWidth(width);
-	m_ui->send->setEnabled(false);
-	m_ui->send->setStyleSheet("color: lightgrey");
 }
 
 SendDialog::~SendDialog()
@@ -127,8 +125,26 @@ void SendDialog::updateProblem()
 		m_ui->problem->setStyleSheet("color: #880000");
 		m_ui->problem->setVisible(false);
 		m_ui->send->setEnabled(false);
-		m_ui->send->setStyleSheet("color: lightgrey");
+		m_ui->send->setStyleSheet("color: grey");
 	}
+
+	if (!m_to)
+	{
+		m_ui->to->setStyleSheet("background: #ffcccc; font-size: 16pt");
+		m_ui->problem->setStyleSheet("color: #880000");
+		m_ui->problem->setText("Invalid address");
+	}
+	else
+		m_ui->to->setStyleSheet("background: #ccffcc; font-size: 16pt");
+
+	if (m_value == Invalid256)
+	{
+		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 16pt");
+		m_ui->problem->setStyleSheet("color: #880000");
+		m_ui->problem->setText("Invalid value");
+	}
+	else
+		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 16pt");
 }
 
 void SendDialog::on_send_clicked()
