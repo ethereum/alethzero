@@ -31,8 +31,7 @@ using namespace aleth;
 SendDialog::SendDialog(QWidget* _parent, AlethFace* _aleth):
 	QDialog(_parent),
 	m_ui(new Ui::SendDialog),
-	m_aleth(_aleth),
-	m_okPressed(false)
+	m_aleth(_aleth)
 {
 	m_ui->setupUi(this);
 	m_ui->send->setEnabled(true);
@@ -149,7 +148,6 @@ void SendDialog::updateProblem()
 
 void SendDialog::on_send_clicked()
 {
-	m_okPressed = true;
 	if (!m_to || m_value == Invalid256)
 		updateProblem();
 	else
@@ -163,5 +161,4 @@ void SendDialog::on_send_clicked()
 void SendDialog::on_cancel_clicked()
 {
 	reject();
-	m_okPressed = false;
 }

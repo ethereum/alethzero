@@ -59,7 +59,6 @@ private:
 	u256 m_value = Invalid256;
 	Address m_to;
 	bytes m_data;
-	bool m_okPressed = false;
 };
 
 }
