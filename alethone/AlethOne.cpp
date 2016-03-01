@@ -146,6 +146,8 @@ void AlethOne::readSettings()
 		m_ui->local->setChecked(true);
 	else
 		m_ui->pool->setChecked(true);
+	m_ui->log->setVisible(s.value("mode", "solo").toString() == "solo" ? 1 : 0);
+	m_ui->stackedWidget->setCurrentIndex(s.value("mode", "solo").toString() == "solo" ? 0 : 1);
 	m_ui->url->setText(s.value("url", "http://127.0.0.1:8545").toString());
 	m_ui->author->setText(s.value("author", "").toString());
 }
@@ -227,12 +229,8 @@ void AlethOne::on_send_clicked()
 void AlethOne::on_local_toggled(bool _on)
 {
 	if (_on)
-	{
 		if (!m_aleth.open(Aleth::Bootstrap))
-		{
 			m_ui->pool->setChecked(true);
-			m_ui->log->setVisible(true);
-		}
 		else
 		{
 			m_aleth.installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
@@ -243,14 +241,11 @@ void AlethOne::on_local_toggled(bool _on)
 					balance += this->m_aleth.ethereum()->balanceAt(a);
 				this->m_ui->balance->setText(QString(tr("%1 across %2 accounts")).arg(QString::fromStdString(formatBalance(balance))).arg(accounts.size()));
 			});
-			m_ui->log->setVisible(true);
 		}
-	}
 	else
-	{
-		m_ui->log->setVisible(false);
 		m_aleth.close();
-	}
+
+	m_ui->log->setVisible(_on ? 1 : 0);
 	m_ui->stackedWidget->setCurrentIndex(_on ? 0 : 1);
 }
 
