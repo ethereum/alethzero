@@ -197,7 +197,7 @@ void AlethZero::warn(QString _s)
 
 void AlethZero::on_about_triggered()
 {
-	QString versionString(WebThreeDirect::composeClientVersion("AlethZero"));
+	QString versionString = QString::fromStdString(WebThreeDirect::composeClientVersion("AlethZero"));
 
 	versionString += "\n";
 	versionString += "\nBy cpp-ethereum contributors, 2014-2016.";
