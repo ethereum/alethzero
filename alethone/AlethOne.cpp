@@ -229,10 +229,10 @@ void AlethOne::on_send_clicked()
 void AlethOne::on_local_toggled(bool _on)
 {
 	if (_on)
+	{
 		if (!m_aleth.open(Aleth::Bootstrap))
 			m_ui->pool->setChecked(true);
 		else
-		{
 			m_aleth.installWatch(ChainChangedFilter, [=](LocalisedLogEntries const&){
 				log(QString(tr("New block #%1")).arg(this->m_aleth.ethereum()->number()));
 				u256 balance = 0;
@@ -241,7 +241,7 @@ void AlethOne::on_local_toggled(bool _on)
 					balance += this->m_aleth.ethereum()->balanceAt(a);
 				this->m_ui->balance->setText(QString(tr("%1 across %2 accounts")).arg(QString::fromStdString(formatBalance(balance))).arg(accounts.size()));
 			});
-		}
+	}
 	else
 		m_aleth.close();
 
