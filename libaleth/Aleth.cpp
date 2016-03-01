@@ -127,7 +127,8 @@ bool Aleth::open(OnInit _connect)
 		}
 
 		web3()->setClientVersion(WebThreeDirect::composeClientVersion(m_clientVersion));
-		setAuthor(keyManager().accounts().front());
+		if (keyManager().accounts().size() > 0)
+			setAuthor(keyManager().accounts().front());
 		ethereum()->setDefault(LatestBlock);
 
 		{
