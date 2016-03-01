@@ -41,11 +41,18 @@ SendDialog::SendDialog(QWidget* _parent, AlethFace* _aleth):
 
 void SendDialog::adjustDialogWidth()
 {
-	QString str("0x42e6723a0c884e922240e56d7b618bec96f35800"); //just some ethereum address
-	QFont defaultFont("Sans Serif", 16);
-	QFontMetrics fm(defaultFont);
+	QString str("0xd57b6c60f48f4187edf735f627400bf03e5c7f02"); //just some ethereum address
+	QFont defaultFont("Sans Serif");
+	QFontMetrics fm(m_ui->to->font());
+
 	int width = fm.width(str) + m_ui->label->width();
+	setMaximumWidth(width);
 	setMinimumWidth(width);
+
+	m_ui->to->setMinimumWidth(fm.width(str));
+	m_ui->to->setMaximumWidth(fm.width(str));
+	m_ui->value->setMinimumWidth(fm.width(str));
+	m_ui->value->setMaximumWidth(fm.width(str));
 }
 
 SendDialog::~SendDialog()
@@ -130,21 +137,21 @@ void SendDialog::updateProblem()
 
 	if (!m_to)
 	{
-		m_ui->to->setStyleSheet("background: #ffcccc; font-size: 16pt");
+		m_ui->to->setStyleSheet("background: #ffcccc;");
 		m_ui->problem->setStyleSheet("color: #880000");
 		m_ui->problem->setText("Invalid address");
 	}
 	else
-		m_ui->to->setStyleSheet("background: #ccffcc; font-size: 16pt");
+		m_ui->to->setStyleSheet("background: #ccffcc;");
 
 	if (m_value == Invalid256)
 	{
-		m_ui->value->setStyleSheet("background: #ffcccc; font-size: 16pt");
+		m_ui->value->setStyleSheet("background: #ffcccc;");
 		m_ui->problem->setStyleSheet("color: #880000");
 		m_ui->problem->setText("Invalid value");
 	}
 	else
-		m_ui->value->setStyleSheet("background: #ccffcc; font-size: 16pt");
+		m_ui->value->setStyleSheet("background: #ccffcc;");
 }
 
 void SendDialog::on_send_clicked()

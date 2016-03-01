@@ -2,6 +2,14 @@
 <ui version="4.0">
  <class>AlethOne</class>
  <widget class="QDialog" name="AlethOne">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>422</width>
+    <height>455</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>AlethOne</string>
   </property>
@@ -519,6 +527,9 @@ font-size: 9pt</string>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
           <item>
            <widget class="QLabel" name="label">
             <property name="sizePolicy">
