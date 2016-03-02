@@ -146,6 +146,8 @@ void AlethOne::readSettings()
 		m_ui->local->setChecked(true);
 	else
 		m_ui->pool->setChecked(true);
+	m_ui->log->setVisible(s.value("mode", "solo").toString() == "solo" ? 1 : 0);
+	m_ui->stackedWidget->setCurrentIndex(s.value("mode", "solo").toString() == "solo" ? 0 : 1);
 	m_ui->url->setText(s.value("url", "http://127.0.0.1:8545").toString());
 	m_ui->author->setText(s.value("author", "").toString());
 }
@@ -243,6 +245,7 @@ void AlethOne::on_local_toggled(bool _on)
 	else
 		m_aleth.close();
 
+	m_ui->log->setVisible(_on ? 1 : 0);
 	m_ui->stackedWidget->setCurrentIndex(_on ? 0 : 1);
 }
 
