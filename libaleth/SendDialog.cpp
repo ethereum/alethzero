@@ -50,9 +50,7 @@ void SendDialog::adjustDialogWidth()
 	setMinimumWidth(width);
 
 	m_ui->to->setMinimumWidth(fm.width(str));
-	m_ui->to->setMaximumWidth(fm.width(str));
 	m_ui->value->setMinimumWidth(fm.width(str));
-	m_ui->value->setMaximumWidth(fm.width(str));
 }
 
 SendDialog::~SendDialog()
