@@ -72,7 +72,7 @@ void InjectTransactions::doInject(QString _txHex)
 		bytes b = fromHex(_txHex.toStdString(), WhenError::Throw);
 		aleth()->ethereum()->injectTransaction(b);
 	}
-	catch (BadHexCharacter& _e)
+	catch (BadHexCharacter& /*_e*/)
 	{
 		if (QMessageBox::warning(zero(), "Invalid Transaction Hex", "Invalid hex character in:\n" + _txHex + "\nTransaction rejected.", QMessageBox::Ignore, QMessageBox::Abort) == QMessageBox::Abort)
 			return;
