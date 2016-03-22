@@ -25,9 +25,9 @@
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <QFileDialog>
 #include <QtWebEngine/QtWebEngine>
-#include <QtWebEngineWidgets/QWebEngineView>
-#include <QtWebEngineWidgets/QWebEngineCallback>
-#include <QtWebEngineWidgets/QWebEngineSettings>
+#include <QtWebEngineWidgets/qwebengineview.h>
+#include <QtWebEngineWidgets/qwebenginepage.h>
+#include <QtWebEngineWidgets/qwebenginesettings.h>
 #include <libaleth/AlethWhisper.h>
 #include <libaleth/AlethFace.h>
 #include <libaleth/DappHost.h>
