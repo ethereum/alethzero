@@ -267,6 +267,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 	else if (sourceIsSolidity(_user))
 	{
 		dev::solidity::CompilerStack compiler(true);
+		auto scannerFromSourceName = [&](string const& _sourceName) -> solidity::Scanner const& { return compiler.scanner(_sourceName); };
 		try
 		{
 			if (!compiler.compile(_user, _opt))
@@ -274,7 +275,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 				for (auto const& error: compiler.errors())
 				{
 					ostringstream errorStr;
-					solidity::SourceReferenceFormatter::printExceptionInformation(errorStr, *error, "Error", compiler);
+					solidity::SourceReferenceFormatter::printExceptionInformation(errorStr, *error, "Error", scannerFromSourceName);
 					errors.push_back("Solidity: " + errorStr.str());
 				}
 			}
@@ -294,7 +295,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 		catch (dev::Exception const& exception)
 		{
 			ostringstream error;
-			solidity::SourceReferenceFormatter::printExceptionInformation(error, exception, "Error", compiler);
+			solidity::SourceReferenceFormatter::printExceptionInformation(error, exception, "Error", scannerFromSourceName);
 			errors.push_back("Solidity: " + error.str());
 		}
 		catch (...)
