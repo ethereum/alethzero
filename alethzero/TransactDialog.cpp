@@ -489,7 +489,7 @@ void TransactDialog::rejigData()
 			bail(htmlErrors);
 			return;
 		}
-		htmlInfo = QString::fromStdString(info) + "<h4>Code</h4>" + QString::fromStdString(disassemble(m_data)).toHtmlEscaped();
+		htmlInfo = QString::fromStdString(info) + "<h4>Code</h4>" + QString::fromStdString(eth::disassemble(m_data)).toHtmlEscaped();
 	}
 	else
 	{
@@ -613,7 +613,7 @@ void TransactDialog::on_debug_clicked()
 
 	try
 	{
-		Block postState(ethereum()->postState());
+		eth::Block postState(ethereum()->postState());
 		Transaction t = isCreation() ?
 			Transaction(value(), gasPrice(), gas(), m_data, postState.transactionsFrom(from)) :
 			Transaction(value(), gasPrice(), gas(), toAccount().first, m_data, postState.transactionsFrom(from));
