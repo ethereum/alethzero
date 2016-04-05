@@ -22,7 +22,7 @@
 #pragma once
 #include <libnatspec/NatspecExpressionEvaluator.h>
 #include <QtQml/QJSEngine>
-
+/*
 class QNatspecEngine
 {
 public:
@@ -40,4 +40,4 @@ public:
 
 class QNatspecExpressionEvaluator: public NatspecExpressionEvaluator<QNatspecEngine, QNatspecPrinter>
 {
-};
+};*/

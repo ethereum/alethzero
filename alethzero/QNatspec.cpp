@@ -20,7 +20,7 @@
  */
 
 #include "QNatspec.h"
-
+/*
 QJSValue QNatspecEngine::eval(std::string const& _expression)
 {
 	return m_engine.evaluate(QString::fromStdString(_expression));
@@ -29,4 +29,4 @@ QJSValue QNatspecEngine::eval(std::string const& _expression)
 std::string QNatspecPrinter::print(QJSValue const& _value)
 {
 	return _value.toString().toStdString();
-}
+}*/
