@@ -46,7 +46,6 @@
 #include <libserpent/funcs.h>
 #include <libserpent/util.h>
 #endif
-#include "QNatspec.h"
 #include <libaleth/Debugger.h>
 #include "ui_TransactDialog.h"
 using namespace std;
@@ -267,6 +266,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 	else if (sourceIsSolidity(_user))
 	{
 		dev::solidity::CompilerStack compiler(true);
+		auto scannerFromSourceName = [&](string const& _sourceName) -> solidity::Scanner const& { return compiler.scanner(_sourceName); };
 		try
 		{
 			if (!compiler.compile(_user, _opt))
@@ -274,7 +274,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 				for (auto const& error: compiler.errors())
 				{
 					ostringstream errorStr;
-					solidity::SourceReferenceFormatter::printExceptionInformation(errorStr, *error, "Error", compiler);
+					solidity::SourceReferenceFormatter::printExceptionInformation(errorStr, *error, "Error", scannerFromSourceName);
 					errors.push_back("Solidity: " + errorStr.str());
 				}
 			}
@@ -294,7 +294,7 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 		catch (dev::Exception const& exception)
 		{
 			ostringstream error;
-			solidity::SourceReferenceFormatter::printExceptionInformation(error, exception, "Error", compiler);
+			solidity::SourceReferenceFormatter::printExceptionInformation(error, exception, "Error", scannerFromSourceName);
 			errors.push_back("Solidity: " + error.str());
 		}
 		catch (...)
@@ -326,23 +326,6 @@ static tuple<vector<string>, bytes, string> userInputToCode(string const& _user,
 		}
 	}
 	return make_tuple(errors, data, lll + solidity);
-}
-
-string TransactDialog::natspecNotice(Address _to, bytes const& _data)
-{
-	if (ethereum()->codeAt(_to, PendingBlock).size())
-	{
-		string userNotice = m_natSpecDB->userNotice(ethereum()->postState().codeHash(_to), _data);
-		if (userNotice.empty())
-			return "Destination contract unknown.";
-		else
-		{
-			QNatspecExpressionEvaluator evaluator;
-			return evaluator.evalExpression(userNotice);
-		}
-	}
-	else
-		return "Destination not a contract.";
 }
 
 pair<Address, bytes> TransactDialog::toAccount()
@@ -488,7 +471,7 @@ void TransactDialog::rejigData()
 			bail(htmlErrors);
 			return;
 		}
-		htmlInfo = QString::fromStdString(info) + "<h4>Code</h4>" + QString::fromStdString(disassemble(m_data)).toHtmlEscaped();
+		htmlInfo = QString::fromStdString(info) + "<h4>Code</h4>" + QString::fromStdString(eth::disassemble(m_data)).toHtmlEscaped();
 	}
 	else
 	{
@@ -497,10 +480,6 @@ void TransactDialog::rejigData()
 	}
 
 	htmlInfo += "<h4>Hex</h4>" + QString(ETH_HTML_DIV(ETH_HTML_MONO)) + QString::fromStdString(toHex(m_data)) + "</div>";
-
-	// Add Natspec information
-	if (!isCreation())
-		htmlInfo = "<div class=\"info\"><span class=\"icon\">INFO</span> " + QString::fromStdString(natspecNotice(toAccount().first, m_data)).toHtmlEscaped() + "</div>" + htmlInfo;
 
 	determineGasRequirements();
 
@@ -612,7 +591,7 @@ void TransactDialog::on_debug_clicked()
 
 	try
 	{
-		Block postState(ethereum()->postState());
+		eth::Block postState(ethereum()->postState());
 		Transaction t = isCreation() ?
 			Transaction(value(), gasPrice(), gas(), m_data, postState.transactionsFrom(from)) :
 			Transaction(value(), gasPrice(), gas(), toAccount().first, m_data, postState.transactionsFrom(from));
