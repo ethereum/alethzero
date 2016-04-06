@@ -21,7 +21,7 @@ eth_add_executable(${EXECUTABLE}
 
 target_link_libraries(${EXECUTABLE} aleth)
 target_include_directories(${EXECUTABLE} PUBLIC ..)
-eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Eth::ethereum Web3::web3jsonrpc Eth::natspec Eth::ethashseal Solidity::lll)
+eth_use(${EXECUTABLE} REQUIRED Qt::Core Qt::Widgets Eth::ethereum Web3::web3jsonrpc Eth::ethashseal Solidity::lll)
 if (SOLIDITY)
 	eth_use(${EXECUTABLE} OPTIONAL Solidity::solidity)
 endif()
