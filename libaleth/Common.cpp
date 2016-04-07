@@ -41,29 +41,6 @@ string dev::niceVersion(string const& _v)
 	return _v;
 }
 
-static unsigned s_port = 0;
-
-
-void dev::aleth::initChromiumDebugTools(int& _argc, char**& _argv)
-{
-	for (int i = 0; i < _argc; ++i)
-		if (string(_argv[i]).substr(0, 24) == "--remote-debugging-port=")
-		{
-			s_port = stoi(string(_argv[i]).substr(24));
-			return;
-		}
-
-	s_port = ((uint16_t)(FixedHash<2>::Arith)FixedHash<2>::random()) % (32768 - 1024) + 1024;
-	cnote << "Web developers: Debugger on 127.0.0.1:" << s_port;
-
-	qputenv("QTWEBENGINE_REMOTE_DEBUGGING", QString::number(s_port).toLatin1());
-}
-
-unsigned dev::aleth::chromiumDebugToolsPort()
-{
-	return s_port;
-}
-
 string dev::aleth::fromRaw(h256 const& _n, unsigned* _inc)
 {
 	if (_n)
