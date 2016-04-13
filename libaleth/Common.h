@@ -55,7 +55,6 @@ dev::u256 fromValueUnits(QComboBox* _units, QSpinBox* _value);
 std::vector<dev::KeyPair> keysAsVector(QList<dev::KeyPair> const& _keys);
 
 bool sourceIsSolidity(std::string const& _source);
-bool sourceIsSerpent(std::string const& _source);
 
 class NatSpecFace
 {
