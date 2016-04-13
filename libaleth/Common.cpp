@@ -106,9 +106,3 @@ bool dev::aleth::sourceIsSolidity(string const& _source)
 	// TODO: Improve this heuristic
 	return (_source.substr(0, 8) == "contract" || _source.substr(0, 5) == "//sol");
 }
-
-bool dev::aleth::sourceIsSerpent(string const& _source)
-{
-	// TODO: Improve this heuristic
-	return (_source.substr(0, 5) == "//ser");
-}
