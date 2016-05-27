@@ -9,7 +9,7 @@ include(EthPolicy)
 eth_policy()
 
 # project name and version should be set after cmake_policy CMP0048
-project(alethzero VERSION "1.2.4")
+project(alethzero VERSION "1.2.5")
 
 # Let's find our dependencies
 include(EthDependencies)
